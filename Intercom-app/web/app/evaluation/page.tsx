@@ -80,8 +80,9 @@ export default function EvaluationPage() {
       {data ? (
         <div className="space-y-6">
           <AlertBanner tone="info" title="Deterministic safety baseline">
-            Scores come from a local subject-name heuristic ({data.modelVersion}) against {data.datasetSize}{' '}
-            versioned cases ({data.datasetVersion}). Live tickets use Gemini with prompt {data.promptVersion}.{' '}
+            These reproducible checks run against {data.datasetSize}{' '}
+            versioned anonymized cases ({data.datasetVersion}) using baseline {data.modelVersion}. Production tickets
+            use Gemini with prompt {data.promptVersion}; offline results are intentionally reported separately.{' '}
             <Link href="/overview" className="font-medium text-primary hover:text-primary-hover">
               See live stats on Overview
             </Link>
@@ -116,17 +117,18 @@ export default function EvaluationPage() {
               <h2 className="text-sm font-semibold tracking-tight text-primary">Evaluation scope</h2>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
                 <li>
-                  <span className="font-medium text-primary">Names.</span> Pull a person from the subject line and
-                  compare to the labeled name. Precision {pct(data.employeeMatchPrecision)}.
+                  <span className="font-medium text-primary">Identity extraction.</span> Extract a person from the
+                  subject and compare it with the labeled result. Precision {pct(data.employeeMatchPrecision)}.
                 </li>
                 <li>
                   <span className="font-medium text-primary">Directory resolution.</span> The controlled evaluation directory contains{' '}
-                  {data.fixtureDirectory.join(' and ')} exist in this harness. {data.directoryTruePositives} resolved
+                  {data.fixtureDirectory.join(' and ')}. {data.directoryTruePositives} resolved
                   · {pct(data.directoryResolutionPrecision)} precision.
                 </li>
                 <li>
-                  <span className="font-medium text-primary">Related-case proxy.</span> A fixture is “related” only if
-                  that sample directory hit. Not live SQL search. Precision {pct(data.relatedCasePrecision)}, recall{' '}
+                  <span className="font-medium text-primary">Association baseline.</span> A case is associated only
+                  after a controlled directory match. This remains separate from live SQL retrieval. Precision{' '}
+                  {pct(data.relatedCasePrecision)}, recall{' '}
                   {pct(data.relatedCaseRecall)} ({data.relatedTruePositives} hits, {data.relatedFalsePositives} extra,{' '}
                   {data.relatedFalseNegatives} missed).
                 </li>
@@ -135,8 +137,8 @@ export default function EvaluationPage() {
             <section className="dash-panel lg:col-span-2">
               <h2 className="text-sm font-semibold tracking-tight text-primary">Quality gates</h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                {passCount} of {total} rows matched both name and category. {data.lowConfidenceCount} are treated as
-                low confidence (no two-word name). {reviewCount} would be sent to a human in this harness.
+                {passCount} of {total} cases matched both identity and category. {data.lowConfidenceCount} lacked
+                sufficient identity evidence. {reviewCount} were safely routed to human review.
               </p>
               <div className="mt-5 space-y-3">
                 <Bar
