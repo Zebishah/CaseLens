@@ -645,5 +645,9 @@ export const processIntelligenceForConversation = async (
       messageCount,
       previousSnapshot: conversation.intelligenceSnapshot as IntelligenceSnapshot | null
     });
+
+    // Propagate the failure so BullMQ can apply its bounded retry/backoff policy.
+    // Inline callers already catch and convert this into a safe operator-facing state.
+    throw error;
   }
 };
