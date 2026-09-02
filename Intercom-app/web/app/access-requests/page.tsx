@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, EmptyState, PageSkeleton, TextButton } from '../../components/dashboard/ui';
-import { api } from '../../lib/api';
+import { ApiError, api } from '../../lib/api';
 
 type Status = 'pending' | 'approved' | 'invited' | 'declined' | 'expired';
 
@@ -43,7 +43,11 @@ export default function AccessRequestsPage() {
       const query = filter === 'all' ? '' : `?status=${filter}`;
       setRows(await api.get<AccessRequest[]>(`/api/access-requests${query}`));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load access requests');
+      setError(
+        err instanceof ApiError && err.sleeping
+          ? 'The backend service is starting. Retry in a moment.'
+          : 'Reviewer requests are temporarily unavailable. Retry after the service reconnects.'
+      );
     } finally {
       setLoading(false);
     }
@@ -58,7 +62,11 @@ export default function AccessRequestsPage() {
       await api.patch(`/api/access-requests/${id}`, { status });
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to update request');
+      setError(
+        err instanceof ApiError && err.sleeping
+          ? 'The backend service is starting. Retry in a moment.'
+          : 'The request could not be updated. Refresh the queue and try again.'
+      );
     } finally {
       setAction(null);
     }
@@ -107,7 +115,7 @@ export default function AccessRequestsPage() {
 
       {loading ? <PageSkeleton variant="table" /> : null}
 
-      {!loading && rows.length === 0 ? (
+      {!loading && !error && rows.length === 0 ? (
         <section className="dash-panel">
           <EmptyState title="No requests in this view">
             New recruiter invitation requests will appear here after secure submission.
@@ -115,7 +123,7 @@ export default function AccessRequestsPage() {
         </section>
       ) : null}
 
-      {!loading && rows.length > 0 ? (
+      {!loading && !error && rows.length > 0 ? (
         <section className="dash-panel overflow-hidden !p-0">
           <div className="overflow-x-auto">
             <table className="dash-table min-w-[68rem] w-full text-left text-sm">
