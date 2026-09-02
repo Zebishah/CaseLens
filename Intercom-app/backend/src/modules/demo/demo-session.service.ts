@@ -68,11 +68,9 @@ export const demoSessionService = {
       eq(demoSessions.id, session.id),
       eq(demoSessions.active, true),
       eq(demoSessions.revoked, false),
-      lt(demoSessions.expiresAt, new Date()) // replaced below with a current-time-safe predicate
+      sql`${demoSessions.expiresAt} > now()`,
+      sql`${demoSessions.caseSubmissionCount} < ${demoSessions.maxCaseSubmissions}`
     ];
-
-    // Replace the expiry placeholder: the session must expire after the current time.
-    eligibility[3] = sql`${demoSessions.expiresAt} > now()`;
 
     if (liveLlm) {
       eligibility.push(sql`${demoSessions.liveLlmCount} < ${demoSessions.maxLiveLlm}`);
@@ -86,12 +84,7 @@ export const demoSessionService = {
           ? sql`${demoSessions.liveLlmCount} + 1`
           : demoSessions.liveLlmCount
       })
-      .where(
-        and(
-          ...eligibility,
-          sql`${demoSessions.caseSubmissionCount} < ${demoSessions.maxCaseSubmissions}`
-        )
-      )
+.where(and(...eligibility))
       .returning({ id: demoSessions.id });
 
     if (updated.length === 0) {
