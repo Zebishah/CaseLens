@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/AppShell';
-import { AlertBanner, SectionCard, StatusBadge, TextButton } from '../../../components/dashboard/ui';
+import { AlertBanner, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../../components/dashboard/ui';
 import { api } from '../../../lib/api';
 import { getAdminToken } from '../../../lib/auth-token';
 
@@ -13,8 +13,10 @@ export default function CaseDetailPage() {
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    setLoading(true);
     try {
       const adminToken = getAdminToken();
       const demoToken = typeof window !== 'undefined' ? sessionStorage.getItem('demoToken') : null;
@@ -28,12 +30,14 @@ export default function CaseDetailPage() {
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load case');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [params.id]);
 
   useEffect(() => {
     void load();
-  }, [params.id]);
+  }, [load]);
 
   const submitFeedback = async () => {
     const adminToken = getAdminToken();
@@ -92,7 +96,7 @@ export default function CaseDetailPage() {
           {error}
         </AlertBanner>
       ) : null}
-      {!data && !error ? <div className="h-72 animate-pulse rounded-[1.8rem] bg-white/80" /> : null}
+      {loading && !data && !error ? <PageSkeleton variant="detail" /> : null}
       {data ? (
         <div className="grid gap-5 lg:grid-cols-2">
           <SectionCard title="Intake">
@@ -100,7 +104,7 @@ export default function CaseDetailPage() {
               {conversation.source} · {conversation.senderName} · {conversation.sender}
             </p>
             <h3 className="mt-4 text-2xl font-semibold tracking-tight text-primary">{conversation.subject}</h3>
-            <blockquote className="mt-5 rounded-[1.4rem] bg-paper px-5 py-4 text-sm leading-7 text-foreground">
+            <blockquote className="mt-5 rounded-xl bg-paper px-5 py-4 text-sm leading-7 text-foreground">
               {conversation.body}
             </blockquote>
           </SectionCard>
@@ -110,7 +114,7 @@ export default function CaseDetailPage() {
               <div className="flex flex-wrap items-center gap-2">
                 {caseRow.openInIntercomUrl ? (
                   <a
-                    className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-white"
+                    className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white"
                     href={caseRow.openInIntercomUrl}
                     target="_blank"
                     rel="noreferrer"
@@ -127,11 +131,11 @@ export default function CaseDetailPage() {
             }
           >
             <dl className="space-y-3">
-              <div className="rounded-[1.2rem] bg-paper px-4 py-3">
+              <div className="rounded-lg bg-paper px-4 py-3">
                 <dt className="text-xs tracking-[0.14em] text-muted">Category</dt>
                 <dd className="mt-1 font-semibold text-primary">{snapshot.caseType ?? '—'}</dd>
               </div>
-              <div className="rounded-[1.2rem] bg-paper px-4 py-3">
+              <div className="rounded-lg bg-paper px-4 py-3">
                 <dt className="text-xs tracking-[0.14em] text-muted">Employee</dt>
                 <dd className="mt-1 font-semibold text-primary">
                   {employee?.canonicalName ?? 'Not matched'}
@@ -143,7 +147,7 @@ export default function CaseDetailPage() {
                   ) : null}
                 </dd>
               </div>
-              <div className="rounded-[1.2rem] bg-paper px-4 py-3">
+              <div className="rounded-lg bg-paper px-4 py-3">
                 <dt className="text-xs tracking-[0.14em] text-muted">Manual review</dt>
                 <dd className="mt-1 font-semibold text-primary">{snapshot.requiresManualReview ? 'Yes' : 'No'}</dd>
               </div>
@@ -210,7 +214,7 @@ export default function CaseDetailPage() {
                   onChange={(event) => setComment(event.target.value)}
                 />
               </label>
-              <button type="submit" className="btn-primary mt-4 rounded-full px-5 py-2.5 text-sm font-medium">
+              <button type="submit" className="btn-primary mt-4 rounded-lg px-5 py-2.5 text-sm font-semibold">
                 Save feedback
               </button>
               {saved ? <p className="mt-3 text-sm text-success">Feedback saved for this case.</p> : null}

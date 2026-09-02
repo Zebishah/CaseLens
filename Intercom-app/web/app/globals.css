@@ -109,6 +109,26 @@ body {
 .dash-row { transition: background 150ms ease; }
 .dash-row:hover { background: rgb(248 250 252); }
 
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: rgb(226 232 240);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  animation: skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
 .login-grid {
   background-image:
     radial-gradient(circle at 20% 20%, rgb(45 170 145 / 0.16), transparent 32%),

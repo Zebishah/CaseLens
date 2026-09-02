@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, SkeletonGrid } from '../../components/dashboard/ui';
+import { AlertBanner, PageSkeleton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
 import { formatCategoryLabel } from '../../lib/case-display';
 
@@ -76,7 +76,7 @@ export default function EvaluationPage() {
           {error}
         </AlertBanner>
       ) : null}
-      {!data && !error ? <SkeletonGrid count={4} className="md:grid-cols-2" /> : null}
+      {!data && !error ? <PageSkeleton variant="overview" /> : null}
       {data ? (
         <div className="space-y-6">
           <AlertBanner tone="info" title="Fixture parser, not the live model">

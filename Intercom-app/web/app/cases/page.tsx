@@ -1,17 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, EmptyState, SectionCard, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, EmptyState, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
-import { getAdminToken } from '../../lib/auth-token';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
 
 type CaseRow = {
   id: number;
   source: string;
-  externalId?: string;
   subject: string | null;
   status: string;
   category: string | null;
@@ -29,179 +27,114 @@ export default function CasesPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
+  const [applied, setApplied] = useState({ q: '', status: '', source: '' });
   const [error, setError] = useState<string | null>(null);
-  const [empty, setEmpty] = useState(false);
-  const [scope, setScope] = useState<'demo' | 'admin'>('admin');
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async (filters: { q: string; status: string; source: string }) => {
     setLoading(true);
+    setError(null);
     try {
-      const adminToken = getAdminToken();
-      const demoToken = typeof window !== 'undefined' ? sessionStorage.getItem('demoToken') : null;
-
-      if (adminToken) {
-        const result = await api.get<{ items: CaseRow[] }>(
-          `/api/cases?q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}&source=${encodeURIComponent(source)}`
-        );
-        setItems(result.items);
-        setEmpty(result.items.length === 0);
-        setScope('admin');
-        setError(null);
-        return;
-      }
-
-      if (demoToken) {
-        const result = await api.get<{ items: CaseRow[] }>('/api/demo/cases');
-        const filtered = result.items.filter((row) => {
-          const matchesQuery =
-            !q || `${row.subject ?? ''} ${row.employee ?? ''}`.toLowerCase().includes(q.toLowerCase());
-          const matchesStatus = !status || row.status === status;
-          const matchesSource = !source || row.source === source;
-          return matchesQuery && matchesStatus && matchesSource;
-        });
-        setItems(filtered);
-        setEmpty(filtered.length === 0);
-        setScope('demo');
-        setError(null);
-        return;
-      }
-
-      setError('Sign in as an operator to view cases.');
-      setItems([]);
-      setEmpty(true);
+      const result = await api.get<{ items: CaseRow[] }>(
+        `/api/cases?q=${encodeURIComponent(filters.q)}&status=${encodeURIComponent(filters.status)}&source=${encodeURIComponent(filters.source)}`
+      );
+      setItems(result.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load cases');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    void load();
   }, []);
 
+  useEffect(() => {
+    void load({ q: '', status: '', source: '' });
+  }, [load]);
+
+  const activeFilterCount = useMemo(
+    () => [applied.q, applied.status, applied.source].filter(Boolean).length,
+    [applied]
+  );
+
+  const applyFilters = () => {
+    const next = { q: q.trim(), status, source };
+    setApplied(next);
+    void load(next);
+  };
+
+  const clearFilters = () => {
+    const next = { q: '', status: '', source: '' };
+    setQ('');
+    setStatus('');
+    setSource('');
+    setApplied(next);
+    void load(next);
+  };
+
   return (
-    <AppShell
-      title="Cases"
-      description="Every conversation persisted after intelligence processing. Counts and names come from the live database."
-    >
-      <SectionCard>
-        <form
-          className="flex flex-wrap gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void load();
-          }}
-        >
-          <input
-            aria-label="Search cases"
-            className="dash-field min-w-[14rem] flex-1"
-            placeholder="Search subject or employee"
-            value={q}
-            onChange={(event) => setQ(event.target.value)}
-          />
-          <select
-            aria-label="Status filter"
-            className="dash-field w-auto min-w-[10rem]"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            <option value="">All statuses</option>
-            <option value="pending">Pending</option>
-            <option value="ready">Ready</option>
-            <option value="failed">Failed</option>
+    <AppShell title="Case explorer" description="Search and inspect every persisted conversation, employee match, classification, and related-case result.">
+      <section className="dash-panel mb-4">
+        <form className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_12rem_12rem_auto]" onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
+          <label className="relative">
+            <span className="sr-only">Search cases</span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="m16 16 4 4" /></svg>
+            <input className="dash-field h-11 pl-10" placeholder="Search subject or employee" value={q} onChange={(event) => setQ(event.target.value)} />
+          </label>
+          <select aria-label="Status filter" className="dash-field h-11" value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="">All statuses</option><option value="pending">Pending</option><option value="ready">Ready</option><option value="failed">Failed</option>
           </select>
-          <select
-            aria-label="Source filter"
-            className="dash-field w-auto min-w-[10rem]"
-            value={source}
-            onChange={(event) => setSource(event.target.value)}
-          >
-            <option value="">All sources</option>
-            <option value="demo">Demo</option>
-            <option value="email">Email</option>
-            <option value="intercom">Intercom</option>
+          <select aria-label="Source filter" className="dash-field h-11" value={source} onChange={(event) => setSource(event.target.value)}>
+            <option value="">All sources</option><option value="demo">Demo</option><option value="email">Email</option><option value="intercom">Intercom</option>
           </select>
-          <button type="submit" className="btn-primary rounded-full px-5 py-2.5 text-sm font-medium">
-            Filter
-          </button>
+          <button type="submit" className="btn-primary h-11 rounded-lg px-5 text-sm font-semibold">Apply filters</button>
         </form>
-      </SectionCard>
+        {activeFilterCount > 0 ? (
+          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+            <span>{activeFilterCount} active {activeFilterCount === 1 ? 'filter' : 'filters'}</span>
+            <button type="button" className="font-semibold text-primary hover:text-primary-hover" onClick={clearFilters}>Clear all</button>
+          </div>
+        ) : null}
+      </section>
 
-      {error ? (
-        <div className="mt-4">
-          <AlertBanner tone="danger" title="Could not load cases" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>
-            {error}
-          </AlertBanner>
-        </div>
-      ) : null}
+      {error ? <AlertBanner tone="danger" title="Could not load cases" action={<TextButton onClick={() => void load(applied)}>Retry</TextButton>}>{error}</AlertBanner> : null}
+      {loading ? <PageSkeleton variant="table" /> : null}
 
-      {loading ? (
-        <div className="mt-4 h-64 animate-pulse rounded-2xl bg-white/80" aria-busy="true" />
-      ) : (
-        <SectionCard className="mt-4 overflow-hidden !p-0">
-          {empty ? (
-            <div className="p-5">
-              <EmptyState title="No cases match these filters">
-                Seeded Northwind cases appear here when you are signed in as an operator.
-              </EmptyState>
+      {!loading && !error ? (
+        <section className="dash-panel overflow-hidden !p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Case results</h2>
+              <p className="mt-1 text-xs text-slate-500">{items.length} {items.length === 1 ? 'case' : 'cases'} in the current view</p>
             </div>
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-500"><span className="h-2 w-2 rounded-full bg-success" />Live database</span>
+          </div>
+          {items.length === 0 ? (
+            <div className="p-5"><EmptyState title="No cases match these filters">Try a broader search or clear the active filters.</EmptyState></div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="dash-table min-w-full text-left text-sm">
-                <thead>
-                  <tr>
-                    {['Subject', 'Employee', 'Category', 'Related', 'Status', 'Source', 'Received', 'Intercom'].map(
-                      (heading) => (
-                        <th key={heading} className="px-5 py-4">
-                          {heading}
-                        </th>
-                      )
-                    )}
-                  </tr>
-                </thead>
+              <table className="dash-table min-w-[72rem] w-full text-left text-sm">
+                <thead><tr>{['Case', 'Employee match', 'Category', 'Related', 'Status', 'Source', 'Received', 'Workspace'].map((heading) => <th key={heading} className="px-5 py-3.5">{heading}</th>)}</tr></thead>
                 <tbody>
                   {items.map((row) => (
-                    <tr key={row.id} className="dash-row border-t border-primary/8">
-                      <td className="max-w-[20rem] px-5 py-4">
-                        <Link className="line-clamp-2 font-medium text-primary hover:text-primary-hover" href={`/cases/${row.id}`}>
-                          {row.subject ?? '(no subject)'}
-                        </Link>
+                    <tr key={row.id} className="dash-row border-t border-slate-100">
+                      <td className="max-w-[22rem] px-5 py-4">
+                        <Link className="line-clamp-2 font-semibold leading-5 text-primary hover:text-primary-hover" href={`/cases/${row.id}`}>{row.subject ?? '(no subject)'}</Link>
+                        <p className="mt-1 text-xs text-slate-400">Case #{row.id}</p>
                       </td>
-                      <td className="px-5 py-4">
-                        <p className="font-medium text-primary">{row.employee ?? '—'}</p>
-                        <p className="text-xs text-muted">{formatMentionStatus(row.mentionStatus)}</p>
-                      </td>
-                      <td className="px-5 py-4 text-muted">{formatCategoryLabel(row.category)}</td>
-                      <td className="px-5 py-4 tabular-nums">{row.relatedCaseCount}</td>
-                      <td className="px-5 py-4">
-                        <StatusBadge status={row.status} />
-                      </td>
-                      <td className="px-5 py-4 capitalize text-muted">{row.source}</td>
-                      <td className="px-5 py-4 text-muted">{formatRelativeTime(row.receivedAt)}</td>
-                      <td className="px-5 py-4">
-                        {row.openInIntercomUrl ? (
-                          <a
-                            className="font-medium text-secondary hover:text-primary"
-                            href={row.openInIntercomUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Open in Intercom
-                          </a>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
+                      <td className="px-5 py-4"><p className="font-medium text-slate-800">{row.employee ?? 'Not identified'}</p><p className="mt-0.5 text-xs text-slate-500">{formatMentionStatus(row.mentionStatus)}</p></td>
+                      <td className="px-5 py-4 text-slate-600">{formatCategoryLabel(row.category)}</td>
+                      <td className="px-5 py-4"><span className="tabular-nums font-medium text-slate-800">{row.relatedCaseCount}</span></td>
+                      <td className="px-5 py-4"><StatusBadge status={row.status} /></td>
+                      <td className="px-5 py-4 capitalize text-slate-500">{row.source}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-500">{formatRelativeTime(row.receivedAt)}</td>
+                      <td className="px-5 py-4">{row.openInIntercomUrl ? <a className="whitespace-nowrap font-semibold text-secondary hover:text-primary" href={row.openInIntercomUrl} target="_blank" rel="noreferrer">Open in Intercom ↗</a> : <span className="text-slate-400">—</span>}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-        </SectionCard>
-      )}
+        </section>
+      ) : null}
     </AppShell>
   );
 }

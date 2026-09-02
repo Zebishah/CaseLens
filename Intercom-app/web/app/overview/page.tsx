@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, SkeletonGrid, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { ApiError, api } from '../../lib/api';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
 
@@ -125,7 +125,7 @@ export default function OverviewPage() {
           The host may be waking from sleep.
         </AlertBanner>
       ) : null}
-      {loading ? <SkeletonGrid count={4} className="md:grid-cols-2 xl:grid-cols-4" /> : null}
+      {loading && !data ? <PageSkeleton variant="overview" /> : null}
       {error ? (
         <AlertBanner
           tone="danger"
