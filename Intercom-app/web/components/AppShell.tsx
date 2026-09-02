@@ -118,7 +118,9 @@ export function AppShell({
   const visibleNavGroups = navGroups.filter((group) => isAdmin || !group.adminOnly);
   const intercomWorkspaceUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
   const restrictedPath =
-    !isAdmin && ['/operations', '/evaluation'].some((route) => pathname === route || pathname.startsWith(`${route}/`));
+    !isAdmin && ['/operations', '/evaluation', '/access-requests'].some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    );
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   useEffect(() => {
