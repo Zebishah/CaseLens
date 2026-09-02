@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, EmptyState, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
+import { getAdminUser } from '../../lib/auth-token';
 
 type Directory = {
   companies: Array<{ name: string; slug: string }>;
@@ -25,6 +26,8 @@ const tabs: Array<{ id: Tab; label: string }> = [
 ];
 
 export default function DirectoryPage() {
+  const isAdmin = getAdminUser()?.role === 'admin';
+  const visibleTabs = isAdmin ? tabs : tabs.filter((item) => item.id !== 'imports');
   const [data, setData] = useState<Directory | null>(null);
   const [tab, setTab] = useState<Tab>('employees');
   const [query, setQuery] = useState('');
@@ -120,7 +123,7 @@ export default function DirectoryPage() {
                 ) : null}
               </div>
               <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Directory views">
-                {tabs.map((item) => (
+                {visibleTabs.map((item) => (
                   <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => { setTab(item.id); setQuery(''); }} className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition ${tab === item.id ? 'border-secondary text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
                     {item.label}
                   </button>
@@ -132,7 +135,7 @@ export default function DirectoryPage() {
             {tab === 'stores' ? <StoresTable items={stores} /> : null}
             {tab === 'companies' ? <CompaniesTable items={companies} /> : null}
             {tab === 'stakeholders' ? <ContactsTable items={contacts} /> : null}
-            {tab === 'imports' ? (
+            {isAdmin && tab === 'imports' ? (
               <div className="grid gap-6 p-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)]">
                 <div>
                   <div className="flex items-center justify-between gap-3">
