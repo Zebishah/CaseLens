@@ -184,5 +184,16 @@ export const api = {
       },
       token
     );
+  },
+
+  async patch<T = Record<string, unknown>>(path: string, body: unknown, token?: string) {
+    return request<T>(
+      path,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(body)
+      },
+      token
+    );
   }
 };
