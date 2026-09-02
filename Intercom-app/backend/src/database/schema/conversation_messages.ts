@@ -1,8 +1,10 @@
-import { integer, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { conversations } from './conversations.js';
 import { vector1536 } from './pg-vector.js';
 
-export const conversationMessages = pgTable('conversation_messages', {
+export const conversationMessages = pgTable(
+  'conversation_messages',
+  {
   id: serial('id').primaryKey(),
   conversationId: integer('conversation_id')
     .notNull()
@@ -12,5 +14,12 @@ export const conversationMessages = pgTable('conversation_messages', {
   senderId: varchar('sender_id', { length: 100 }),
   messageBody: text('message_body'),
   embeddingVector: vector1536('embedding_vector'),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
-});
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index('conversation_messages_conversation_created_idx').on(
+      table.conversationId,
+      table.createdAt
+    )
+  ]
+);
