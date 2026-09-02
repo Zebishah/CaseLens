@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../../lib/api';
@@ -108,7 +109,10 @@ export default function LoginPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Secure access</p>
               <h2 id="login-form" className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Use the credentials shared for your review. Recruiter access is read-only; administrative controls require an operator role.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Sign in with issued dashboard reviewer credentials. This account is separate from an approved
+                Intercom teammate invitation.
+              </p>
 
               {checking ? (
                 <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
@@ -141,9 +145,21 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="mt-6 flex items-start gap-2 border-t border-slate-100 pt-5 text-xs leading-5 text-slate-500">
-                <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /></svg>
-                Sessions renew securely in the background. Public registration is disabled.
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="flex items-start gap-2 text-xs leading-5 text-slate-500">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /></svg>
+                  <span>Sessions renew securely in the background. Public registration is disabled.</span>
+                </div>
+                <div className="mt-4 rounded-xl bg-paper p-4">
+                  <p className="text-sm font-semibold text-primary">Need reviewer access?</p>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    Start with the public walkthrough, or request a personal Intercom invitation using your own email.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold">
+                    <Link href="/#live-demo" className="text-primary hover:text-primary-hover">View public demo</Link>
+                    <Link href="/access" className="text-secondary hover:text-primary">Request Intercom access →</Link>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
