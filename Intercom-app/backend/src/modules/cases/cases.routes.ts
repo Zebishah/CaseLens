@@ -7,13 +7,26 @@ import { casesController } from './cases.controller.js';
 
 export const casesRoutes = Router();
 
+const requireCaseReader = requireRole(ROLES.ADMIN, ROLES.VIEWER);
+
 casesRoutes.get(
   '/overview',
   authMiddleware,
-  requireRole(ROLES.ADMIN),
+  requireCaseReader,
   asyncHandler(casesController.overview)
 );
-casesRoutes.get('/', authMiddleware, requireRole(ROLES.ADMIN), asyncHandler(casesController.list));
-casesRoutes.get('/:id', authMiddleware, requireRole(ROLES.ADMIN), asyncHandler(casesController.get));
-casesRoutes.post('/:id/corrections', authMiddleware, requireRole(ROLES.ADMIN), asyncHandler(casesController.correct));
-casesRoutes.post('/:id/feedback', authMiddleware, requireRole(ROLES.ADMIN), asyncHandler(casesController.feedback));
+casesRoutes.get('/', authMiddleware, requireCaseReader, asyncHandler(casesController.list));
+casesRoutes.get('/:id', authMiddleware, requireCaseReader, asyncHandler(casesController.get));
+
+casesRoutes.post(
+  '/:id/corrections',
+  authMiddleware,
+  requireRole(ROLES.ADMIN),
+  asyncHandler(casesController.correct)
+);
+casesRoutes.post(
+  '/:id/feedback',
+  authMiddleware,
+  requireRole(ROLES.ADMIN),
+  asyncHandler(casesController.feedback)
+);
