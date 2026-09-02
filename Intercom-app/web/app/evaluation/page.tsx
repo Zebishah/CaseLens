@@ -68,8 +68,8 @@ export default function EvaluationPage() {
 
   return (
     <AppShell
-      title="AI Evaluation"
-      description="Offline regression check on frozen anonymized tickets. This does not call Gemini and is not live accuracy — Overview is."
+      title="AI Quality"
+      description="Versioned offline regression suite for extraction, classification, and safe human-review behavior on anonymized cases."
     >
       {error ? (
         <AlertBanner tone="danger" title="Could not load evaluation">
@@ -79,7 +79,7 @@ export default function EvaluationPage() {
       {!data && !error ? <PageSkeleton variant="overview" /> : null}
       {data ? (
         <div className="space-y-6">
-          <AlertBanner tone="info" title="Fixture parser, not the live model">
+          <AlertBanner tone="info" title="Deterministic safety baseline">
             Scores come from a local subject-name heuristic ({data.modelVersion}) against {data.datasetSize}{' '}
             versioned cases ({data.datasetVersion}). Live tickets use Gemini with prompt {data.promptVersion}.{' '}
             <Link href="/overview" className="font-medium text-primary hover:text-primary-hover">
@@ -90,9 +90,9 @@ export default function EvaluationPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <ScoreCard
-              label="Cases in set"
+              label="Validation cases"
               value={String(data.datasetSize)}
-              hint={`${data.datasetVersion} · frozen JSON, rerun on every page load`}
+              hint={`${data.datasetVersion} · versioned anonymized regression set`}
             />
             <ScoreCard
               label="Name extraction"
@@ -100,27 +100,27 @@ export default function EvaluationPage() {
               hint={`${data.employeeTruePositives} exact matches · ${data.employeeFalsePositives} wrong · ${data.employeeFalseNegatives} missed`}
             />
             <ScoreCard
-              label="Category from subject"
+              label="Category classification"
               value={pct(data.classificationAccuracy)}
-              hint={`${data.classificationHits} of ${data.datasetSize} prefixes matched the labeled type`}
+              hint={`${data.classificationHits} of ${data.datasetSize} cases matched the labeled category`}
             />
             <ScoreCard
-              label="Flagged for review"
+              label="Safety escalations"
               value={`${reviewCount}/${total}`}
-              hint="Many fixtures are incomplete names or missing store on purpose. High is expected."
+              hint="Conservative review for incomplete identity or store evidence"
             />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
             <section className="dash-panel">
-              <h2 className="text-sm font-semibold tracking-tight text-primary">What this measures</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-primary">Evaluation scope</h2>
               <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
                 <li>
                   <span className="font-medium text-primary">Names.</span> Pull a person from the subject line and
                   compare to the labeled name. Precision {pct(data.employeeMatchPrecision)}.
                 </li>
                 <li>
-                  <span className="font-medium text-primary">Sample directory.</span> Only{' '}
+                  <span className="font-medium text-primary">Directory resolution.</span> The controlled evaluation directory contains{' '}
                   {data.fixtureDirectory.join(' and ')} exist in this harness. {data.directoryTruePositives} resolved
                   · {pct(data.directoryResolutionPrecision)} precision.
                 </li>
@@ -133,7 +133,7 @@ export default function EvaluationPage() {
               </ul>
             </section>
             <section className="dash-panel lg:col-span-2">
-              <h2 className="text-sm font-semibold tracking-tight text-primary">How to read the scores</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-primary">Quality gates</h2>
               <p className="mt-2 text-sm leading-6 text-muted">
                 {passCount} of {total} rows matched both name and category. {data.lowConfidenceCount} are treated as
                 low confidence (no two-word name). {reviewCount} would be sent to a human in this harness.
@@ -145,9 +145,9 @@ export default function EvaluationPage() {
                   total={total}
                   color="bg-success"
                 />
-                <Bar label="Flagged for human review" count={reviewCount} total={total} color="bg-highlight" />
+                <Bar label="Protected by human review" count={reviewCount} total={total} color="bg-highlight" />
                 <Bar
-                  label="Low-confidence name"
+                  label="Insufficient identity evidence"
                   count={data.lowConfidenceCount}
                   total={total}
                   color="bg-primary/30"
@@ -158,9 +158,9 @@ export default function EvaluationPage() {
 
           <section className="dash-panel overflow-hidden p-0">
             <div className="px-5 py-4">
-              <h2 className="text-sm font-semibold tracking-tight text-primary">Fixture cases</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-primary">Validation case evidence</h2>
               <p className="mt-1 text-sm text-muted">
-                Expected vs parsed. Pass means the subject heuristic matched the labeled name and category.
+                Expected versus observed results for each anonymized regression case.
               </p>
             </div>
             <div className="overflow-x-auto">
