@@ -74,6 +74,7 @@ export const webhookService = {
   async handleConversationCreated(envelope: IntercomWebhookEnvelope): Promise<{
     conversationId: number;
     intercomId: string;
+    queued: boolean;
   }> {
     logger.info('[webhook] Processing new conversation webhook', {
       topic: envelope.topic,
@@ -90,17 +91,23 @@ export const webhookService = {
     });
 
     const messageCount = await conversationRepository.countMessagesByConversationId(conversation.id);
-    await enqueueIntelligenceIfNeeded(conversation.id, conversation.intercomId, messageCount);
+    const queued = await enqueueIntelligenceIfNeeded(
+      conversation.id,
+      conversation.intercomId,
+      messageCount
+    );
 
     return {
       conversationId: conversation.id,
-      intercomId: conversation.intercomId
+      intercomId: conversation.intercomId,
+      queued
     };
   },
 
   async handleConversationReply(envelope: IntercomWebhookEnvelope): Promise<{
     conversationId: number;
     intercomId: string;
+    queued: boolean;
   }> {
     const intercomId = String(envelope.data.item.id);
 
@@ -114,11 +121,16 @@ export const webhookService = {
     });
 
     const messageCount = await conversationRepository.countMessagesByConversationId(conversation.id);
-    await enqueueIntelligenceIfNeeded(conversation.id, conversation.intercomId, messageCount);
+    const queued = await enqueueIntelligenceIfNeeded(
+      conversation.id,
+      conversation.intercomId,
+      messageCount
+    );
 
     return {
       conversationId: conversation.id,
-      intercomId: conversation.intercomId
+      intercomId: conversation.intercomId,
+      queued
     };
   },
 
@@ -154,7 +166,7 @@ export const webhookService = {
 
     if (isConversationCreatedTopic(envelope.topic)) {
       const result = await this.handleConversationCreated(envelope);
-      if (recorded.inboundEventId) {
+      if (recorded.inboundEventId && result.queued) {
         await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
       }
       return { handled: true };
@@ -162,7 +174,7 @@ export const webhookService = {
 
     if (isConversationReplyTopic(envelope.topic)) {
       const result = await this.handleConversationReply(envelope);
-      if (recorded.inboundEventId) {
+      if (recorded.inboundEventId && result.queued) {
         await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
       }
       return { handled: true };
