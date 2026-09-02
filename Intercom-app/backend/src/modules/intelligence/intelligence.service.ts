@@ -1,5 +1,4 @@
 import { INTELLIGENCE_STATUS } from '../../constants/intelligence.constants.js';
-import { INTERCOM_MATCH } from '../../constants/intercom.constants.js';
 import { logger } from '../../config/logger.config.js';
 import type {
   IntelligenceEmployeeMatch,

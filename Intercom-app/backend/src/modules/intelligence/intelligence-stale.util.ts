@@ -1,6 +1,5 @@
 import { INTELLIGENCE_STATUS } from '../../constants/intelligence.constants.js';
 import type { ConversationRecord } from '../conversation/conversation.repository.js';
-import { conversationRepository } from '../conversation/conversation.repository.js';
 import { resolveConversationSubject } from '../conversation/conversation-subject.util.js';
 import type { IntelligenceSnapshot } from '../../types/intelligence.types.js';
 import { shouldSkipIntelligenceProcessing } from './intelligence-attempt.util.js';
