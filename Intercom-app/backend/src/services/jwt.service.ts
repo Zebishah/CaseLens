@@ -1,4 +1,4 @@
-import jwt, { type SignOptions } from 'jsonwebtoken';
+import jwt, { type SignOptions, type VerifyOptions } from 'jsonwebtoken';
 import { env } from '../config/env.config.js';
 
 export type AppJwtPayload = {
@@ -15,12 +15,22 @@ const sign = (
   secret: string,
   expiresIn: string
 ): string => {
-  const options: SignOptions = { expiresIn: expiresIn as SignOptions['expiresIn'] };
+  const options: SignOptions = {
+    algorithm: 'HS256',
+    audience: env.JWT_AUDIENCE,
+    issuer: env.JWT_ISSUER,
+    expiresIn: expiresIn as SignOptions['expiresIn']
+  };
   return jwt.sign({ ...payload, tokenType }, secret, options);
 };
 
 const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayload => {
-  const payload = jwt.verify(token, secret);
+  const options: VerifyOptions = {
+    algorithms: ['HS256'],
+    audience: env.JWT_AUDIENCE,
+    issuer: env.JWT_ISSUER
+  };
+  const payload = jwt.verify(token, secret, options);
   if (
     typeof payload === 'string' ||
     !('sub' in payload) ||
