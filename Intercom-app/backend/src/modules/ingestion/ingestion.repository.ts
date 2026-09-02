@@ -48,10 +48,15 @@ export const ingestionRepository = {
     return row;
   },
 
-  async markQueued(id: number): Promise<void> {
+  async markQueued(id: number, conversationId?: number): Promise<void> {
     await db
       .update(inboundEvents)
-      .set({ status: 'queued', queuedAt: new Date(), updatedAt: new Date() })
+      .set({
+        status: 'queued',
+        conversationId,
+        queuedAt: new Date(),
+        updatedAt: new Date()
+      })
       .where(eq(inboundEvents.id, id));
   },
 
