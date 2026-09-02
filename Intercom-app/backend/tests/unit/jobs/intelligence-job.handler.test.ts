@@ -22,6 +22,17 @@ describe('handleIntelligenceJob', () => {
     mockPeer.mockClear();
   });
 
+  test('propagates processing failures so BullMQ can retry them', async () => {
+    mockProcess.mockRejectedValueOnce(new Error('temporary model timeout'));
+
+    await expect(
+      handleIntelligenceJob({
+        conversationId: 3,
+        intercomId: 'abc'
+      })
+    ).rejects.toThrow('temporary model timeout');
+  });
+
   test('BullMQ worker handler calls the shared intelligence processor', async () => {
     await handleIntelligenceJob({
       conversationId: 3,
