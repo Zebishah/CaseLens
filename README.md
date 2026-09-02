@@ -2,7 +2,7 @@
 
 Sanitized, recruiter-demonstrable HR intelligence system. **Intercom is the operator workspace** (inbox + Canvas Kit). This application is the intelligence, operations, and evaluation layer. Demo and inbound email are optional source adapters.
 
-The public portfolio demo runs with `INTERCOM_ENABLED=false`. That does not mean Intercom is unused in the product: it is the intended operator UI when enabled.
+The portfolio can run as a self-contained sanitized demo or connect to an Intercom Developer Workspace. Recruiter access is read-only by default; operator and reliability controls remain admin-only.
 
 ## What it does
 
@@ -32,6 +32,8 @@ cp .env.example .env
 npm install
 npm run db:push          # or npm run db:migrate-portfolio after an existing schema
 npm run db:seed-portfolio
+# Optional: set SEED_VIEWER_EMAIL/PASSWORD/NAME, then:
+npm run db:seed-viewer
 npm test
 npm run dev
 ```
@@ -67,7 +69,7 @@ npm run intercom:canvas-smoke
 
 See `docs/BENCHMARKS.md`, `docs/FINAL_PRODUCTION_READINESS_AUDIT.md`, and `docs/HR_INTELLIGENCE_ACCEPTANCE_MATRIX.md`.
 
-Live Intercom is **not** verified until Developer Workspace webhooks and Canvas URLs succeed. The Canvas Kit Hub page rendering blank is an external blocker.
+For the recruiter-safe dashboard and individually invited Intercom workflow, see `docs/RECRUITER_ACCESS.md`. Live Intercom behavior must be re-verified for each deployment; local contract tests do not replace workspace acceptance.
 
 ## Safety
 
