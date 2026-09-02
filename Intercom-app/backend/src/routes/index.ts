@@ -8,10 +8,12 @@ import { operationsRoutes } from '../modules/operations/operations.routes.js';
 import { directoryRoutes } from '../modules/directory/directory.routes.js';
 import { evaluationRoutes } from '../modules/evaluation/evaluation.routes.js';
 import { env } from '../config/env.config.js';
+import { accessRequestRoutes } from '../modules/access-request/access-request.routes.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/access-requests', accessRequestRoutes);
 apiRouter.use('/users', userRoutes);
 if (env.NODE_ENV !== 'production') {
   apiRouter.use('/example', exampleRoutes);
