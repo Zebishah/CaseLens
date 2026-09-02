@@ -41,14 +41,14 @@ export default function LandingPage() {
                 conversations, and inspect auditable intelligence — without replacing the Intercom inbox.
               </p>
               <div className="reveal reveal-delay-3 mt-8 flex flex-wrap items-center gap-3">
-                <Link href="/login" className="btn-primary rounded-full px-5 py-2.5 text-sm font-medium">
-                  Open recruiter showcase
+                <Link href="#live-demo" className="btn-primary rounded-full px-5 py-2.5 text-sm font-medium">
+                  Watch product walkthrough
                 </Link>
-                <Link href="#product" className="btn-secondary rounded-full px-5 py-2.5 text-sm">
-                  Explore the system
+                <Link href="/login" className="btn-secondary rounded-full px-5 py-2.5 text-sm">
+                  Open read-only dashboard
                 </Link>
-                <Link href="#architecture" className="text-sm text-muted hover:text-primary">
-                  View architecture
+                <Link href="/access" className="text-sm font-medium text-primary hover:text-primary-hover">
+                  Request Intercom access
                 </Link>
               </div>
             </div>
