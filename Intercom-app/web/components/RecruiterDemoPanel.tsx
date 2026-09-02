@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 type CopyTarget = 'email' | 'password' | null;
 
@@ -148,7 +148,7 @@ function CredentialRow({
   );
 }
 
-function DemoStep({ number, children }: { number: string; children: React.ReactNode }) {
+function DemoStep({ number, children }: { number: string; children: ReactNode }) {
   return (
     <li className="flex gap-3">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-mist text-xs font-semibold text-primary">
