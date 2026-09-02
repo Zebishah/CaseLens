@@ -1,98 +1,93 @@
-# Final production-readiness audit
+# Engineering readiness audit
 
-Inspection date: 2026-09-01  
-Repository: `Hr-intercom` working tree (`Intercom-app/` plus `docs/`). Outer git commit `85f289c`; application code remains largely untracked at the outer repo.  
-No push, deploy, commit, or live Intercom credential use was performed for this pass.
+Inspection date: 2026-09-02  
+Branch: `portfolio-hardening`
 
-Status labels (exactly one per requirement):
+This audit distinguishes repository evidence, synthetic demonstration evidence, and unmeasured production outcomes.
 
-- **Verified automatically** — covered by a test or command run in this checkout
-- **Verified against a real external service** — live Intercom/Gemini/Box/Resend
-- **Implemented but awaiting manual verification** — code exists; Developer Workspace or operator still required
-- **Partially implemented** — present but missing a required guarantee
-- **Missing**
-- **Intentionally excluded**
+## Overall assessment
 
-Mocked Intercom/Gemini behavior is never labelled live-verified.
+The repository is a credible senior full-stack portfolio project with a modular TypeScript backend, PostgreSQL persistence, Intercom adapters, asynchronous processing, a Next.js operations UI, and meaningful automated coverage. The primary reliability paths are engineered rather than mocked.
 
----
+It is appropriate to claim the concrete patterns listed below. It is not appropriate to claim production scale, business impact, or customer SLAs without real measurements.
 
-## Architecture map (from code)
+## Architecture
 
-| Behavior | Route | Service | Persistence | Queue / inline | UI | Automated test | Live status |
-|---|---|---|---|---|---|---|---|
-| Intercom webhook ingest | `HEAD/POST /webhooks/intercom` | `webhook.service` + HMAC middleware | `inbound_events`, `conversations` | Enqueue or fire-and-forget `processCaseIntelligence` | Operations last-webhook | `tests/integration/webhook/webhook.test.ts`, E2E HTTP | Implemented but awaiting manual verification |
-| Canvas initialize/submit/configure | `POST /canvas/*` | `canvas.service` + HMAC-SHA256 | Conversation resolved from Intercom conversation id | Enqueue revision-aware jobs | Intercom Inbox App | `canvas.test.ts`, `canvas.contract.smoke.test.ts` | Implemented but awaiting manual verification (Developer Hub Canvas page blank) |
-| Shared intelligence | none (worker/inline) | `process-case-intelligence` → `intelligence.processor` | `conversations.intelligence_snapshot` | BullMQ `intercom-intelligence-queue` or inline | Canvas + dashboard explorer | processor/unit/integration | Verified automatically (fixture/mocked Gemini) |
-| Identity resolution | same processor | `employee.matching.service` | `employee_identities`, `employee_aliases`, `conversation_employees` | same | Canvas employee section | matching unit tests | Partially implemented (no dedicated employee-ID column match) |
-| Store/company | mapper + `parseReporterContext` | reporter email local-part + directory | `reporter_store_number`, store directory | same | Canvas CC + store input | reporter-context unit tests | Verified automatically for email-local store numbers |
-| Classification | processor | `resolveCaseType` + Gemini `caseType` | `conversations.case_type` | same | Canvas category line | case-type unit tests + eval fixture | Verified automatically (fixture heuristics); live Gemini awaiting manual |
-| Related cases | processor | `related.retrieval.service` | snapshot `relatedCases` | peer-refresh jobs | Canvas related list | related unit tests + eval fixture | Partially implemented (same-employee list; category filter currently disabled) |
-| Stakeholders | Canvas CC | `ccRecipientsService` | snapshot `ccRecipients` | none | Canvas CC section | cc-recipients tests | Verified automatically against directory fixtures |
-| Operator corrections | `POST /api/cases/:id/corrections` + Canvas dismiss/store | `operator-correction.util` | `case_corrections` + snapshot `operatorConfirmedFields` | later AI honors confirmed fields unless Re-analyze | Dashboard case + Canvas | `operator-correction.util.test.ts` | Verified automatically for persist/precedence unit; dashboard HTTP awaiting manual |
-| Write-back | after ready intelligence | `syncIntercomIntelligence` | `intercom_sync_*` | not in webhook request | Intercom note/tags | `intercom.sync.service.test.ts` | Implemented but awaiting manual verification |
-| Demo adapter | `/api/demo/*` | `demo-process.service` | same conversations table, `source=demo` | inline or `demo-process-{id}` job | Try Demo | demo unit tests | Implemented but awaiting manual verification |
-| Email adapter | Resend webhook | `ingestion.service` | inbound_events/outbox | same processor | dashboard source=email | resend webhook tests | Implemented but awaiting manual verification when `RESEND_ENABLED` |
-| Dashboard overview | `GET /api/cases/overview` (admin JWT) | `cases.controller` | `countByIntelligenceStatus`, duplicates, latest intercom event | n/a | `/overview` | route now authenticated | Verified automatically for query provenance; UI manual |
-| Evaluation | `GET /api/evaluation` (admin) + `npm run eval:run` | `evaluation.runner` | dataset file `eval/dataset.v1.json` | n/a | `/evaluation` | eval command | Verified automatically as **fixture subject-heuristic**, not live Gemini |
-
----
-
-## Requirement statuses
-
-| Requirement | Status | Evidence |
+| Area | Implementation | Status |
 |---|---|---|
-| Intercom is the operator workspace; dashboard is intelligence/ops | Verified automatically | Dashboard copy; Canvas is the conversation UI; cases page is read-only explorer |
-| Source-agnostic pipeline (Intercom / demo / email) | Verified automatically | `ingestion.service` + `processCaseIntelligence`; adapters do not duplicate matching/classification |
-| Webhook HMAC-SHA1 raw body, `sha1=`, timing-safe | Verified automatically | `intercom.signature.ts`, webhook HTTP tests |
-| `HEAD /webhooks/intercom` 200 | Verified automatically | webhook integration test |
-| Workspace/app id checked before ingest | Verified automatically | mismatch returns 401; no inbound event |
-| Duplicate notification id does not reprocess | Verified automatically | `inbound_events` unique + adapter test + E2E replay |
-| Webhook does not run Gemini/related/write-back | Verified automatically | handler enqueues / fire-and-forget |
-| One local case per Intercom conversation | Verified automatically | unique `intercom_id` upsert |
-| New user reply not lost while a BullMQ job is active | Verified automatically | conversation-only job id **would collide**; revision-aware `intelligence-{id}-r{messageCount}-{updatedAtMs}` + `shouldReprocessIntelligence` uses Intercom `updated_at` because only the opening message is stored (`CONVERSATION_MESSAGE_SAVE_LIMIT = 1`) |
-| Stale persist cannot overwrite newer snapshot | Verified automatically | `isStaleIntelligencePersist` |
-| Stale write-back skipped | Verified automatically | `syncIntercomIntelligence` compares snapshot vs current revision |
-| Canvas HMAC-SHA256 raw body | Verified automatically | canvas HTTP tests |
-| Canvas does not trust client local case id | Verified automatically | resolved from signed conversation id |
-| Canvas states (not ingested, pending, ready, failed, disabled, manual review, related, sync failed, operator corrected, stale) | Verified automatically | `canvas.contract.smoke.test.ts` |
-| Live Canvas Kit in Developer Hub | Implemented but awaiting manual verification | Hub Canvas page reported blank — external blocker |
-| Human corrections persist and survive later AI | Verified automatically (unit) | snapshot `operatorConfirmedFields`; Re-analyze (`forceReprocess`) clears them |
-| Related-case add/remove on dashboard | Partially implemented | Canvas dismiss persists; dashboard has no add/remove related-case API |
-| Related-case precision/recall (product retrieval) | Partially implemented | `eval:run` uses **subject-heuristic fixture**, not the SQL retrieval service |
-| Vector search | Intentionally excluded | no benchmark showing improvement |
-| Tags optional / isolated from notes | Verified automatically | `INTERCOM_WRITEBACK_TAGS_ENABLED`; tag 403 does not fail note sync |
-| Overview/evaluation APIs authenticated | Verified automatically | admin JWT + role |
-| Dashboard numbers from DB/runtime | Verified automatically | overview queries repositories; evaluation is fixture command output |
-| Fake dashboard metrics | Intentionally excluded | none found in dashboard pages (search placeholder only) |
-| Object-level multi-workspace isolation | Intentionally excluded | single-tenant private app; workspace id is env, not per-row ACL |
-| CSRF on cookie mutations | Partially implemented | `requireCsrf` exists; Bearer JWT is the dashboard auth path |
-| Live Gemini quality metrics | Missing as production claims | fixture eval only; do not cite as production model quality |
-| Kafka / Kubernetes / extra broker / extra LLM | Intentionally excluded | |
-| Frontend non-interactive lint | Verified automatically after `eslint.config.mjs` | `npm run lint` in `Intercom-app/web` |
-| Full E2E signed webhook → canvas | Verified automatically | `tests/integration/e2e/intercom-http-flow.test.ts` (mocked Intercom/Gemini, real Express). **79 suites / 439 tests** on 2026-09-01 this pass. |
-| Live Developer Workspace end-to-end | Implemented but awaiting manual verification | requires user-provided Intercom env; `INTERCOM_ENABLED` currently false in local `.env` |
+| Operator workflow | Intercom Inbox + Canvas UI + internal note/tag write-back | Manually demonstrable with synthetic workspace |
+| Dashboard | Overview, cases, directory, operations, evaluation, architecture | Recruiter viewer is read-only |
+| Ingestion | Intercom adapter and generic demo/email ingestion | Source-separated, shared intelligence pipeline |
+| Persistence | PostgreSQL/Drizzle with schema migrations and targeted indexes | Implemented |
+| Async execution | BullMQ workers or explicit inline demo mode | Implemented; worker mode is the durable mode |
+| AI | Gemini structured extraction/classification with fixture evaluation kept separate | Implemented; live quality not benchmarked |
+| Observability | Structured logs, request/correlation IDs, health/readiness, operational counters | Implemented |
+| Delivery | Docker and GitHub Actions lint/typecheck/test/build | Implemented |
 
----
+## Reliability guarantees verified in code
 
-## BullMQ job-id finding
+- Raw-body signed Intercom webhook and Canvas validation plus workspace checks.
+- Unique `(source, external_event_id)` durable idempotency.
+- Duplicate delivery increments evidence without creating a second logical event.
+- A crash-interrupted Intercom event in `received` or `failed` state can resume; queued/completed duplicates are skipped.
+- Revision-aware BullMQ IDs distinguish later replies from an older active job.
+- Processor exceptions propagate to BullMQ, enabling configured retry/backoff.
+- Stale revisions cannot persist over newer snapshots or write back outdated intelligence.
+- Generic ingestion commits event, conversation, messages, and outbox record atomically.
+- Operator-confirmed fields take precedence until explicit re-analysis.
+- Intercom note and tag write-back failures are isolated.
+- Public demo limits use atomic SQL increments rather than race-prone read/then-write checks.
 
-Previous job id `intelligence-{conversationId}` plus `removeOnComplete: true` still **drops a new reply while a job is waiting or active** across API vs worker processes. In-process locks do not span processes.
+## Security controls verified in code
 
-**Change (tests demonstrated the collision):** deterministic id `intelligence-{conversationId}-r{messageCount}-{sourceUpdatedAtMs}`. Duplicate notifications keep the same revision key. `forceReprocess` (Canvas Re-analyze / sibling refresh) uses a unique `force-` suffix so an in-flight job cannot swallow an explicit rerun.
+- Viewer/admin role validation and route authorization.
+- HS256 JWT verification with issuer/audience and distinct production secrets.
+- HttpOnly refresh cookie, production-disabled registration, login throttling, and general endpoint rate limits.
+- Helmet, CORS allowlist, request-size limits, mutation schemas, generic production errors, and bounded request IDs.
+- Server-only provider/database/secrets; intentionally public recruiter credentials are restricted to a synthetic Intercom teammate.
+- Payload hashing, secret-safe logging rules, and disabled public attachments.
 
-Trade-off: rapid replies can enqueue more than one job for the same conversation. Stale-persist CAS still drops older snapshot writes. Duplicate *notifications* are still blocked before enqueue.
+See `docs/SECURITY.md` for limitations.
 
----
+## Database work
 
-## What is not production-ready
+Indexes now cover:
 
-Do not call the Intercom integration live-verified until Developer Workspace webhook + Canvas initialize succeed against the real app. The Intercom Canvas Kit documentation page rendering blank is an **external blocker**.
+- conversation message hydration by conversation/time;
+- reverse employee identity to conversation lookup;
+- pending outbox dispatch;
+- inbound source/time queries;
+- case-insensitive employee email;
+- trigram employee canonical-name and alias search.
 
-Do not call AI quality production-ready: `npm run eval:run` is a 6-row anonymized subject heuristic (`eval-v1`), labelled Local fixture evaluation.
+The migration scripts must be run in each deployed database. An index existing in source is not proof that production has applied it.
 
----
+## Recruiter experience
 
-## Migrations this pass
+The landing page and dashboard Overview include an environment-driven recruiter walkthrough:
 
-None. Operator confirmation is stored on the existing JSON snapshot plus `case_corrections`. `INTERCOM_WRITEBACK_TAGS_ENABLED` is env-only.
+1. Copy the restricted synthetic teammate email/password.
+2. Open the configured Intercom workspace/inbox URL.
+3. Sign in and open the demo inbox.
+4. Select existing synthetic tickets and inspect the HR Intelligence panel.
+5. Return to the dashboard for operational and architectural evidence.
+
+Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled guided video. Credentials and video configuration are deployment environment values, not committed secrets.
+
+## Remaining limitations
+
+- Single-tenant, environment-scoped workspace design.
+- No refresh-token rotation/revocation store.
+- Access token in session storage; CSP/XSS defense remains important.
+- CSRF helper is not universal; Bearer access tokens are the primary mutation authorization.
+- The Intercom ingestion path uses durable event state and deterministic jobs, while generic ingestion uses the explicit transactional outbox.
+- Inline mode is convenient for demonstrations but is not equivalent to worker-mode crash recovery.
+- Known `xlsx` advisories remain; prefer CSV and trusted admin-only imports.
+- Related-case and live Gemini quality require a larger labelled evaluation before publishing accuracy.
+- No measured production throughput, end-to-end latency, time savings, or failure-rate reduction.
+
+## Final claim decision
+
+Safe: signed webhooks, PostgreSQL idempotency, transactional outbox ingestion, revision-aware BullMQ jobs, retries/backoff, stale-write protection, role-based security, atomic quotas, indexed matching/history lookups, automated CI, and a live synthetic Intercom demonstration.
+
+Unsafe until measured: production accuracy, p95 end-to-end latency, throughput, customer impact, percentage failure reduction, or vulnerability-free status.
