@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, EmptyState, MetricCard, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, EmptyState, MetricCard, PageSkeleton, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
 
 type QueueCounts = Record<string, number>;
@@ -58,9 +58,17 @@ export default function OperationsPage() {
 
   const counts = data?.queues?.intelligence ?? {};
   const queueEntries = Object.entries(counts);
+  const workspaceName =
+    process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME?.trim() ||
+    data?.intercom?.workspace ||
+    'Nagumo Workspace [DEV]';
+  const runtimeLabel =
+    data?.jobProcessingMode === 'bullmq'
+      ? 'Distributed queue workers'
+      : 'Portfolio-safe inline processing';
 
   return (
-    <AppShell title="Operations" description="Monitor ingestion, queue health, delivery safeguards, and Intercom write-back from one operational view.">
+    <AppShell title="Operations" description="Live operational health for case ingestion, durable delivery, AI processing, and Intercom synchronization.">
       {error ? <AlertBanner tone="danger" title="Operation could not be completed" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {message ? <AlertBanner tone="success" title="Action completed">{message}</AlertBanner> : null}
       {loading ? <PageSkeleton variant="overview" /> : null}
@@ -74,7 +82,12 @@ export default function OperationsPage() {
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Intercom integration</p>
                   <h2 className="mt-2 text-xl font-semibold text-slate-900">{data.intercom?.enabled && data.intercom?.connected ? 'Connected and receiving events' : data.intercom?.enabled ? 'Enabled — connection needs attention' : 'Integration disabled'}</h2>
-                  <p className="mt-1 text-sm text-slate-500">Workspace: {data.intercom?.workspace ?? 'Not configured'}{data.intercom?.lastWebhookTopic ? ` · Last topic: ${data.intercom.lastWebhookTopic}` : ''}</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Workspace: {workspaceName}
+                    {data.intercom?.lastWebhookTopic
+                      ? ` · Latest event: ${formatWebhookTopic(data.intercom.lastWebhookTopic)}`
+                      : ''}
+                  </p>
                 </div>
               </div>
               <button type="button" onClick={() => void load()} className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Refresh status</button>
@@ -83,7 +96,7 @@ export default function OperationsPage() {
               <OperationalFact label="Last webhook" value={data.intercom?.lastWebhookAt ? new Date(data.intercom.lastWebhookAt).toLocaleString() : 'No event received'} />
               <OperationalFact label="Last write-back" value={data.intercom?.lastSuccessfulWritebackAt ? new Date(data.intercom.lastSuccessfulWritebackAt).toLocaleString() : 'No successful sync'} />
               <OperationalFact label="Write-back failures" value={String(data.intercom?.writebackFailures ?? 0)} />
-              <OperationalFact label="Execution" value={`${data.jobProcessingMode ?? 'inline'} · workers ${data.workersEnabled ? 'on' : 'off'}`} />
+              <OperationalFact label="Runtime" value={runtimeLabel} />
             </dl>
           </section>
 
@@ -97,7 +110,16 @@ export default function OperationsPage() {
           <section className="dash-panel overflow-hidden !p-0">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-5 py-4">
               <div><h2 className="text-base font-semibold text-slate-900">Dead-letter queue</h2><p className="mt-1 text-sm text-slate-500">Permanently failed jobs requiring operator review.</p></div>
-              <button type="button" disabled={action === 'recover'} className="rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60" onClick={() => void recover()}>{action === 'recover' ? 'Recovering…' : 'Recover outbox'}</button>
+              {(data.pendingOutbox ?? 0) > 0 ? (
+                <button
+                  type="button"
+                  disabled={action === 'recover'}
+                  className="rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                  onClick={() => void recover()}
+                >
+                  {action === 'recover' ? 'Dispatching…' : 'Dispatch pending events'}
+                </button>
+              ) : null}
             </div>
             {(data.deadLetter ?? []).length === 0 ? <div className="p-5"><EmptyState title="Queue is healthy">No failed jobs are waiting for intervention.</EmptyState></div> : (
               <div className="overflow-x-auto"><table className="dash-table min-w-[52rem] w-full text-left text-sm"><thead><tr>{['Job', 'Case', 'Attempts', 'Safe error', 'Action'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{(data.deadLetter ?? []).map((job) => <tr key={job.id} className="dash-row border-t border-slate-100"><td className="px-5 py-4 font-mono text-xs text-slate-500">{job.id ?? '—'}</td><td className="px-5 py-4 font-medium text-slate-800">{job.conversationId ?? '—'}</td><td className="px-5 py-4 text-slate-600">{job.attempts}</td><td className="max-w-md px-5 py-4 text-slate-600">{job.safeError ?? 'No safe error message'}</td><td className="px-5 py-4">{job.conversationId ? <button className="font-semibold text-primary hover:text-primary-hover" type="button" onClick={() => void replay(String(job.conversationId), true)}>Replay</button> : '—'}</td></tr>)}</tbody></table></div>
@@ -130,4 +152,14 @@ export default function OperationsPage() {
 
 function OperationalFact({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-xs font-medium text-slate-500">{label}</dt><dd className="mt-1.5 text-sm font-semibold text-slate-800">{value}</dd></div>;
+}
+
+function formatWebhookTopic(topic: string): string {
+  const labels: Record<string, string> = {
+    'conversation.user.created': 'New conversation received',
+    'conversation.user.replied': 'Conversation reply received',
+    'conversation.admin.replied': 'Operator reply received',
+    'conversation.admin.closed': 'Conversation closed'
+  };
+  return labels[topic] ?? 'Intercom event received';
 }
