@@ -1,50 +1,52 @@
 # Recruiter evidence
 
-## 1. Verified original system functionality
+This file separates demonstrable engineering from claims that would overstate the evidence.
 
-Confirmed by reading this checkout (not by live Intercom):
+## Live recruiter demonstration
 
-- Intercom webhook HMAC + conversation sync
-- Canvas Kit initialize/submit/configure
-- Gemini or fixture name/category extraction
-- Employee match (exact, alias, fuzzy, token) — not a dedicated HR employee-id key
-- Related-case retrieval by identity/name (category filter currently off)
-- Box Excel store-directory sync (optional)
-- Dashboard intelligence/ops explorer
+The portfolio can demonstrate, using synthetic data:
 
-Test counts belong only to the latest `npm test` run. See `docs/BENCHMARKS.md`. Do not quote 338, 362, or 413 unless that run produced them.
+- A real Intercom inbox as the operator workspace.
+- Signed Intercom conversation events entering the application.
+- Gemini-backed extraction/classification when live LLM mode is enabled.
+- Employee directory resolution, related employee history, stakeholder suggestions, manual review, and internal-note/tag write-back.
+- A separate dashboard for case exploration, directory data, operational health, and labelled evaluation results.
+- A restricted viewer account and a separate synthetic Intercom teammate account.
+- A guided subtitled video from the landing page and Overview.
 
-## 2. Confirmed original contributions
+The workspace owner has manually exercised the Intercom integration. This is demonstration evidence, not a production customer SLA or independent load test.
 
-Treat as original to the pre-existing Intercom-app backend: intelligence processor, matching utilities, Canvas builder, store-directory parser. This file does not invent product metrics or headcount impact.
+## Verified engineering in the repository
 
-## 3. Sanitized portfolio improvements
+- Raw-body HMAC verification and workspace validation for Intercom webhook and Canvas traffic.
+- Durable notification idempotency through a PostgreSQL unique key.
+- Recovery of an event recorded before an interrupted enqueue.
+- Revision-aware deterministic BullMQ job IDs so a later reply is not hidden by an active older job.
+- Configurable retries/backoff, failure propagation, and stale-snapshot/write-back protection.
+- Transactional generic ingestion: inbound event, conversation, messages, and outbox event commit together.
+- Identity matching through exact email/name, aliases, first/last/full-name evidence, and bounded fuzzy matching with manual review.
+- Related-case retrieval across name variants and close spellings without requiring the same category.
+- Human corrections that survive later analysis until an explicit re-analysis.
+- JWT algorithm/issuer/audience checks, viewer/admin authorization, login throttling, CORS/Helmet, input validation, safe request IDs, and atomic demo quotas.
+- Targeted PostgreSQL indexes for message, identity, outbox, event, email, and fuzzy-name access paths.
+- Automated backend unit/integration/E2E tests and frontend lint/typecheck/build in GitHub Actions.
 
-- Optional Intercom/Box/Resend flags
-- Source-agnostic ingestion + inbound_events/outbox
-- Revision-aware BullMQ job ids (reply not lost while an older job is active)
-- Operator corrections persisted on the snapshot (`operatorConfirmedFields`)
-- Independent tag write-back (`INTERCOM_WRITEBACK_TAGS_ENABLED`)
-- Recruiter demo sessions
-- Evaluation dataset + `npm run eval:run` (fixture heuristic, 6 cases)
-- Canvas contract smoke (`npm run intercom:canvas-smoke`)
+## Defensible CV bullets
 
-## 4. Measured evidence
+Use these without inventing business numbers:
 
-See `docs/BENCHMARKS.md`. Only numbers produced by a command in this repo. Fixture eval is not production model quality.
+- Architected an AI-powered HR case workflow integrating Intercom Canvas, signed webhooks, Gemini classification, employee resolution, related-case retrieval, stakeholder routing, and internal-note write-back.
+- Built durable event processing with PostgreSQL idempotency, transactional outbox ingestion, revision-aware BullMQ jobs, bounded retries, and stale-write protection to prevent duplicate handling and lost updates.
+- Hardened a role-based TypeScript/Node.js platform with JWT verification, login throttling, schema validation, atomic demo quotas, structured request tracing, and optimized PostgreSQL lookup indexes.
+- Delivered a recruiter-ready Next.js operations dashboard and synthetic Intercom walkthrough with restricted viewer access, explicit loading/error states, case exploration, directory views, and measured test/evaluation evidence.
 
-## 5. Unverified — do not claim
+Only add exact test counts, accuracy, latency, or throughput after copying the latest successful command output and labeling its environment.
 
-- Production accuracy, latency, or volume
-- Live Intercom Canvas (Developer Hub Canvas Kit page has been blank)
-- That vector search improved quality (not used)
-- That related-case SQL precision equals the fixture eval related scores
-- Business outcomes or customer names
+## Do not claim
 
-## 6. Suggested CV bullets (only after tests/eval in this pass)
-
-Replace the measurements with the command output from `docs/BENCHMARKS.md` this-pass table:
-
-- Built an Intercom Canvas Kit HR intelligence layer: signed webhooks, directory identity resolution, related-case retrieval, stakeholder CC, and internal-note write-back, with a separate operations dashboard.
-- Stopped duplicate Intercom notifications via durable `inbound_events` and stopped lost replies via revision-aware BullMQ job ids plus stale-snapshot protection.
-- Separated fixture evaluation (`eval-v1`, 6 anonymized cases) from live Gemini so model-quality claims stay honest.
+- Production traffic volume, revenue, time saved, failure reduction, or customer outcomes that were not measured.
+- Local CPU microbenchmarks as HTTP or end-to-end latency.
+- Fixture evaluation as live Gemini accuracy.
+- Full multi-tenant isolation, full refresh-token revocation, or vulnerability-free dependencies.
+- That every adapter uses the same outbox flow.
+- Company/client names or non-synthetic data.
