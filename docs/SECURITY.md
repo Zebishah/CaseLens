@@ -16,9 +16,11 @@
 - Open registration is disabled in production. Attachments are disabled for the public demo.
 - Targeted indexes cover Intercom IDs, message hydration, reverse employee history, pending outbox, inbound event lookups, normalized email, and trigram name/alias matching.
 
-## Public recruiter credentials
+## Recruiter access security
 
-The optional `NEXT_PUBLIC_INTERCOM_DEMO_EMAIL` and `NEXT_PUBLIC_INTERCOM_DEMO_PASSWORD` are intentionally public credentials for a restricted, synthetic-only Intercom teammate. They are not platform secrets and must never be reused for a personal account, production workspace, API token, or admin account.
+Shared Intercom credentials are not published. Public visitors submit a validated, rate-limited invitation request using their own email. Requests are deduplicated without disclosing existing state, stored with explicit consent, and reviewable only by administrators. Intercom remains the invitation and identity-verification authority.
+
+The direct Intercom workspace link is rendered only for dashboard administrators. Reviewer accounts cannot access invitation administration, Operations, AI Quality, or mutation/recovery controls.
 
 Backend credentials—including `INTERCOM_ACCESS_TOKEN`, `INTERCOM_CLIENT_SECRET`, JWT secrets, Gemini keys, database URLs, and Redis URLs—remain server-only and must never use a `NEXT_PUBLIC_*` name.
 
