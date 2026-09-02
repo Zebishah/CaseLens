@@ -20,9 +20,14 @@ export const intercomNotificationId = (envelope: IntercomWebhookEnvelope): strin
  */
 export const recordIntercomWebhookNotification = async (
   envelope: IntercomWebhookEnvelope
-): Promise<{ duplicate: boolean; externalEventId: string }> => {
+): Promise<{
+  duplicate: boolean;
+  externalEventId: string;
+  inboundEventId: number | null;
+  status: string;
+}> => {
   if (envelope.topic === INTERCOM_WEBHOOK_TOPICS.PING) {
-    return { duplicate: false, externalEventId: envelope.id ?? 'ping' };
+    return { duplicate: false, externalEventId: envelope.id ?? 'ping', inboundEventId: null, status: 'received' };
   }
 
   const externalEventId = intercomNotificationId(envelope);
@@ -33,11 +38,11 @@ export const recordIntercomWebhookNotification = async (
       inboundEventId: existing.id,
       externalEventId
     });
-    return { duplicate: true, externalEventId };
+    return { duplicate: true, externalEventId, inboundEventId: existing.id, status: existing.status };
   }
 
   try {
-    await ingestionRepository.insertEvent({
+    const inserted = await ingestionRepository.insertEvent({
       source: 'intercom',
       externalEventId,
       eventType: envelope.topic,
@@ -50,7 +55,13 @@ export const recordIntercomWebhookNotification = async (
     });
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return { duplicate: true, externalEventId };
+      const raced = await ingestionRepository.findBySourceExternalId('intercom', externalEventId);
+      return {
+        duplicate: true,
+        externalEventId,
+        inboundEventId: raced?.id ?? null,
+        status: raced?.status ?? 'received'
+      };
     }
     logger.error('[intercom-adapter] Failed to record inbound Intercom event', {
       message: error instanceof Error ? error.message : String(error)
@@ -58,5 +69,5 @@ export const recordIntercomWebhookNotification = async (
     throw error;
   }
 
-  return { duplicate: false, externalEventId };
+  return { duplicate: false, externalEventId, inboundEventId: inserted.id, status: inserted.status };
 };
