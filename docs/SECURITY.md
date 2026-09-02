@@ -1,22 +1,34 @@
 # Security
 
-## Rules in force
+## Controls implemented
 
-- Secrets live only in server environment variables. None are `NEXT_PUBLIC_*`.
-- `.env` files are gitignored. `.env.example` lists names and descriptions only.
-- Webhooks are processed only after signature verification on the **raw** body.
-- Public demo sessions use hashed tokens, expiry, and per-session limits (including live AI calls).
-- `JOB_PROCESSING_MODE=inline` does not start BullMQ workers and does not require Redis.
-- Open user registration is disabled in production.
-- `/api/users`, `/api/cases`, `/api/cases/overview`, `/api/evaluation`, operations, and directory require an admin JWT (except public demo and health).
-- Logs must not include API keys, cookies, authorization headers, or full confidential conversations.
-- Attachments are disabled in the first public release.
-- Intercom webhook HMAC-SHA1 and Canvas HMAC-SHA256 use `INTERCOM_CLIENT_SECRET` on the raw body. Invalid signatures do not create inbound events.
+- Intercom webhooks are verified on the raw request body with HMAC-SHA1 and Canvas requests with HMAC-SHA256 using timing-safe comparison.
+- The configured Intercom workspace is checked before ingestion. Durable `inbound_events` uniqueness prevents duplicate notification processing, and interrupted `received` or `failed` events can be resumed.
+- Intercom ingestion stores a SHA-256 payload hash.
+- Generic demo/email ingestion writes its inbound event, conversation, messages, and outbox event in one PostgreSQL transaction.
+- BullMQ jobs use revision-aware deterministic IDs. Retry attempts and bounded exponential backoff are configurable; processing failures propagate so BullMQ can retry them.
+- Older intelligence revisions cannot overwrite newer snapshots or write stale results back to Intercom.
+- Private API routes require verified JWTs and explicit viewer/admin authorization. JWTs are restricted to HS256 with configured issuer and audience.
+- Production startup requires distinct access/refresh secrets of at least 32 characters.
+- Refresh tokens use an HttpOnly cookie. Login has a separate failure-oriented rate limit.
+- Helmet, strict CORS, bounded bodies, schema validation, production-safe errors, and validated request/correlation IDs are enabled.
+- Public demo tokens are stored as hashes, expire, and use atomic database quota increments.
+- Open registration is disabled in production. Attachments are disabled for the public demo.
+- Targeted indexes cover Intercom IDs, message hydration, reverse employee history, pending outbox, inbound event lookups, normalized email, and trigram name/alias matching.
 
-## Residual risk
+## Public recruiter credentials
 
-- CSRF cookie middleware exists but is not yet applied to every browser mutation. Bearer tokens remain the primary admin auth.
-- The `xlsx` dependency has known advisories; only import trusted directory files.
-- In-memory intelligence locks still exist for single-process safety; durable notification idempotency is the `inbound_events` unique key. BullMQ job ids are revision-aware so API/worker process splits cannot drop a later reply.
-- This app is single-tenant. Workspace id is an environment check, not per-row multi-tenant ACL.
-- Operator correction audit stores `actorRole`, not the teammate email (`actor_role` varchar 32).
+The optional `NEXT_PUBLIC_INTERCOM_DEMO_EMAIL` and `NEXT_PUBLIC_INTERCOM_DEMO_PASSWORD` are intentionally public credentials for a restricted, synthetic-only Intercom teammate. They are not platform secrets and must never be reused for a personal account, production workspace, API token, or admin account.
+
+Backend credentials—including `INTERCOM_ACCESS_TOKEN`, `INTERCOM_CLIENT_SECRET`, JWT secrets, Gemini keys, database URLs, and Redis URLs—remain server-only and must never use a `NEXT_PUBLIC_*` name.
+
+## Residual risks and honest limitations
+
+- The portfolio deployment is single-tenant. Workspace validation is environment-based, not per-row multi-tenant authorization.
+- Refresh-token rotation/revocation is not implemented. The access token is in session storage, so successful same-origin XSS could read it.
+- The CSRF helper is not wired to every mutation. Bearer JWT is the dashboard's primary authorization; do not claim comprehensive CSRF-token enforcement.
+- Generic ingestion has a transactional outbox. Intercom uses durable event state plus deterministic revision jobs; do not claim every adapter uses the identical outbox path.
+- Inline demo mode intentionally has weaker crash recovery than PostgreSQL + BullMQ worker mode.
+- `xlsx` has known advisories. CSV is preferred for sanitized imports; imports remain admin-only and size-limited. Do not claim vulnerability-free dependencies.
+- A queued Intercom event proves delivery/enqueue state, not successful live Gemini completion.
+- Synthetic/local evaluation is not production AI accuracy or customer impact.
