@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
+import { RecruiterDemoPanel } from '../../components/RecruiterDemoPanel';
 import { AlertBanner, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { ApiError, api } from '../../lib/api';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
@@ -180,6 +181,8 @@ export default function OverviewPage() {
               tone={review > 0 ? 'warning' : 'default'}
             />
           </div>
+
+          <RecruiterDemoPanel compact />
 
           <div className="grid gap-4 lg:grid-cols-5">
             <section className="dash-panel lg:col-span-3">
