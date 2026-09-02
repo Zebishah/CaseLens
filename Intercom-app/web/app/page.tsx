@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ArchitectureShowcase } from '../components/landing/ArchitectureShowcase';
 import { CtaBand } from '../components/landing/CtaBand';
-import { EvaluationStrip } from '../components/landing/EvaluationStrip';
 import { FeatureGallery } from '../components/landing/FeatureGallery';
 import { HeroVisual } from '../components/landing/HeroVisual';
 import { LandingNav } from '../components/landing/LandingNav';
@@ -11,6 +10,8 @@ import { WaveEdge } from '../components/landing/WaveEdge';
 import { WorkflowStory } from '../components/landing/WorkflowStory';
 
 export default function LandingPage() {
+  const intercomUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
+
   return (
     <div className="theme-light landing-canvas relative min-h-screen overflow-x-hidden text-foreground">
       <LandingNav />
@@ -42,7 +43,7 @@ export default function LandingPage() {
               </p>
               <div className="reveal reveal-delay-3 mt-8 flex flex-wrap items-center gap-3">
                 <Link href="/login" className="btn-primary rounded-full px-5 py-2.5 text-sm font-medium">
-                  Open the application
+                  Open recruiter showcase
                 </Link>
                 <Link href="#product" className="btn-secondary rounded-full px-5 py-2.5 text-sm">
                   Explore the system
@@ -96,33 +97,57 @@ export default function LandingPage() {
             </div>
             <p className="mt-8 text-sm">
               <Link href="/login" className="font-medium text-primary hover:text-primary-hover">
-                Sign in to inspect real cases
+                Sign in to inspect sanitized cases
               </Link>
             </p>
           </div>
         </section>
 
-        <section id="evaluation" className="bg-white">
+        <section id="live-demo" className="bg-white">
           <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
-            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <div>
-                <p className="text-sm font-medium tracking-[0.18em] text-secondary">Evaluation</p>
-                <h2 className="mt-4 max-w-xl text-3xl font-bold tracking-tight text-primary md:text-5xl">
-                  AI you can evaluate, not just demo.
-                </h2>
-                <p className="mt-5 max-w-md text-muted">
-                  A versioned anonymized dataset drives local and CI evaluation. Open the evaluation
-                  page for the current run.
-                </p>
-                <Link
-                  href="/evaluation"
-                  className="mt-8 inline-flex rounded-full border border-primary/20 px-4 py-2 text-sm font-medium text-primary hover:bg-paper"
-                >
-                  Open AI Evaluation
-                </Link>
-              </div>
-              <EvaluationStrip />
+            <div className="max-w-3xl">
+              <p className="text-sm font-medium tracking-[0.18em] text-secondary">Live product proof</p>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">
+                Review the system in two connected workspaces.
+              </h2>
+              <p className="mt-5 max-w-2xl leading-7 text-muted">
+                The recruiter dashboard presents sanitized case intelligence and verified system behavior.
+                Intercom remains the operator inbox where conversations arrive and intelligence is written back.
+              </p>
             </div>
+            <div className="mt-10 grid gap-5 md:grid-cols-2">
+              <article className="rounded-3xl border border-primary/10 bg-paper p-7">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">01 · Recruiter showcase</p>
+                <h3 className="mt-3 text-2xl font-semibold text-primary">Read-only intelligence dashboard</h3>
+                <p className="mt-3 leading-7 text-muted">
+                  Inspect case classification, employee resolution, related history, stakeholder routing,
+                  and the production architecture without access to administrative controls.
+                </p>
+                <Link href="/login" className="mt-6 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white">
+                  Open recruiter dashboard
+                </Link>
+              </article>
+              <article className="rounded-3xl border border-primary/10 bg-primary p-7 text-white">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">02 · Operator workflow</p>
+                <h3 className="mt-3 text-2xl font-semibold">Intercom inbox and Canvas</h3>
+                <p className="mt-3 leading-7 text-white/75">
+                  Follow the same case in Intercom, from signed webhook ingestion to the Canvas intelligence
+                  panel and internal-note write-back. Access is granted by individual invitation.
+                </p>
+                {intercomUrl ? (
+                  <a href={intercomUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex rounded-full bg-secondary px-5 py-2.5 text-sm font-medium text-white">
+                    Open invited Intercom workspace ↗
+                  </a>
+                ) : (
+                  <p className="mt-6 text-sm font-medium text-emerald-200">
+                    Live Intercom access is provided during a scheduled review.
+                  </p>
+                )}
+              </article>
+            </div>
+            <p className="mt-6 text-sm text-muted">
+              Portfolio environment only · Synthetic records · No employer or customer data
+            </p>
           </div>
         </section>
 
