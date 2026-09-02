@@ -117,3 +117,14 @@ CREATE TABLE IF NOT EXISTS ai_evaluation_runs (
   git_commit varchar(64),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Hot paths used by case hydration and the outbox dispatcher.
+CREATE INDEX IF NOT EXISTS conversation_messages_conversation_created_idx
+  ON conversation_messages (conversation_id, created_at);
+
+CREATE INDEX IF NOT EXISTS outbox_events_pending_created_idx
+  ON outbox_events (created_at)
+  WHERE status = 'pending';
+
+CREATE INDEX IF NOT EXISTS inbound_events_source_received_idx
+  ON inbound_events (source, received_at DESC);
