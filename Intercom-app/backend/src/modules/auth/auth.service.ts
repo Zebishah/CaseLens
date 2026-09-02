@@ -1,19 +1,39 @@
 import bcrypt from 'bcrypt';
-import { createAccessToken } from '../../utils/token.util.js';
+import { createAccessToken, createRefreshToken } from '../../utils/token.util.js';
 import { AppError } from '../../utils/error.util.js';
+import { verifyRefreshToken } from '../../services/jwt.service.js';
 import { userService } from '../user/user.service.js';
 import { authRepository } from './auth.repository.js';
 import { AUTH_CONSTANTS } from './auth.constants.js';
+
+type AuthUser = {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+};
+
+const publicUser = (user: AuthUser) => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  role: user.role
+});
+
+const createSession = (user: AuthUser) => {
+  const payload = { sub: user.id, email: user.email, role: user.role };
+  return {
+    token: createAccessToken(payload),
+    refreshToken: createRefreshToken(payload),
+    user: publicUser(user)
+  };
+};
 
 export const authService = {
   async register(payload: { email: string; password: string; name: string }) {
     const hashedPassword = await bcrypt.hash(payload.password, AUTH_CONSTANTS.SALT_ROUNDS);
     const user = await userService.createUser({ ...payload, password: hashedPassword });
-
-    return {
-      token: createAccessToken({ sub: user.id, email: user.email, role: user.role }),
-      user
-    };
+    return createSession(user);
   },
 
   async login(payload: { email: string; password: string }) {
@@ -28,13 +48,22 @@ export const authService = {
       throw AppError.unauthorized('Invalid credentials');
     }
 
-    return {
-      token: createAccessToken({ sub: user.id, email: user.email, role: user.role }),
-      user
-    };
+    return createSession(user);
   },
 
   async refreshToken(refreshToken: string) {
-    return { token: refreshToken };
+    let payload;
+    try {
+      payload = verifyRefreshToken(refreshToken);
+    } catch {
+      throw AppError.unauthorized('Session expired');
+    }
+
+    const user = await authRepository.findUserById(payload.sub);
+    if (!user) {
+      throw AppError.unauthorized('Session expired');
+    }
+
+    return createSession(user);
   }
 };

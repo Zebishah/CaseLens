@@ -13,3 +13,4 @@ authRoutes.post(
   validate(refreshTokenSchema),
   asyncHandler(authController.refreshToken)
 );
+authRoutes.post('/logout', asyncHandler(authController.logout));

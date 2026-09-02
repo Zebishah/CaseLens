@@ -52,9 +52,13 @@ const envSchema = z
     ),
 
     JWT_SECRET: z.string().min(12),
-    JWT_EXPIRES_IN: z.string().default('1d'),
+    JWT_EXPIRES_IN: z.string().default('15m'),
+    JWT_REFRESH_SECRET: z.string().min(12),
+    JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
     AUTH_COOKIE_NAME: z.string().default('caseops_session'),
     CSRF_COOKIE_NAME: z.string().default('caseops_csrf'),
+    COOKIE_SECURE: booleanFlag(false),
+    COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
     CORS_ORIGINS: z.string().optional(),
 
     RUN_API: booleanFlag(true),
@@ -85,7 +89,6 @@ const envSchema = z
       .string()
       .optional()
       .transform((value) => value?.trim() || undefined),
-    /** When false, internal notes still write back; conversation tags are skipped. */
     INTERCOM_WRITEBACK_TAGS_ENABLED: booleanFlag(true),
 
     BOX_SYNC_ENABLED: booleanFlag(false),
@@ -120,6 +123,14 @@ const envSchema = z
     SENTRY_DSN: optionalSecret
   })
   .superRefine((value, ctx) => {
+    if (value.COOKIE_SAME_SITE === 'none' && !value.COOKIE_SECURE) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['COOKIE_SECURE'],
+        message: 'COOKIE_SECURE must be true when COOKIE_SAME_SITE=none'
+      });
+    }
+
     if (value.INTERCOM_ENABLED) {
       for (const key of [
         'INTERCOM_ACCESS_TOKEN',
