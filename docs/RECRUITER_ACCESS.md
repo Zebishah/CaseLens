@@ -1,10 +1,32 @@
 # Recruiter access
 
-The portfolio exposes two separate, synthetic-only review paths. Neither path uses employer or customer data.
+The portfolio uses separate access paths for the dashboard and Intercom. No shared Intercom password, verification code, production data, or employer account is exposed.
 
-## Read-only product dashboard
+## Public walkthrough
 
-Create a dedicated dashboard viewer:
+Every visitor can use the landing page without signing in:
+
+- Product and architecture narrative
+- Subtitled walkthrough video
+- Sanitized screenshots of the Inbox, HR Intelligence Canvas, and dashboard
+- Explanation of the dashboard/Intercom boundary
+- Personal Intercom invitation request form
+
+Frontend deployment variables:
+
+```env
+NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME=Nagumo Workspace [DEV]
+NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL=https://www.youtube.com/embed/VIDEO_ID
+NEXT_PUBLIC_DEMO_SCREENSHOT_INBOX_URL=https://cdn.example.com/intercom-inbox.png
+NEXT_PUBLIC_DEMO_SCREENSHOT_CANVAS_URL=https://cdn.example.com/hr-intelligence-canvas.png
+NEXT_PUBLIC_DEMO_SCREENSHOT_DASHBOARD_URL=https://cdn.example.com/dashboard.png
+```
+
+The optional `NEXT_PUBLIC_INTERCOM_WORKSPACE_URL` is rendered only for authenticated administrators. It is not a secret, but public visitors and viewer accounts do not receive that shortcut.
+
+## Dashboard reviewer
+
+Create a separate read-only dashboard viewer:
 
 ```bash
 cd Intercom-app/backend
@@ -14,46 +36,52 @@ SEED_VIEWER_NAME='Recruiter Review' \
 npm run db:seed-viewer
 ```
 
-A `viewer` can inspect Overview, sanitized cases, People & stores, and Architecture. Server-side authorization blocks corrections, feedback, imports, sync controls, replay, recovery, Operations, AI Evaluation, and user management.
+A viewer can inspect Overview, sanitized cases, People & stores, and Architecture. Server authorization blocks corrections, imports, recovery, Operations, AI Quality, invitation administration, and user management.
 
-Never publish or share an admin account.
+## Intercom invitation request
 
-## Shared synthetic Intercom workspace
+Apply the recruiter-access migration once per database:
 
-The landing page and Overview can show an intentionally public, tightly restricted Intercom teammate. This is acceptable only because this Developer Workspace contains generated portfolio records and no private data.
-
-Configure the frontend deployment:
-
-```env
-NEXT_PUBLIC_INTERCOM_WORKSPACE_URL=https://app.intercom.com/a/inbox/YOUR_WORKSPACE_ID/inbox
-NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME=Nagumo Workspace [DEV]
-NEXT_PUBLIC_INTERCOM_DEMO_EMAIL=demo-reviewer@example.com
-NEXT_PUBLIC_INTERCOM_DEMO_PASSWORD=unique-password-used-only-for-this-demo
-NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL=https://www.youtube.com/embed/VIDEO_ID
+```bash
+cd Intercom-app/backend
+npm run db:migrate-recruiter-access
 ```
 
-These `NEXT_PUBLIC_*` values are intentionally visible to every site visitor. Never put Intercom access tokens, client secrets, personal Google credentials, or reused passwords in them.
+Public workflow:
 
-Lock the Intercom teammate down before publishing:
+1. The reviewer opens `/access`.
+2. They provide their name, work email, organization/role, review purpose, and consent.
+3. The API validates the request, rate-limits submissions, uses a honeypot, normalizes the email, and avoids duplicate pending requests.
+4. The response confirms receipt without revealing whether that email already has a pending request.
+5. An administrator reviews the request under Dashboard → Access requests.
+6. After verifying the requester, the administrator marks it approved.
+7. The administrator manually invites that exact email from Intercom teammate settings with minimum permissions.
+8. The administrator marks the request invited.
+9. The reviewer accepts the official email and completes Intercom's own verification.
+10. They select **Nagumo Workspace [DEV]**, open **Inbox → All or Unassigned**, and inspect a synthetic ticket.
 
-- Allow only the synthetic demo inbox/conversations.
-- Remove Developer Hub, app installation/configuration, teammate management, workspace settings, exports, billing, security, contacts/data deletion, and outbound messaging permissions where Intercom permits.
-- Do not make the teammate an administrator.
-- Keep all contacts and conversations generated.
-- Rotate the password regularly and immediately if the workspace is modified.
-- Prefer the subtitled video when the shared seat is unavailable or Intercom blocks concurrent sessions.
+Approval in this application intentionally does not call an undocumented or privileged Intercom invitation API. It records an auditable operator decision; Intercom remains the identity and invitation authority.
 
-## Visitor flow
+## Intercom teammate restrictions
 
-1. Open the portfolio landing page and find **Live recruiter demo**.
-2. Copy the displayed demo teammate email and password.
-3. Choose **Open Intercom inbox** and sign in.
-4. Select **Nagumo Workspace [DEV]** if prompted.
-5. Open **Inbox**, then **All** or **Unassigned**.
-6. Open any synthetic HR ticket.
-7. Inspect the HR Intelligence panel: identity resolution, category, related cases, routing, and review status.
-8. Return to the read-only dashboard for aggregated case and architecture evidence.
+Before inviting a reviewer:
 
-## Video
+- Allow access only to the synthetic demonstration workspace/inbox.
+- Do not grant administrator permissions.
+- Remove Developer Hub, installation/configuration, teammate management, billing, exports, security settings, data deletion, and outbound messaging access where supported.
+- Never send shared credentials, email verification tokens, 2FA recovery codes, API tokens, or a Google account.
+- Expire/remove the teammate after the review.
+- Keep every contact and conversation synthetic.
 
-Use an iframe-compatible YouTube, Vimeo, or Loom embed URL. Publish a 3–5 minute subtitled walkthrough showing webhook arrival, processing, identity matching, related cases, Intercom write-back, and the read-only dashboard. Do not display secrets, browser password managers, personal tabs, or Developer Hub credentials in the recording.
+## Recording and screenshots
+
+The 3–5 minute subtitled walkthrough should show:
+
+1. A synthetic Intercom conversation arriving.
+2. The embedded HR Intelligence panel.
+3. Employee resolution, category, related history, routing, and manual review.
+4. Internal note/tag write-back.
+5. Dashboard Overview and Architecture.
+6. A brief administrator-only Operations view showing idempotency, outbox/queue health, and write-back status.
+
+Do not record browser password managers, verification emails, personal tabs, API credentials, Developer Hub secrets, or real people/company data.
