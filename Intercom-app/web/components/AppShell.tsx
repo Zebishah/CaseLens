@@ -12,10 +12,13 @@ import {
 
 type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'architecture';
 
-const navGroups: Array<{
+type NavGroup = {
   label: string;
+  adminOnly?: boolean;
   items: Array<{ href: string; label: string; hint: string; icon: IconName }>;
-}> = [
+};
+
+const navGroups: NavGroup[] = [
   {
     label: 'Workspace',
     items: [
@@ -26,6 +29,7 @@ const navGroups: Array<{
   },
   {
     label: 'Reliability',
+    adminOnly: true,
     items: [
       { href: '/operations', label: 'Operations', hint: 'Ingestion and processing', icon: 'operations' },
       { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' }
@@ -108,9 +112,20 @@ export function AppShell({
     router.replace('/login?reason=signed-out');
   };
 
+  const isAdmin = user?.role === 'admin';
+  const visibleNavGroups = navGroups.filter((group) => isAdmin || !group.adminOnly);
+  const intercomWorkspaceUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
+  const restrictedPath =
+    !isAdmin && ['/operations', '/evaluation'].some((route) => pathname === route || pathname.startsWith(`${route}/`));
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
-  if (status !== 'ready') {
+  useEffect(() => {
+    if (status === 'ready' && restrictedPath) {
+      router.replace('/overview');
+    }
+  }, [restrictedPath, router, status]);
+
+  if (status !== 'ready' || restrictedPath) {
     return (
       <div className="theme-light flex min-h-screen items-center justify-center bg-paper px-6 text-foreground">
         <div className="w-full max-w-sm text-center">
@@ -155,7 +170,7 @@ export function AppShell({
           </Link>
 
           <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Application">
-            {navGroups.map((group) => (
+            {visibleNavGroups.map((group) => (
               <div key={group.label} className="mb-5">
                 <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{group.label}</p>
                 <div className="space-y-1">
@@ -177,6 +192,17 @@ export function AppShell({
           </nav>
 
           <div className="border-t border-white/10 p-4">
+            {intercomWorkspaceUrl ? (
+              <a
+                href={intercomWorkspaceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mb-4 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-300/15"
+              >
+                <span>Open Intercom inbox</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            ) : null}
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold uppercase text-white">
                 {(user?.name ?? user?.email ?? 'O').slice(0, 2)}
@@ -202,7 +228,7 @@ export function AppShell({
               <div className="flex items-center gap-3">
                 <span className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  Protected workspace
+                  {isAdmin ? 'Admin workspace' : 'Read-only showcase'}
                 </span>
                 <button type="button" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm md:hidden" aria-expanded={open} aria-controls="mobile-app-nav" onClick={() => setOpen((value) => !value)}>
                   {open ? 'Close' : 'Menu'}
@@ -211,12 +237,17 @@ export function AppShell({
             </div>
             {open ? (
               <nav id="mobile-app-nav" className="border-t border-slate-100 bg-white p-3 md:hidden" aria-label="Mobile application">
-                {navGroups.flatMap((group) => group.items).map((item) => (
+                {visibleNavGroups.flatMap((group) => group.items).map((item) => (
                   <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${isActive(item.href) ? 'bg-primary text-white' : 'text-slate-700'}`}>
                     <NavIcon name={item.icon} />
                     {item.label}
                   </Link>
                 ))}
+                {intercomWorkspaceUrl ? (
+                  <a href={intercomWorkspaceUrl} target="_blank" rel="noreferrer" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-secondary">
+                    Open Intercom inbox ↗
+                  </a>
+                ) : null}
                 <button type="button" className="mt-2 w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-danger" onClick={() => void signOut()}>
                   Sign out
                 </button>
