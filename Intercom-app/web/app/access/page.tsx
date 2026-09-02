@@ -41,8 +41,12 @@ export default function AccessRequestPage() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
         setError('Too many requests were submitted from this network. Please try again later.');
+      } else if (err instanceof ApiError && err.status === 400) {
+        setError('Please review the form fields and submit the request again.');
+      } else if (err instanceof ApiError && err.sleeping) {
+        setError('The invitation service is starting. Please retry in a moment.');
       } else {
-        setError(err instanceof Error ? err.message : 'The request could not be submitted');
+        setError('The invitation service is temporarily unavailable. Please try again shortly.');
       }
       setState('idle');
     }
@@ -50,7 +54,7 @@ export default function AccessRequestPage() {
 
   return (
     <main className="theme-light min-h-screen bg-paper text-foreground">
-      <header className="border-b border-primary/10 bg-white">
+      <header className="mx-3 mt-3 rounded-2xl border border-primary/10 bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-6">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-primary">HI</span>
