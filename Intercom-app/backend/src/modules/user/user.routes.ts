@@ -18,7 +18,7 @@ const createSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8),
     name: z.string().min(1),
-    role: z.string().optional()
+    role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
   }),
   params: z.object({}).default({}),
   query: z.object({}).default({})
@@ -30,7 +30,7 @@ const updateSchema = z.object({
       email: z.string().email().optional(),
       password: z.string().min(8).optional(),
       name: z.string().min(1).optional(),
-      role: z.string().optional()
+      role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
     })
     .refine((v) => Object.keys(v).length > 0, 'At least one field is required'),
   params: z.object({ id: z.coerce.number().int().positive() }),
