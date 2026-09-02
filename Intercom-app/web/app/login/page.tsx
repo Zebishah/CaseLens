@@ -75,12 +75,12 @@ export default function LoginPage() {
           </div>
 
           <div className="relative my-auto max-w-xl py-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Operator workspace</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Protected product showcase</p>
             <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">
               Turn every HR conversation into actionable case intelligence.
             </h1>
             <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
-              Review employee matches, related history, stakeholder routing, and processing health from one protected workspace.
+              Review employee matches, related history, stakeholder routing, and processing health from one protected workspace. Recruiter accounts are read-only.
             </p>
             <div className="mt-10 space-y-5">
               {capabilities.map(([title, copy], index) => (
@@ -95,7 +95,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="relative text-xs text-slate-500">Synthetic portfolio data only · Private operator access</p>
+          <p className="relative text-xs text-slate-500">Synthetic portfolio data only · Role-based access</p>
         </section>
 
         <section className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10 sm:px-10">
@@ -108,7 +108,7 @@ export default function LoginPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Secure access</p>
               <h2 id="login-form" className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to review live case operations and AI-assisted decisions.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Use the credentials shared for your review. Recruiter access is read-only; administrative controls require an operator role.</p>
 
               {checking ? (
                 <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
