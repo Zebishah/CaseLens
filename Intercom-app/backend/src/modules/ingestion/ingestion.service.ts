@@ -1,6 +1,6 @@
 import { INTELLIGENCE_STATUS } from '../../constants/intelligence.constants.js';
 import { logger } from '../../config/logger.config.js';
-import { db } from '../../database/connection.js';
+import { db, type Database } from '../../database/connection.js';
 import { conversationRepository } from '../conversation/conversation.repository.js';
 import { parseReporterContext } from '../employee/employee.reporter-context.util.js';
 import { enqueueIntercomIntelligence } from '../../queues/intercom-intelligence.queue.js';
@@ -26,7 +26,12 @@ const isUniqueViolation = (error: unknown): boolean => {
   return code === '23505';
 };
 
-const persistConversation = async (event: CaseIngestionEvent) => {
+type IngestionExecutor = Pick<Database, 'insert' | 'update' | 'delete' | 'query'>;
+
+const persistConversation = async (
+  event: CaseIngestionEvent,
+  executor: IngestionExecutor = db
+) => {
   const reporter = parseReporterContext(event.senderName ?? null, event.senderEmail);
   const externalId = buildSourceExternalId(event.source, event.receivedEmailId || event.externalEventId);
 
@@ -64,7 +69,8 @@ const persistConversation = async (event: CaseIngestionEvent) => {
           }
         ]
       : [],
-    INTELLIGENCE_STATUS.PENDING
+    INTELLIGENCE_STATUS.PENDING,
+    { executor }
   );
 };
 
@@ -155,7 +161,7 @@ export const ingestionService = {
           tx
         );
 
-        const conversation = await persistConversation(event);
+        const conversation = await persistConversation(event, tx);
         const jobId = event.externalEventId.replace(/[^a-zA-Z0-9:_-]/g, '-').slice(0, 120);
 
         const outbox = await ingestionRepository.insertOutbox(
