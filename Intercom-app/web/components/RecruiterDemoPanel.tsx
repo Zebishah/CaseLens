@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 type Screenshot = {
   title: string;
@@ -155,7 +156,7 @@ function WorkspaceCard({ number, title, copy }: { number: string; title: string;
   );
 }
 
-function DemoStep({ number, children }: { number: string; children: React.ReactNode }) {
+function DemoStep({ number, children }: { number: string; children: ReactNode }) {
   return (
     <li className="flex gap-3">
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-mist text-xs font-semibold text-primary">{number}</span>
