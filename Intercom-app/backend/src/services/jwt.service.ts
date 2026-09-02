@@ -8,7 +8,6 @@ export type AppJwtPayload = {
 };
 
 type TokenType = 'access' | 'refresh';
-type StoredJwtPayload = AppJwtPayload & { tokenType: TokenType };
 
 const sign = (
   payload: AppJwtPayload,
@@ -32,11 +31,10 @@ const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayl
     throw new Error('Invalid token payload');
   }
 
-  const stored = payload as StoredJwtPayload;
   return {
-    sub: Number(stored.sub),
-    email: String(stored.email),
-    role: String(stored.role)
+    sub: Number(payload.sub),
+    email: String(payload.email),
+    role: String(payload.role)
   };
 };
 

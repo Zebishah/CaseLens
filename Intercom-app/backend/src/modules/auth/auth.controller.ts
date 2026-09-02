@@ -9,7 +9,7 @@ import { authService } from './auth.service.js';
 const sendSession = (
   res: Response,
   result: Awaited<ReturnType<typeof authService.login>>,
-  statusCode = STATUS_CODES.OK
+  statusCode: number = STATUS_CODES.OK
 ): void => {
   const { refreshToken, ...session } = result;
   setRefreshCookie(res, refreshToken);
