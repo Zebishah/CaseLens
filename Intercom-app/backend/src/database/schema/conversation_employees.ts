@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, serial, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 import { conversations } from './conversations.js';
 import { employeeIdentities } from './employee_identities.js';
 
@@ -21,6 +21,10 @@ export const conversationEmployees = pgTable(
     uniqueIndex('conversation_employees_conversation_identity_idx').on(
       table.conversationId,
       table.employeeIdentityId
+    ),
+    index('conversation_employees_identity_conversation_idx').on(
+      table.employeeIdentityId,
+      table.conversationId
     )
   ]
 );
