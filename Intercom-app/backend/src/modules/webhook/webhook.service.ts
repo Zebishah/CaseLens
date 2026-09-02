@@ -12,6 +12,7 @@ import { shouldReprocessIntelligence } from '../intelligence/intelligence-stale.
 import { enqueueIntercomIntelligence } from '../../queues/intercom-intelligence.queue.js';
 import { AppError } from '../../utils/error.util.js';
 import { recordIntercomWebhookNotification } from '../ingestion/intercom.webhook.adapter.js';
+import { ingestionRepository } from '../ingestion/ingestion.repository.js';
 import { webhookWorkspaceMatches } from '../intercom/intercom.workspace.util.js';
 import {
   buildIntelligenceJobId,
@@ -22,7 +23,7 @@ const enqueueIntelligenceIfNeeded = async (
   conversationId: number,
   intercomId: string,
   messageCount: number
-): Promise<void> => {
+): Promise<boolean> => {
   const conversation = await conversationRepository.findById(conversationId);
   if (!conversation || !shouldReprocessIntelligence(conversation, messageCount)) {
     logger.info('[webhook] Intelligence enqueue skipped — snapshot already current', {
@@ -30,7 +31,7 @@ const enqueueIntelligenceIfNeeded = async (
       intercomId,
       messageCount
     });
-    return;
+    return true;
   }
 
   if (conversation.intelligenceStatus !== INTELLIGENCE_STATUS.PENDING) {
@@ -57,6 +58,7 @@ const enqueueIntelligenceIfNeeded = async (
       intercomId,
       messageCount
     });
+    return true;
   } catch (error) {
     logger.error('[webhook] Intelligence enqueue failed — worker may still pick up a late job', {
       conversationId,
@@ -64,6 +66,7 @@ const enqueueIntelligenceIfNeeded = async (
       messageCount,
       error: error instanceof Error ? error.message : String(error)
     });
+    return false;
   }
 };
 
@@ -130,8 +133,18 @@ export const webhookService = {
     }
 
     const recorded = await recordIntercomWebhookNotification(envelope);
-    if (recorded.duplicate) {
+    const recoverableDuplicate =
+      recorded.duplicate && (recorded.status === 'received' || recorded.status === 'failed');
+    if (recorded.duplicate && !recoverableDuplicate) {
       return { handled: true };
+    }
+
+    if (recoverableDuplicate) {
+      logger.warn('[webhook] Resuming an Intercom event that was recorded but not queued', {
+        inboundEventId: recorded.inboundEventId,
+        externalEventId: recorded.externalEventId,
+        priorStatus: recorded.status
+      });
     }
 
     if (envelope.topic === INTERCOM_WEBHOOK_TOPICS.PING) {
@@ -140,12 +153,18 @@ export const webhookService = {
     }
 
     if (isConversationCreatedTopic(envelope.topic)) {
-      await this.handleConversationCreated(envelope);
+      const result = await this.handleConversationCreated(envelope);
+      if (recorded.inboundEventId) {
+        await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
+      }
       return { handled: true };
     }
 
     if (isConversationReplyTopic(envelope.topic)) {
-      await this.handleConversationReply(envelope);
+      const result = await this.handleConversationReply(envelope);
+      if (recorded.inboundEventId) {
+        await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
+      }
       return { handled: true };
     }
 
