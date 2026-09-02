@@ -10,7 +10,7 @@ import {
   type AdminUser
 } from '../lib/auth-token';
 
-type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'architecture';
+type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'access' | 'architecture';
 
 type NavGroup = {
   label: string;
@@ -32,7 +32,8 @@ const navGroups: NavGroup[] = [
     adminOnly: true,
     items: [
       { href: '/operations', label: 'Operations', hint: 'Ingestion and processing', icon: 'operations' },
-      { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' }
+      { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' },
+      { href: '/access-requests', label: 'Access requests', hint: 'Reviewer invitations', icon: 'access' }
     ]
   },
   {
@@ -50,6 +51,7 @@ function NavIcon({ name }: { name: IconName }) {
     directory: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.4-4 2.2-6 5.5-6s5.1 2 5.5 6M16 6h5M18.5 3.5v5" /></>,
     operations: <><path d="M4 7h10M4 17h16M18 7h2" /><circle cx="15.5" cy="7" r="1.5" /><circle cx="8.5" cy="17" r="1.5" /></>,
     quality: <><path d="m12 3 2.2 5.2L20 10l-4.2 3.8L17 20l-5-3-5 3 1.2-6.2L4 10l5.8-1.8L12 3Z" /></>,
+    access: <><path d="M4 20c.5-4 2.4-6 6-6s5.5 2 6 6" /><circle cx="10" cy="8" r="3" /><path d="M17 8h4M19 6v4" /></>,
     architecture: <><rect x="3" y="4" width="7" height="6" /><rect x="14" y="14" width="7" height="6" /><path d="M10 7h4a3 3 0 0 1 3 3v4M7 10v7h7" /></>
   };
   return (
@@ -194,7 +196,7 @@ export function AppShell({
           </nav>
 
           <div className="border-t border-white/10 p-4">
-            {intercomWorkspaceUrl ? (
+            {isAdmin && intercomWorkspaceUrl ? (
               <a
                 href={intercomWorkspaceUrl}
                 target="_blank"
@@ -245,7 +247,7 @@ export function AppShell({
                     {item.label}
                   </Link>
                 ))}
-                {intercomWorkspaceUrl ? (
+                {isAdmin && intercomWorkspaceUrl ? (
                   <a href={intercomWorkspaceUrl} target="_blank" rel="noreferrer" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-secondary">
                     Open Intercom inbox ↗
                   </a>
