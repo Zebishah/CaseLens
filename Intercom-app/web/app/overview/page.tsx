@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { ApiError, api } from '../../lib/api';
@@ -62,42 +62,43 @@ export default function OverviewPage() {
   const [sleeping, setSleeping] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const load = async (attempt = 0) => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const ready = await api.ready();
-      if (ready.status !== 'ready') {
-        setSleeping(true);
-        setLoading(false);
-        return;
-      }
-      setSleeping(false);
-      const overview = await api.get<Overview>('/api/cases/overview');
-      setData(overview);
-    } catch (err) {
-      if (err instanceof ApiError && err.sleeping) {
-        setSleeping(true);
-      } else if (attempt < 2) {
-        await wait(700 * (attempt + 1));
-        await load(attempt + 1);
-        return;
-      } else {
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const ready = await api.ready();
+        if (ready.status !== 'ready') {
+          setSleeping(true);
+          break;
+        }
+
+        setSleeping(false);
+        setData(await api.get<Overview>('/api/cases/overview'));
+        break;
+      } catch (err) {
+        if (err instanceof ApiError && err.sleeping) {
+          setSleeping(true);
+          break;
+        }
+
+        if (attempt < 2) {
+          await wait(700 * (attempt + 1));
+          continue;
+        }
+
         const raw = err instanceof Error ? err.message : 'Unable to load overview';
-        setError(
-          raw === 'Internal server error'
-            ? 'The database host timed out. Retry in a moment.'
-            : raw
-        );
+        setError(raw === 'Internal server error' ? 'The database host timed out. Retry in a moment.' : raw);
       }
-    } finally {
-      setLoading(false);
     }
-  };
+
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const total = data?.casesProcessed ?? 0;
   const matched = data?.matchedEmployeeCases ?? 0;
