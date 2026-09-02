@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ApiError, api } from '../../lib/api';
 
 type FormState = {
@@ -198,7 +198,7 @@ function Field({
   label: string;
   hint?: string;
   required?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <label className="block text-sm font-medium text-slate-700">
