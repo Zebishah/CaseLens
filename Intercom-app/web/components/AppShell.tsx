@@ -131,12 +131,14 @@ export function AppShell({
         <div className="w-full max-w-sm text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">HI</div>
           <h1 className="mt-5 text-xl font-semibold text-primary">
-            {status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
+            {restrictedPath ? 'Opening the read-only showcase' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
-            {status === 'checking'
-              ? 'Restoring the protected operator session.'
-              : 'The backend host may be waking up. Your session has not been discarded.'}
+            {restrictedPath
+              ? 'Administrative tools are not part of recruiter access.'
+              : status === 'checking'
+                ? 'Restoring the protected workspace session.'
+                : 'The backend host may be waking up. Your session has not been discarded.'}
           </p>
           {status === 'unavailable' ? (
             <button type="button" className="btn-primary mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold" onClick={() => void restore()}>
