@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, EmptyState, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
-import { getAdminUser } from '../../lib/auth-token';
+import { AUTH_STATE_EVENT, getAdminUser } from '../../lib/auth-token';
 
 type Directory = {
   companies: Array<{ name: string; slug: string }>;
@@ -26,7 +26,8 @@ const tabs: Array<{ id: Tab; label: string }> = [
 ];
 
 export default function DirectoryPage() {
-  const isAdmin = getAdminUser()?.role === 'admin';
+  const [role, setRole] = useState(() => getAdminUser()?.role);
+  const isAdmin = role === 'admin';
   const visibleTabs = isAdmin ? tabs : tabs.filter((item) => item.id !== 'imports');
   const [data, setData] = useState<Directory | null>(null);
   const [tab, setTab] = useState<Tab>('employees');
@@ -50,6 +51,11 @@ export default function DirectoryPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    const syncRole = () => setRole(getAdminUser()?.role);
+    window.addEventListener(AUTH_STATE_EVENT, syncRole);
+    return () => window.removeEventListener(AUTH_STATE_EVENT, syncRole);
+  }, []);
 
   const normalizedQuery = query.trim().toLowerCase();
   const employees = useMemo(() => (data?.employees ?? []).filter((row) =>
