@@ -4,6 +4,9 @@
 -- Drizzle db:push can fail with: "column id is in a primary key" (Postgres 42P16)
 -- when it tries to auto-alter constraints. This script applies the same changes safely.
 
+-- Trigram similarity is used by employee and alias fuzzy matching.
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- 1) Reporter columns (rename only if old names still exist)
 DO $$
 BEGIN
@@ -39,3 +42,16 @@ CREATE TABLE IF NOT EXISTS conversation_employees (
 
 CREATE UNIQUE INDEX IF NOT EXISTS conversation_employees_conversation_identity_idx
   ON conversation_employees (conversation_id, employee_identity_id);
+
+CREATE INDEX IF NOT EXISTS conversation_employees_identity_conversation_idx
+  ON conversation_employees (employee_identity_id, conversation_id);
+
+CREATE INDEX IF NOT EXISTS employee_identities_canonical_name_trgm_idx
+  ON employee_identities USING gin (canonical_name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS employee_aliases_alias_trgm_idx
+  ON employee_aliases USING gin (alias gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS employee_identities_lower_email_idx
+  ON employee_identities (lower(email))
+  WHERE email IS NOT NULL;
