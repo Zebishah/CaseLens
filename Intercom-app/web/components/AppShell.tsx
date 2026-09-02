@@ -164,7 +164,7 @@ export function AppShell({
         Skip to content
       </a>
       <div className="flex min-h-screen">
-        <aside className="dash-sidebar sticky top-0 hidden h-screen w-[17rem] shrink-0 border-r border-slate-800 md:flex md:flex-col">
+        <aside className="dash-sidebar sticky top-3 m-3 mr-0 hidden h-[calc(100vh-1.5rem)] w-[17rem] shrink-0 overflow-hidden rounded-2xl border border-emerald-950/40 md:flex md:flex-col">
           <Link href="/overview" className="border-b border-white/10 px-5 py-5">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-slate-950">HI</span>
@@ -225,7 +225,7 @@ export function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-primary/10 bg-white/95 backdrop-blur">
+          <header className="sticky top-3 z-40 mx-3 mt-3 overflow-hidden rounded-2xl border border-primary/10 bg-white/95 shadow-sm backdrop-blur">
             <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-4 py-4 md:px-8">
               <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-secondary md:hidden">HR Intelligence</p>
