@@ -2,6 +2,7 @@ import { app } from './app.js';
 import { env } from './config/env.config.js';
 import { logger } from './config/logger.config.js';
 import { pool } from './database/connection.js';
+import { ensureRequiredApplicationSchema } from './database/startup-schema.js';
 import { getSharedRedis } from './config/redis.config.js';
 import { shouldStartQueueWorkers } from './config/job-processing.js';
 import { ingestionService } from './modules/ingestion/ingestion.service.js';
@@ -57,19 +58,34 @@ const startWorkers = async (): Promise<void> => {
   }, 60_000).unref();
 };
 
-const server = env.RUN_API
-  ? app.listen(env.PORT, () => {
-      logger.info(`Server running on port ${env.PORT}`, {
-        runApi: env.RUN_API,
-        runWorkers: env.RUN_WORKERS,
-        jobProcessingMode: env.JOB_PROCESSING_MODE
-      });
-    })
-  : null;
+let server: ReturnType<typeof app.listen> | null = null;
 
-if (shouldStartQueueWorkers()) {
-  void startWorkers();
-}
+const startApplication = async (): Promise<void> => {
+  await ensureRequiredApplicationSchema();
+
+  server = env.RUN_API
+    ? app.listen(env.PORT, () => {
+        logger.info(`Server running on port ${env.PORT}`, {
+          runApi: env.RUN_API,
+          runWorkers: env.RUN_WORKERS,
+          jobProcessingMode: env.JOB_PROCESSING_MODE
+        });
+      })
+    : null;
+
+  if (shouldStartQueueWorkers()) {
+    await startWorkers();
+  }
+};
+
+void startApplication().catch(async (error: unknown) => {
+  logger.error('[startup] Application startup failed', {
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : undefined
+  });
+  await pool.end().catch(() => undefined);
+  process.exitCode = 1;
+});
 
 if (env.NODE_ENV !== 'test') {
   setInterval(() => {
