@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/AppShell';
 import { AlertBanner, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../../components/dashboard/ui';
 import { api } from '../../../lib/api';
-import { getAdminToken, getAdminUser } from '../../../lib/auth-token';
+import { AUTH_STATE_EVENT, getAdminToken, getAdminUser } from '../../../lib/auth-token';
 
 export default function CaseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -14,7 +14,8 @@ export default function CaseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const isAdmin = getAdminUser()?.role === 'admin';
+  const [role, setRole] = useState(() => getAdminUser()?.role);
+  const isAdmin = role === 'admin';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -39,6 +40,12 @@ export default function CaseDetailPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const syncRole = () => setRole(getAdminUser()?.role);
+    window.addEventListener(AUTH_STATE_EVENT, syncRole);
+    return () => window.removeEventListener(AUTH_STATE_EVENT, syncRole);
+  }, []);
 
   const submitFeedback = async () => {
     const adminToken = getAdminToken();
