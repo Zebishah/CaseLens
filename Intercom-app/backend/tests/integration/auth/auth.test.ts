@@ -3,7 +3,7 @@ import { app } from '../../../src/app.js';
 
 describe('Auth integration tests', () => {
   test('replaces unsafe request identifiers instead of reflecting them', async () => {
-    const unsafeId = 'bad id\nwith-control-data';
+    const unsafeId = 'x'.repeat(200);
     const res = await request(app)
       .post('/api/auth/login')
       .set('x-request-id', unsafeId)
