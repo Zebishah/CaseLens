@@ -1,5 +1,5 @@
 import { randomBytes, createHash } from 'node:crypto';
-import { and, eq, lt } from 'drizzle-orm';
+import { and, eq, lt, sql } from 'drizzle-orm';
 import { env } from '../../config/env.config.js';
 import { db } from '../../database/connection.js';
 import { demoSessions, type DemoSessionRow } from '../../database/schema/demo_sessions.js';
@@ -64,38 +64,61 @@ export const demoSessionService = {
   },
 
   async incrementCaseSubmission(session: DemoSessionRow, liveLlm: boolean): Promise<void> {
-    if (session.caseSubmissionCount >= session.maxCaseSubmissions) {
-      throw AppError.badRequest('This demo session has reached its case submission limit');
+    const eligibility = [
+      eq(demoSessions.id, session.id),
+      eq(demoSessions.active, true),
+      eq(demoSessions.revoked, false),
+      lt(demoSessions.expiresAt, new Date()) // replaced below with a current-time-safe predicate
+    ];
+
+    // Replace the expiry placeholder: the session must expire after the current time.
+    eligibility[3] = sql`${demoSessions.expiresAt} > now()`;
+
+    if (liveLlm) {
+      eligibility.push(sql`${demoSessions.liveLlmCount} < ${demoSessions.maxLiveLlm}`);
     }
 
-    if (liveLlm && session.liveLlmCount >= session.maxLiveLlm) {
-      throw AppError.badRequest('This demo session has reached its live LLM limit');
-    }
-
-    await db
+    const updated = await db
       .update(demoSessions)
       .set({
-        caseSubmissionCount: session.caseSubmissionCount + 1,
-        liveLlmCount: liveLlm ? session.liveLlmCount + 1 : session.liveLlmCount
+        caseSubmissionCount: sql`${demoSessions.caseSubmissionCount} + 1`,
+        liveLlmCount: liveLlm
+          ? sql`${demoSessions.liveLlmCount} + 1`
+          : demoSessions.liveLlmCount
       })
-      .where(eq(demoSessions.id, session.id));
+      .where(
+        and(
+          ...eligibility,
+          sql`${demoSessions.caseSubmissionCount} < ${demoSessions.maxCaseSubmissions}`
+        )
+      )
+      .returning({ id: demoSessions.id });
+
+    if (updated.length === 0) {
+      throw AppError.badRequest(
+        liveLlm
+          ? 'This demo session is expired or has reached its case/live AI limit'
+          : 'This demo session is expired or has reached its case submission limit'
+      );
+    }
   },
 
   async incrementEmail(sessionId: number): Promise<boolean> {
-    const [session] = await db
-      .select()
-      .from(demoSessions)
-      .where(eq(demoSessions.id, sessionId))
-      .limit(1);
-    if (!session || session.emailCount >= session.maxEmails) {
-      return false;
-    }
-
-    await db
+    const updated = await db
       .update(demoSessions)
-      .set({ emailCount: session.emailCount + 1 })
-      .where(eq(demoSessions.id, session.id));
-    return true;
+      .set({ emailCount: sql`${demoSessions.emailCount} + 1` })
+      .where(
+        and(
+          eq(demoSessions.id, sessionId),
+          eq(demoSessions.active, true),
+          eq(demoSessions.revoked, false),
+          sql`${demoSessions.expiresAt} > now()`,
+          sql`${demoSessions.emailCount} < ${demoSessions.maxEmails}`
+        )
+      )
+      .returning({ id: demoSessions.id });
+
+    return updated.length === 1;
   },
 
   async findByReceivingAddress(address: string): Promise<DemoSessionRow | undefined> {
