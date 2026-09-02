@@ -15,3 +15,4 @@ export * from './outbox_events.js';
 export * from './demo_sessions.js';
 export * from './case_review.js';
 export * from './relations.js';
+export * from './recruiter_access_requests.js';
