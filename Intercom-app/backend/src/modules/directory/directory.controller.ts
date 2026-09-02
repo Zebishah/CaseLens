@@ -12,9 +12,11 @@ import { enqueueStoreDirectorySync } from '../../queues/store-directory-sync.que
 import { isBoxStoreDirectoryConfigured } from '../box/box.client.js';
 import { storeDirectoryRepository } from '../store-directory/store-directory.repository.js';
 import { parseDirectoryUpload } from './directory.import.js';
+import { ROLES } from '../../constants/roles.js';
 
 export const directoryController = {
-  async list(_req: Request, res: Response): Promise<void> {
+  async list(req: Request, res: Response): Promise<void> {
+    const isAdmin = req.user?.role === ROLES.ADMIN;
     const companyRows = await db.select().from(companies);
     const stores = await db.select().from(storeDirectory);
     const contacts = await db.select().from(companyFixedContacts);
@@ -27,11 +29,13 @@ export const directoryController = {
       })
       .from(employeeIdentities)
       .limit(100);
-    const runs = await db
-      .select()
-      .from(storeDirectorySyncRuns)
-      .orderBy(desc(storeDirectorySyncRuns.startedAt))
-      .limit(10);
+    const runs = isAdmin
+      ? await db
+          .select()
+          .from(storeDirectorySyncRuns)
+          .orderBy(desc(storeDirectorySyncRuns.startedAt))
+          .limit(10)
+      : [];
 
     sendSuccess(res, {
       companies: companyRows,
@@ -47,7 +51,7 @@ export const directoryController = {
         startedAt: run.startedAt,
         finishedAt: run.finishedAt
       })),
-      boxConfigured: isBoxStoreDirectoryConfigured()
+      boxConfigured: isAdmin && isBoxStoreDirectoryConfigured()
     });
   },
 
