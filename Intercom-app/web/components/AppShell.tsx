@@ -1,18 +1,59 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState, type ReactNode } from 'react';
-import { clearAdminToken, getAdminToken, getAdminUser, type AdminUser } from '../lib/auth-token';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { ApiError, api } from '../lib/api';
+import {
+  AUTH_STATE_EVENT,
+  getAdminUser,
+  type AdminUser
+} from '../lib/auth-token';
 
-const nav = [
-  { href: '/overview', label: 'Overview', hint: 'Live stats' },
-  { href: '/cases', label: 'Cases', hint: 'Processed tickets' },
-  { href: '/directory', label: 'Directory', hint: 'Employees & stores' },
-  { href: '/operations', label: 'Operations', hint: 'Ingestion health' },
-  { href: '/evaluation', label: 'Evaluation', hint: 'Fixture checks' },
-  { href: '/architecture', label: 'Architecture', hint: 'System design' }
+type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'architecture';
+
+const navGroups: Array<{
+  label: string;
+  items: Array<{ href: string; label: string; hint: string; icon: IconName }>;
+}> = [
+  {
+    label: 'Workspace',
+    items: [
+      { href: '/overview', label: 'Overview', hint: 'Performance and attention', icon: 'overview' },
+      { href: '/cases', label: 'Case explorer', hint: 'Processed conversations', icon: 'cases' },
+      { href: '/directory', label: 'People & stores', hint: 'Resolution directory', icon: 'directory' }
+    ]
+  },
+  {
+    label: 'Reliability',
+    items: [
+      { href: '/operations', label: 'Operations', hint: 'Ingestion and processing', icon: 'operations' },
+      { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' }
+    ]
+  },
+  {
+    label: 'System',
+    items: [
+      { href: '/architecture', label: 'Architecture', hint: 'Verified system design', icon: 'architecture' }
+    ]
+  }
 ];
+
+function NavIcon({ name }: { name: IconName }) {
+  const paths: Record<IconName, ReactNode> = {
+    overview: <><path d="M4 13h6V4H4v9Z" /><path d="M14 20h6v-9h-6v9Z" /><path d="M4 20h6v-3H4v3Z" /><path d="M14 7h6V4h-6v3Z" /></>,
+    cases: <><path d="M6 4h12v16H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
+    directory: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.4-4 2.2-6 5.5-6s5.1 2 5.5 6M16 6h5M18.5 3.5v5" /></>,
+    operations: <><path d="M4 7h10M4 17h16M18 7h2" /><circle cx="15.5" cy="7" r="1.5" /><circle cx="8.5" cy="17" r="1.5" /></>,
+    quality: <><path d="m12 3 2.2 5.2L20 10l-4.2 3.8L17 20l-5-3-5 3 1.2-6.2L4 10l5.8-1.8L12 3Z" /></>,
+    architecture: <><rect x="3" y="4" width="7" height="6" /><rect x="14" y="14" width="7" height="6" /><path d="M10 7h4a3 3 0 0 1 3 3v4M7 10v7h7" /></>
+  };
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      {paths[name]}
+    </svg>
+  );
+}
 
 export function AppShell({
   title,
@@ -24,139 +65,170 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const [signedIn, setSignedIn] = useState(false);
+  const router = useRouter();
+  const [status, setStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
   const [user, setUser] = useState<AdminUser | null>(null);
   const [open, setOpen] = useState(false);
 
+  const restore = useCallback(async () => {
+    setStatus('checking');
+    try {
+      const session = await api.restoreSession();
+      if (!session) {
+        router.replace('/login?reason=session-expired');
+        return;
+      }
+      setUser(session.user);
+      setStatus('ready');
+    } catch (error) {
+      if (error instanceof ApiError && error.sleeping) {
+        setStatus('unavailable');
+        return;
+      }
+      router.replace('/login?reason=session-expired');
+    }
+  }, [router]);
+
   useEffect(() => {
-    setSignedIn(Boolean(getAdminToken()));
-    setUser(getAdminUser());
-  }, [pathname]);
+    void restore();
+  }, [restore]);
+
+  useEffect(() => {
+    const syncUser = () => setUser(getAdminUser());
+    window.addEventListener(AUTH_STATE_EVENT, syncUser);
+    return () => window.removeEventListener(AUTH_STATE_EVENT, syncUser);
+  }, []);
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  const signOut = () => {
-    clearAdminToken();
-    setSignedIn(false);
-    setUser(null);
-    window.location.href = '/';
+  const signOut = async () => {
+    await api.logout();
+    router.replace('/login?reason=signed-out');
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
+  if (status !== 'ready') {
+    return (
+      <div className="theme-light flex min-h-screen items-center justify-center bg-paper px-6 text-foreground">
+        <div className="w-full max-w-sm text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">HI</div>
+          <h1 className="mt-5 text-xl font-semibold text-primary">
+            {status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            {status === 'checking'
+              ? 'Restoring the protected operator session.'
+              : 'The backend host may be waking up. Your session has not been discarded.'}
+          </p>
+          {status === 'unavailable' ? (
+            <button type="button" className="btn-primary mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold" onClick={() => void restore()}>
+              Try again
+            </button>
+          ) : (
+            <div className="mx-auto mt-5 h-1 w-28 overflow-hidden rounded-full bg-primary/10">
+              <div className="h-full w-1/2 animate-pulse rounded-full bg-secondary" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="theme-light dash-canvas min-h-screen text-foreground">
-      <a
-        href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-primary focus:px-3 focus:py-2 focus:text-white"
-      >
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-white">
         Skip to content
       </a>
       <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-[17.5rem] shrink-0 p-3 md:flex">
-          <div className="dash-sidebar flex h-full w-full flex-col rounded-2xl bg-white px-3 py-4">
-            <Link href="/" className="rounded-xl px-3 py-3">
-              <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-secondary">Nagumo</p>
-              <p className="mt-1 text-[1.05rem] font-semibold tracking-tight text-primary">HR Intelligence</p>
-              <p className="mt-1 text-xs text-muted">Operator workspace</p>
-            </Link>
-            <nav className="mt-4 flex flex-1 flex-col gap-1 px-1" aria-label="Application">
-              {nav.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`rounded-xl px-3 py-2.5 transition ${
-                      active ? 'bg-primary text-white' : 'text-muted hover:bg-paper hover:text-primary'
-                    }`}
-                  >
-                    <span className="block text-sm font-medium">{item.label}</span>
-                    <span className={`block text-[11px] ${active ? 'text-white/70' : 'text-muted/80'}`}>
-                      {item.hint}
-                    </span>
-                  </Link>
-                );
-              })}
-            </nav>
-            <div className="mt-auto rounded-xl bg-paper px-4 py-4">
-              {signedIn ? (
-                <>
-                  <p className="text-sm font-semibold text-primary">{user?.name ?? 'Operator'}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted">{user?.email ?? 'Signed in'}</p>
-                  <button type="button" className="mt-3 text-sm font-medium text-primary hover:text-primary-hover" onClick={signOut}>
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <Link href="/login" className="text-sm font-medium text-primary hover:text-primary-hover">
-                  Sign in
-                </Link>
-              )}
+        <aside className="dash-sidebar sticky top-0 hidden h-screen w-[17rem] shrink-0 border-r border-slate-800 md:flex md:flex-col">
+          <Link href="/overview" className="border-b border-white/10 px-5 py-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-slate-950">HI</span>
+              <span>
+                <span className="block text-sm font-semibold tracking-tight text-white">HR Intelligence</span>
+                <span className="mt-0.5 block text-[11px] text-slate-400">Case operations</span>
+              </span>
+            </div>
+          </Link>
+
+          <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Application">
+            {navGroups.map((group) => (
+              <div key={group.label} className="mb-5">
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{group.label}</p>
+                <div className="space-y-1">
+                  {group.items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link key={item.href} href={item.href} className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'}`}>
+                        <span className={`mt-0.5 ${active ? 'text-secondary' : 'text-slate-500 group-hover:text-slate-300'}`}><NavIcon name={item.icon} /></span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium">{item.label}</span>
+                          <span className={`mt-0.5 block text-[11px] ${active ? 'text-slate-300' : 'text-slate-500'}`}>{item.hint}</span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          <div className="border-t border-white/10 p-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold uppercase text-white">
+                {(user?.name ?? user?.email ?? 'O').slice(0, 2)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">{user?.name ?? 'Operator'}</p>
+                <p className="truncate text-[11px] text-slate-400">{user?.email ?? 'Authenticated'}</p>
+              </div>
+              <button type="button" onClick={() => void signOut()} className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Sign out">
+                Exit
+              </button>
             </div>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 px-3 pt-3 md:px-6 md:pt-4">
-            <div className="nav-dock flex items-center justify-between gap-3 rounded-2xl border border-primary/10 bg-white/90 px-4 py-2.5 backdrop-blur-md">
+          <header className="sticky top-0 z-40 border-b border-primary/10 bg-white/95 backdrop-blur">
+            <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-4 py-4 md:px-8">
               <div className="min-w-0">
-                <p className="text-[10px] font-medium tracking-[0.18em] text-secondary md:hidden">HR Intelligence</p>
-                <h1 className="truncate text-lg font-semibold tracking-tight text-primary md:text-xl">{title}</h1>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-secondary md:hidden">HR Intelligence</p>
+                <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 md:text-2xl">{title}</h1>
               </div>
-              <div className="flex items-center gap-2">
-                <Link href="/" className="hidden rounded-full px-3 py-1.5 text-sm text-muted hover:bg-paper hover:text-primary md:inline">
-                  Home
-                </Link>
-                <button
-                  type="button"
-                  className="rounded-full border border-primary/15 px-3 py-1.5 text-sm text-primary md:hidden"
-                  aria-expanded={open}
-                  aria-controls="mobile-app-nav"
-                  onClick={() => setOpen((value) => !value)}
-                >
+              <div className="flex items-center gap-3">
+                <span className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
+                  <span className="h-2 w-2 rounded-full bg-success" />
+                  Protected workspace
+                </span>
+                <button type="button" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm md:hidden" aria-expanded={open} aria-controls="mobile-app-nav" onClick={() => setOpen((value) => !value)}>
                   {open ? 'Close' : 'Menu'}
                 </button>
               </div>
             </div>
             {open ? (
-              <nav
-                id="mobile-app-nav"
-                className="nav-dock mt-2 rounded-[1.6rem] border border-primary/10 bg-white/95 p-3 shadow-float md:hidden"
-                aria-label="Mobile application"
-              >
-                {nav.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`block rounded-full px-4 py-2.5 text-sm ${
-                      isActive(item.href) ? 'bg-primary text-white' : 'text-primary'
-                    }`}
-                  >
+              <nav id="mobile-app-nav" className="border-t border-slate-100 bg-white p-3 md:hidden" aria-label="Mobile application">
+                {navGroups.flatMap((group) => group.items).map((item) => (
+                  <Link key={item.href} href={item.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${isActive(item.href) ? 'bg-primary text-white' : 'text-slate-700'}`}>
+                    <NavIcon name={item.icon} />
                     {item.label}
                   </Link>
                 ))}
-                {signedIn ? (
-                  <button type="button" className="mt-1 w-full rounded-full px-4 py-2.5 text-left text-sm text-muted" onClick={signOut}>
-                    Sign out
-                  </button>
-                ) : (
-                  <Link href="/login" className="mt-1 block rounded-full px-4 py-2.5 text-sm text-primary">
-                    Sign in
-                  </Link>
-                )}
+                <button type="button" className="mt-2 w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-danger" onClick={() => void signOut()}>
+                  Sign out
+                </button>
               </nav>
             ) : null}
           </header>
-          <main id="main" className="relative flex-1 px-4 py-6 md:px-8 md:py-8">
-            <div
-              className="pointer-events-none absolute -right-10 top-8 hidden h-40 w-40 rounded-full bg-mist/40 md:block"
-              aria-hidden="true"
-            />
-            {description ? <p className="reveal relative mb-6 max-w-2xl text-sm leading-6 text-muted">{description}</p> : null}
-            <div className="relative">{children}</div>
+
+          <main id="main" className="flex-1 px-4 py-6 md:px-8 md:py-8">
+            <div className="mx-auto max-w-[96rem]">
+              {description ? <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+              {children}
+            </div>
           </main>
         </div>
       </div>
