@@ -70,6 +70,12 @@ await jest.unstable_mockModule('../../../src/modules/ingestion/intercom.webhook.
   recordIntercomWebhookNotification: mockRecordIntercomNotification
 }));
 
+await jest.unstable_mockModule('../../../src/modules/ingestion/ingestion.repository.js', () => ({
+  ingestionRepository: {
+    markQueued: mockMarkInboundQueued
+  }
+}));
+
 const { app } = await import('../../../src/app.js');
 
 describe('Intercom webhook integration', () => {
@@ -80,6 +86,7 @@ describe('Intercom webhook integration', () => {
     mockEnqueueIntercomIntelligence.mockReset();
     mockRecordIntercomNotification.mockReset();
     mockMarkInboundQueued.mockReset();
+    mockMarkInboundQueued.mockResolvedValue(undefined);
     mockRecordIntercomNotification.mockResolvedValue({ duplicate: false, externalEventId: 'notif-1' });
     mockSyncFromWebhook.mockResolvedValue({
       id: 1,
