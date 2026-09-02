@@ -8,10 +8,9 @@ import { SiteFooter } from '../components/landing/SiteFooter';
 import { UseCases } from '../components/landing/UseCases';
 import { WaveEdge } from '../components/landing/WaveEdge';
 import { WorkflowStory } from '../components/landing/WorkflowStory';
+import { RecruiterDemoPanel } from '../components/RecruiterDemoPanel';
 
 export default function LandingPage() {
-  const intercomUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
-
   return (
     <div className="theme-light landing-canvas relative min-h-screen overflow-x-hidden text-foreground">
       <LandingNav />
@@ -115,35 +114,8 @@ export default function LandingPage() {
                 Intercom remains the operator inbox where conversations arrive and intelligence is written back.
               </p>
             </div>
-            <div className="mt-10 grid gap-5 md:grid-cols-2">
-              <article className="rounded-3xl border border-primary/10 bg-paper p-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">01 · Recruiter showcase</p>
-                <h3 className="mt-3 text-2xl font-semibold text-primary">Read-only intelligence dashboard</h3>
-                <p className="mt-3 leading-7 text-muted">
-                  Inspect case classification, employee resolution, related history, stakeholder routing,
-                  and the production architecture without access to administrative controls.
-                </p>
-                <Link href="/login" className="mt-6 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white">
-                  Open recruiter dashboard
-                </Link>
-              </article>
-              <article className="rounded-3xl border border-primary/10 bg-primary p-7 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">02 · Operator workflow</p>
-                <h3 className="mt-3 text-2xl font-semibold">Intercom inbox and Canvas</h3>
-                <p className="mt-3 leading-7 text-white/75">
-                  Follow the same case in Intercom, from signed webhook ingestion to the Canvas intelligence
-                  panel and internal-note write-back. Access is granted by individual invitation.
-                </p>
-                {intercomUrl ? (
-                  <a href={intercomUrl} target="_blank" rel="noreferrer" className="mt-6 inline-flex rounded-full bg-secondary px-5 py-2.5 text-sm font-medium text-white">
-                    Open invited Intercom workspace ↗
-                  </a>
-                ) : (
-                  <p className="mt-6 text-sm font-medium text-emerald-200">
-                    Live Intercom access is provided during a scheduled review.
-                  </p>
-                )}
-              </article>
+            <div className="mt-10">
+              <RecruiterDemoPanel />
             </div>
             <p className="mt-6 text-sm text-muted">
               Portfolio environment only · Synthetic records · No employer or customer data
