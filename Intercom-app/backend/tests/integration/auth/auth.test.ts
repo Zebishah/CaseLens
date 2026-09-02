@@ -2,6 +2,17 @@ import request from 'supertest';
 import { app } from '../../../src/app.js';
 
 describe('Auth integration tests', () => {
+  test('replaces unsafe request identifiers instead of reflecting them', async () => {
+    const unsafeId = 'bad id\nwith-control-data';
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set('x-request-id', unsafeId)
+      .send({ email: 'bad' });
+
+    expect(res.headers['x-request-id']).toMatch(/^[a-f0-9-]{36}$/);
+    expect(res.headers['x-request-id']).not.toBe(unsafeId);
+  });
+
   test('POST /api/auth/login - invalid body', async () => {
     const res = await request(app).post('/api/auth/login').send({ email: 'bad' });
     expect(res.statusCode).toBe(400);
