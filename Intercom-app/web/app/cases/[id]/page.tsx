@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { AppShell } from '../../../components/AppShell';
 import { AlertBanner, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../../components/dashboard/ui';
 import { api } from '../../../lib/api';
-import { getAdminToken } from '../../../lib/auth-token';
+import { getAdminToken, getAdminUser } from '../../../lib/auth-token';
 
 export default function CaseDetailPage() {
   const params = useParams<{ id: string }>();
@@ -14,6 +14,7 @@ export default function CaseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const isAdmin = getAdminUser()?.role === 'admin';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -192,14 +193,20 @@ export default function CaseDetailPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-xs leading-5 text-muted">
-              Received {timeline.createdAt ?? '—'} · Processed {timeline.processedAt ?? 'pending'} ·{' '}
-              {timeline.processingDurationMs ?? '—'} ms
-              {timeline.correlationId ? ` · ${timeline.correlationId}` : ''}
-              {caseRow.intercomSyncStatus ? ` · Intercom sync ${caseRow.intercomSyncStatus}` : ''}
-            </p>
+            {isAdmin ? (
+              <p className="mt-6 text-xs leading-5 text-muted">
+                Received {timeline.createdAt ?? '—'} · Processed {timeline.processedAt ?? 'pending'} ·{' '}
+                {timeline.processingDurationMs ?? '—'} ms
+                {timeline.correlationId ? ` · ${timeline.correlationId}` : ''}
+                {caseRow.intercomSyncStatus ? ` · Intercom sync ${caseRow.intercomSyncStatus}` : ''}
+              </p>
+            ) : (
+              <p className="mt-6 text-xs leading-5 text-muted">
+                Generated from the persisted intelligence snapshot. Open the source conversation in Intercom to review the operator workflow.
+              </p>
+            )}
           </SectionCard>
-          <SectionCard title="Operator feedback" className="lg:col-span-2">
+          {isAdmin ? <SectionCard title="Operator feedback" className="lg:col-span-2">
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -219,7 +226,7 @@ export default function CaseDetailPage() {
               </button>
               {saved ? <p className="mt-3 text-sm text-success">Feedback saved for this case.</p> : null}
             </form>
-          </SectionCard>
+          </SectionCard> : null}
         </div>
       ) : null}
     </AppShell>
