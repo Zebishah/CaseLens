@@ -15,8 +15,8 @@ export const intercomNotificationId = (envelope: IntercomWebhookEnvelope): strin
 
 /**
  * Durable Intercom webhook idempotency. Conversation persist stays on the existing
- * Intercom API sync path so characterization tests remain valid. Duplicate
- * notification IDs skip re-sync and re-enqueue.
+ * Intercom API sync path so characterization tests remain valid. Queued notification IDs skip re-sync and re-enqueue; interrupted received/failed
+ * records are safely resumed by the webhook service.
  */
 export const recordIntercomWebhookNotification = async (
   envelope: IntercomWebhookEnvelope
@@ -53,6 +53,12 @@ export const recordIntercomWebhookNotification = async (
       payload: { topic: envelope.topic },
       receivedAt: new Date()
     });
+    return {
+      duplicate: false,
+      externalEventId,
+      inboundEventId: inserted.id,
+      status: inserted.status
+    };
   } catch (error) {
     if (isUniqueViolation(error)) {
       const raced = await ingestionRepository.findBySourceExternalId('intercom', externalEventId);
@@ -68,6 +74,4 @@ export const recordIntercomWebhookNotification = async (
     });
     throw error;
   }
-
-  return { duplicate: false, externalEventId, inboundEventId: inserted.id, status: inserted.status };
 };
