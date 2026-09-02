@@ -6,7 +6,7 @@ import {
   type IntelligenceStatus
 } from '../../constants/intelligence.constants.js';
 import { logger } from '../../config/logger.config.js';
-import { db } from '../../database/connection.js';
+import { db, type Database } from '../../database/connection.js';
 import { conversationMessages } from '../../database/schema/conversation_messages.js';
 import { conversations } from '../../database/schema/conversations.js';
 import { employeeIdentities } from '../../database/schema/employee_identities.js';
@@ -30,6 +30,7 @@ import { laterTimestamp } from '../intelligence/intelligence-revision.util.js';
 
 export type ConversationRecord = typeof conversations.$inferSelect;
 export type ConversationMessageRecord = typeof conversationMessages.$inferSelect;
+export type ConversationExecutor = Pick<Database, 'insert' | 'update' | 'delete' | 'query'>;
 
 const conversationSelectColumns = sql`
   c.id,
@@ -95,8 +96,11 @@ export const conversationRepository = {
     });
   },
 
-  async findByIntercomId(intercomId: string): Promise<ConversationRecord | undefined> {
-    return db.query.conversations.findFirst({
+  async findByIntercomId(
+    intercomId: string,
+    executor: ConversationExecutor = db
+  ): Promise<ConversationRecord | undefined> {
+    return executor.query.conversations.findFirst({
       where: eq(conversations.intercomId, intercomId)
     });
   },
@@ -486,7 +490,8 @@ export const conversationRepository = {
 
   async upsertMessages(
     conversationId: number,
-    messages: MappedConversationMessage[]
+    messages: MappedConversationMessage[],
+    executor: ConversationExecutor = db
   ): Promise<number> {
     const messagesToSave = messages.slice(0, CONVERSATION_MESSAGE_SAVE_LIMIT);
     const keptPartIds = messagesToSave
@@ -494,13 +499,13 @@ export const conversationRepository = {
       .filter((partId): partId is string => Boolean(partId));
 
     if (keptPartIds.length === 0) {
-      await db
+      await executor
         .delete(conversationMessages)
         .where(eq(conversationMessages.conversationId, conversationId));
       return 0;
     }
 
-    await db
+    await executor
       .delete(conversationMessages)
       .where(
         and(
@@ -513,7 +518,7 @@ export const conversationRepository = {
     let upserted = 0;
 
     for (const message of messagesToSave) {
-      await db
+      await executor
         .insert(conversationMessages)
         .values({
           conversationId,
@@ -548,10 +553,14 @@ export const conversationRepository = {
     mapped: MappedConversation,
     messages: MappedConversationMessage[],
     intelligenceStatus: string,
-    options?: { preserveIntelligenceStatus?: boolean }
+    options?: {
+      preserveIntelligenceStatus?: boolean;
+      executor?: ConversationExecutor;
+    }
   ): Promise<ConversationRecord> {
+    const executor = options?.executor ?? db;
     const now = new Date();
-    const existing = await this.findByIntercomId(mapped.intercomId);
+    const existing = await this.findByIntercomId(mapped.intercomId, executor);
 
     const preserveStatus = options?.preserveIntelligenceStatus === true && Boolean(existing);
     const statusToSet = preserveStatus ? existing!.intelligenceStatus : intelligenceStatus;
@@ -565,7 +574,7 @@ export const conversationRepository = {
       mapped.sourceUpdatedAt ?? null
     );
 
-    const [conversation] = await db
+    const [conversation] = await executor
       .insert(conversations)
       .values({
         intercomId: mapped.intercomId,
@@ -617,7 +626,7 @@ export const conversationRepository = {
       })
       .returning();
 
-    await this.upsertMessages(conversation.id, messages);
+    await this.upsertMessages(conversation.id, messages, executor);
 
     logger.info('[conversation] Upsert complete', {
       conversationId: conversation.id,
