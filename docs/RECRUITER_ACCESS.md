@@ -26,7 +26,7 @@ Configure the frontend deployment:
 
 ```env
 NEXT_PUBLIC_INTERCOM_WORKSPACE_URL=https://app.intercom.com/a/inbox/YOUR_WORKSPACE_ID/inbox
-NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME=HR Intelligence demo
+NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME=Nagumo Workspace [DEV]
 NEXT_PUBLIC_INTERCOM_DEMO_EMAIL=demo-reviewer@example.com
 NEXT_PUBLIC_INTERCOM_DEMO_PASSWORD=unique-password-used-only-for-this-demo
 NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL=https://www.youtube.com/embed/VIDEO_ID
@@ -48,7 +48,7 @@ Lock the Intercom teammate down before publishing:
 1. Open the portfolio landing page and find **Live recruiter demo**.
 2. Copy the displayed demo teammate email and password.
 3. Choose **Open Intercom inbox** and sign in.
-4. Select the configured HR Intelligence demo workspace if prompted.
+4. Select **Nagumo Workspace [DEV]** if prompted.
 5. Open **Inbox**, then **All** or **Unassigned**.
 6. Open any synthetic HR ticket.
 7. Inspect the HR Intelligence panel: identity resolution, category, related cases, routing, and review status.
