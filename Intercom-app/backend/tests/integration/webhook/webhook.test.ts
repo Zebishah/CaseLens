@@ -23,7 +23,15 @@ const mockRefreshFromIntercomApi = jest.fn<
 >();
 const mockMarkIntelligencePending = jest.fn<() => Promise<void>>();
 const mockEnqueueIntercomIntelligence = jest.fn<() => Promise<void>>();
-const mockRecordIntercomNotification = jest.fn<() => Promise<{ duplicate: boolean; externalEventId: string }>>();
+const mockRecordIntercomNotification = jest.fn<
+  () => Promise<{
+    duplicate: boolean;
+    externalEventId: string;
+    inboundEventId?: number | null;
+    status?: string;
+  }>
+>();
+const mockMarkInboundQueued = jest.fn<() => Promise<void>>();
 const mockFindById = jest.fn<
   () => Promise<
     | {
@@ -71,6 +79,7 @@ describe('Intercom webhook integration', () => {
     mockMarkIntelligencePending.mockReset();
     mockEnqueueIntercomIntelligence.mockReset();
     mockRecordIntercomNotification.mockReset();
+    mockMarkInboundQueued.mockReset();
     mockRecordIntercomNotification.mockResolvedValue({ duplicate: false, externalEventId: 'notif-1' });
     mockSyncFromWebhook.mockResolvedValue({
       id: 1,
@@ -145,6 +154,28 @@ describe('Intercom webhook integration', () => {
         jobId: expect.stringMatching(/^intelligence-1-r/)
       })
     );
+  });
+
+  test('POST /webhooks/intercom - resumes a recorded event that was never queued', async () => {
+    mockRecordIntercomNotification.mockResolvedValue({
+      duplicate: true,
+      externalEventId: 'notif-interrupted',
+      inboundEventId: 44,
+      status: 'received'
+    });
+    const { rawBody, payload } = loadWebhookFixture();
+    const signature = computeWebhookSignature(rawBody, TEST_SECRET);
+
+    const res = await request(app as Express)
+      .post('/webhooks/intercom')
+      .set('Content-Type', 'application/json')
+      .set('x-hub-signature', signature)
+      .send(payload);
+
+    expect(res.statusCode).toBe(200);
+    expect(mockSyncFromWebhook).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueIntercomIntelligence).toHaveBeenCalledTimes(1);
+    expect(mockMarkInboundQueued).toHaveBeenCalledWith(44, 1);
   });
 
   test('POST /webhooks/intercom - duplicate notification does not re-sync', async () => {
