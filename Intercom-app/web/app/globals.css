@@ -73,9 +73,9 @@ body {
 .dash-canvas { background: #f5f7f9; }
 .dash-sidebar {
   background:
-    radial-gradient(circle at 18% 0%, rgb(45 170 145 / 0.16), transparent 32%),
-    linear-gradient(180deg, #073f37 0%, #062f2b 52%, #052824 100%);
-  box-shadow: 10px 0 30px rgb(5 40 36 / 0.08);
+    radial-gradient(circle at 18% 0%, rgb(69 205 170 / 0.2), transparent 34%),
+    linear-gradient(180deg, #07594b 0%, #06463d 48%, #04352f 100%);
+  box-shadow: 0 16px 38px rgb(4 53 47 / 0.16);
 }
 
 .dash-panel {
