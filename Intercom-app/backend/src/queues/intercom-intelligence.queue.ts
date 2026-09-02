@@ -130,8 +130,8 @@ export const enqueueIntercomIntelligence = async (
     const job = await withTimeout(
       getIntercomIntelligenceQueue().add('process-intelligence', data, {
         jobId,
-        attempts: 5,
-        backoff: { type: 'exponential', delay: 1000 },
+        attempts: env.QUEUE_JOB_ATTEMPTS,
+        backoff: { type: 'exponential', delay: env.QUEUE_BACKOFF_MS },
         removeOnComplete: true,
         removeOnFail: 100
       }),
