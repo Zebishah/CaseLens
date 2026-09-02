@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 const links = [
   { href: '/#product', label: 'Product', match: 'product' },
   { href: '/#architecture', label: 'Architecture', match: 'architecture' },
-  { href: '/#evaluation', label: 'Evaluation', match: 'evaluation' }
+  { href: '/#live-demo', label: 'Live demo', match: 'live-demo' }
 ];
 
 export function LandingNav() {
