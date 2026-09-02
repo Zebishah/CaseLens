@@ -43,7 +43,8 @@
     "intercom:fetch": "tsx scripts/fetch-intercom-conversation.ts",
     "intercom:smoke": "tsx scripts/intercom-smoke.ts",
     "intercom:canvas-smoke": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand tests/integration/canvas/canvas.contract.smoke.test.ts tests/integration/canvas/canvas.test.ts",
-    "intercom:sync": "tsx scripts/sync-intercom-conversations.ts"
+    "intercom:sync": "tsx scripts/sync-intercom-conversations.ts",
+    "db:seed-viewer": "tsx scripts/seed-viewer.ts"
   },
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
