@@ -32,6 +32,15 @@ const booleanFlag = (defaultValue: boolean) =>
     .optional()
     .transform((value) => (value === undefined ? defaultValue : value === 'true'));
 
+const trustProxyValue = z
+  .union([z.enum(['true', 'false']), z.coerce.number().int().min(0).max(2)])
+  .optional()
+  .transform((value) => {
+    if (value === undefined || value === 'true') return 1;
+    if (value === 'false') return 0;
+    return value;
+  });
+
 const optionalSecret = z
   .string()
   .optional()
@@ -60,6 +69,9 @@ const envSchema = z
     COOKIE_SECURE: booleanFlag(false),
     COOKIE_SAME_SITE: z.enum(['lax', 'strict', 'none']).default('lax'),
     CORS_ORIGINS: z.string().optional(),
+    TRUST_PROXY: trustProxyValue,
+    JWT_ISSUER: z.string().min(3).default('hr-intelligence-api'),
+    JWT_AUDIENCE: z.string().min(3).default('hr-intelligence-web'),
 
     RUN_API: booleanFlag(true),
     RUN_WORKERS: booleanFlag(true),
@@ -123,6 +135,30 @@ const envSchema = z
     SENTRY_DSN: optionalSecret
   })
   .superRefine((value, ctx) => {
+    if (value.NODE_ENV === 'production') {
+      if (value.JWT_SECRET.length < 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['JWT_SECRET'],
+          message: 'JWT_SECRET must contain at least 32 characters in production'
+        });
+      }
+      if (value.JWT_REFRESH_SECRET.length < 32) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['JWT_REFRESH_SECRET'],
+          message: 'JWT_REFRESH_SECRET must contain at least 32 characters in production'
+        });
+      }
+      if (value.JWT_SECRET === value.JWT_REFRESH_SECRET) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['JWT_REFRESH_SECRET'],
+          message: 'JWT refresh and access secrets must be different'
+        });
+      }
+    }
+
     if (value.COOKIE_SAME_SITE === 'none' && !value.COOKIE_SECURE) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
