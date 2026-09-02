@@ -5,7 +5,8 @@ import { shouldDispatchQueueJobs, shouldStartQueueWorkers } from '../../../src/c
 const base = {
   NODE_ENV: 'test',
   DATABASE_URL: 'postgresql://user:password@localhost:5432/db_name',
-  JWT_SECRET: 'test-secret-value',
+  JWT_SECRET: 'test-access-secret-value',
+  JWT_REFRESH_SECRET: 'test-refresh-secret-value',
   INTERCOM_ENABLED: 'false',
   LLM_MODE: 'fixture',
   RUN_API: 'true',
