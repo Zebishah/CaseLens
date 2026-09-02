@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, EmptyState, PageSkeleton, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
@@ -55,7 +55,7 @@ export default function AccessRequestsPage() {
     setAction(id);
     setError(null);
     try {
-      await api.post(`/api/access-requests/${id}`, { status });
+      await api.patch(`/api/access-requests/${id}`, { status });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update request');
@@ -179,7 +179,7 @@ function ActionButton({
   muted = false,
   onClick
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   disabled: boolean;
   muted?: boolean;
   onClick: () => void;
