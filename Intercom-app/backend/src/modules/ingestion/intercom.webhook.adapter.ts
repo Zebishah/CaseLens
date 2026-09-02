@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { logger } from '../../config/logger.config.js';
 import { INTERCOM_WEBHOOK_TOPICS } from '../../constants/intercom.constants.js';
 import type { IntercomWebhookEnvelope } from '../intercom/intercom.types.js';
@@ -5,6 +6,9 @@ import { buildCorrelationId } from './ingestion.normalize.js';
 import { ingestionRepository } from './ingestion.repository.js';
 
 const isUniqueViolation = (error: unknown): boolean => (error as { code?: string }).code === '23505';
+
+export const intercomPayloadHash = (envelope: IntercomWebhookEnvelope): string =>
+  createHash('sha256').update(JSON.stringify(envelope)).digest('hex');
 
 export const intercomNotificationId = (envelope: IntercomWebhookEnvelope): string => {
   const conversationId = String(
@@ -46,7 +50,7 @@ export const recordIntercomWebhookNotification = async (
       source: 'intercom',
       externalEventId,
       eventType: envelope.topic,
-      payloadHash: externalEventId,
+      payloadHash: intercomPayloadHash(envelope),
       status: 'received',
       correlationId: buildCorrelationId(),
       processingMode: 'live',
