@@ -79,6 +79,8 @@ const envSchema = z
 
     REDIS_ENQUEUE_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
     INTELLIGENCE_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(3),
+    QUEUE_JOB_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(5),
+    QUEUE_BACKOFF_MS: z.coerce.number().int().min(100).max(60_000).default(1000),
 
     LLM_MODE: z.enum(['live', 'fixture']).default('fixture'),
     GEMINI_API_KEY: optionalSecret,
