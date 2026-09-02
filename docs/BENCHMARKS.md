@@ -4,18 +4,18 @@ No production performance or business metrics are claimed. Values below are labe
 
 ## Current CI verification
 
-GitHub Actions run [#72](https://github.com/Zebishah/Hr-intercom/actions/runs/33679675219), commit `fe490d9`, 2026-09-02:
+GitHub Actions run [#99](https://github.com/Zebishah/Hr-intercom/actions/runs/33686513729), commit `3f28869`, 2026-09-02:
 
 | Check | Result | Label |
 |---|---:|---|
 | Backend lint | Passed | CI verification |
 | Backend typecheck | Passed | CI verification |
-| Backend tests | **87 suites, 554 tests passed** | CI verification |
+| Backend tests | **89 suites, 561 tests passed** | CI verification |
 | Backend production build | Passed | CI verification |
 | Migration/evaluation files | Present | CI verification |
 | Frontend lint + typecheck | Passed | CI verification |
 | Frontend production build | Passed | CI verification |
-| Frontend routes | **12 generated pages/routes** | CI build output |
+| Frontend routes | **14 generated pages/routes** | CI build output |
 
 The install also reported dependency advisories: backend 18 (7 moderate, 10 high, 1 critical) and frontend 2 (1 moderate, 1 high). See `docs/SECURITY.md`; do not describe the dependency tree as vulnerability-free.
 
