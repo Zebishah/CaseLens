@@ -1,10 +1,10 @@
 # Recruiter access
 
-The portfolio uses two deliberately separate access paths.
+The portfolio exposes two separate, synthetic-only review paths. Neither path uses employer or customer data.
 
-## 1. Read-only dashboard
+## Read-only product dashboard
 
-Create a dedicated reviewer account instead of sharing an operator account:
+Create a dedicated dashboard viewer:
 
 ```bash
 cd Intercom-app/backend
@@ -14,36 +14,46 @@ SEED_VIEWER_NAME='Recruiter Review' \
 npm run db:seed-viewer
 ```
 
-A `viewer` can inspect the overview, sanitized cases, directory records, and architecture. The API blocks corrections, feedback, imports, sync controls, replay, recovery, operations, and evaluation endpoints.
+A `viewer` can inspect Overview, sanitized cases, People & stores, and Architecture. Server-side authorization blocks corrections, feedback, imports, sync controls, replay, recovery, Operations, AI Evaluation, and user management.
 
-Share dashboard credentials privately and rotate or remove the account after the review.
+Never publish or share an admin account.
 
-## 2. Intercom operator workflow
+## Shared synthetic Intercom workspace
 
-Never share the Google account used to create the Developer Workspace.
+The landing page and Overview can show an intentionally public, tightly restricted Intercom teammate. This is acceptable only because this Developer Workspace contains generated portfolio records and no private data.
 
-For a scheduled live review:
-
-1. Invite the recruiter's own work email as an Intercom teammate.
-2. Grant only the minimum inbox/conversation access needed for the synthetic demo.
-3. Do not grant workspace settings, app configuration, teammate management, export, billing, or security permissions.
-4. Use only generated conversations and contacts.
-5. Remove the teammate when the review is complete.
-
-Set the optional frontend link to the relevant inbox or demo conversation:
+Configure the frontend deployment:
 
 ```env
 NEXT_PUBLIC_INTERCOM_WORKSPACE_URL=https://app.intercom.com/a/inbox/YOUR_WORKSPACE_ID/inbox
+NEXT_PUBLIC_INTERCOM_WORKSPACE_NAME=HR Intelligence demo
+NEXT_PUBLIC_INTERCOM_DEMO_EMAIL=demo-reviewer@example.com
+NEXT_PUBLIC_INTERCOM_DEMO_PASSWORD=unique-password-used-only-for-this-demo
+NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL=https://www.youtube.com/embed/VIDEO_ID
 ```
 
-This link does not bypass Intercom authentication. Only individually invited teammates can open the workspace.
+These `NEXT_PUBLIC_*` values are intentionally visible to every site visitor. Never put Intercom access tokens, client secrets, personal Google credentials, or reused passwords in them.
 
-## Recommended recruiter flow
+Lock the Intercom teammate down before publishing:
 
-1. Open the portfolio landing page.
-2. Sign in with the read-only dashboard account.
-3. Review Overview, Case explorer, People & stores, and Architecture.
-4. Open one case and use **Open in Intercom**.
-5. In Intercom, show the original conversation, Canvas intelligence, related history, and write-back.
+- Allow only the synthetic demo inbox/conversations.
+- Remove Developer Hub, app installation/configuration, teammate management, workspace settings, exports, billing, security, contacts/data deletion, and outbound messaging permissions where Intercom permits.
+- Do not make the teammate an administrator.
+- Keep all contacts and conversations generated.
+- Rotate the password regularly and immediately if the workspace is modified.
+- Prefer the subtitled video when the shared seat is unavailable or Intercom blocks concurrent sessions.
 
-For asynchronous applications, use a short screen recording. Reserve live Intercom invitations for scheduled interviews or serious reviewers.
+## Visitor flow
+
+1. Open the portfolio landing page and find **Live recruiter demo**.
+2. Copy the displayed demo teammate email and password.
+3. Choose **Open Intercom inbox** and sign in.
+4. Select the configured HR Intelligence demo workspace if prompted.
+5. Open **Inbox**, then **All** or **Unassigned**.
+6. Open any synthetic HR ticket.
+7. Inspect the HR Intelligence panel: identity resolution, category, related cases, routing, and review status.
+8. Return to the read-only dashboard for aggregated case and architecture evidence.
+
+## Video
+
+Use an iframe-compatible YouTube, Vimeo, or Loom embed URL. Publish a 3–5 minute subtitled walkthrough showing webhook arrival, processing, identity matching, related cases, Intercom write-back, and the read-only dashboard. Do not display secrets, browser password managers, personal tabs, or Developer Hub credentials in the recording.
