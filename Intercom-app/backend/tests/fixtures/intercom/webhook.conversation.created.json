@@ -1,0 +1,25 @@
+{
+  "type": "notification_event",
+  "topic": "conversation.created",
+  "id": "notif_test_001",
+  "app_id": "test-workspace-id",
+  "data": {
+    "type": "notification_event_data",
+    "item": {
+      "type": "conversation",
+      "id": "123456789",
+      "title": "Attendance concern",
+      "state": "open",
+      "source": {
+        "type": "conversation",
+        "body": "I was late today",
+        "author": {
+          "type": "user",
+          "id": "user_1",
+          "name": "Jon Fritz",
+          "email": "jon@example.com"
+        }
+      }
+    }
+  }
+}

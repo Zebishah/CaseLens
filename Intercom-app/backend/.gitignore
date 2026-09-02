@@ -1,0 +1,12 @@
+node_modules/
+dist/
+drizzle/
+.env
+.env.*
+!.env.example
+logs/
+coverage/
+.DS_Store
+benchmarks/raw/
+*.pem
+*credentials*

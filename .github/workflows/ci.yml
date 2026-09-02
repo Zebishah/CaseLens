@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main, portfolio-hardening]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Intercom-app/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: Intercom-app/backend/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npx tsc -p tsconfig.json --noEmit
+      - name: Unit and integration tests
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Migration file present
+        run: test -f scripts/migrate-portfolio-ingestion-schema.sql
+      - name: Evaluation dataset present
+        run: test -f eval/dataset.v1.json
+      - name: Frontend typecheck and build
+        working-directory: Intercom-app/web
+        run: npm install && npx tsc --noEmit && npm run build

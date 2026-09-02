@@ -1,0 +1,34 @@
+# Secrets and local env — never commit values
+.env
+.env.*
+!.env.example
+!.env*.example
+
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Logs and local runtime files (Render disk is ephemeral)
+logs/
+*.log
+npm-debug.log*
+
+# Generated / sensitive artifacts
+benchmarks/raw/
+**/benchmarks/raw/
+**/*credentials*
+**/*.pem
+**/*.key
+Intercom-app/backend/drizzle/
+
+# Client-era internal notes — not part of the public portfolio
+Intercom-app/docs/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
