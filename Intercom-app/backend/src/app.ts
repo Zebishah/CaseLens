@@ -38,8 +38,8 @@ const swaggerSpec = swaggerJSDoc({
 
 export const app = express();
 
-/** One hop (Render, ngrok). Required so express-rate-limit accepts X-Forwarded-For. */
-app.set('trust proxy', 1);
+/** Explicit proxy trust prevents spoofed client IPs while supporting Render/ngrok. */
+app.set('trust proxy', env.TRUST_PROXY);
 
 app.use(
   helmet({
