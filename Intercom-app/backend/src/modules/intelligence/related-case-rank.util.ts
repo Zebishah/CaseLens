@@ -65,12 +65,13 @@ export const rankRelatedCases = (input: {
 
   return input.relatedCases.map((relatedCase) => {
     const evidence: string[] = ['Same employee'];
-    const sameCategory =
-      Boolean(currentType) && relatedCase.caseType.trim().toLowerCase() === currentType;
+    const relatedType = relatedCase.caseType.trim().toLowerCase();
+    const sameCategory = Boolean(currentType) && relatedType === currentType;
     const topics = sharedTopicTerms(relatedCase, topicTerms);
     const sameStore =
       Boolean(currentStore) && relatedCase.reporterStoreNumber?.trim() === currentStore;
     const recent = isWithinDays(relatedCase.createdAt, 30);
+    const closelyRelated = sameCategory || topics.length > 0;
 
     if (sameCategory) {
       evidence.push(`Same category: ${relatedCase.caseType}`);
@@ -78,14 +79,15 @@ export const rankRelatedCases = (input: {
     if (topics.length > 0) {
       evidence.push(`Shared topic: ${topics.join(', ')}`);
     }
+    if (!closelyRelated && currentType && relatedType && relatedType !== currentType) {
+      evidence.push(`Different category: ${relatedCase.caseType}`);
+    }
     if (sameStore) {
       evidence.push('Same store');
     }
     if (recent) {
       evidence.push('Reported within 30 days');
     }
-
-    const closelyRelated = sameCategory || topics.length > 0;
 
     return {
       ...relatedCase,

@@ -22,7 +22,7 @@ export const CANVAS_COPY = {
   NO_RELATED_CASES_NO_EMPLOYEE:
     'Related cases appear after we identify an employee. Add a name in the subject, then click Re-analyze case.',
   CLOSELY_RELATED_CASES_HEADER: 'Closely related cases',
-  OTHER_EMPLOYEE_HISTORY_HEADER: 'Other employee history',
+  OTHER_EMPLOYEE_HISTORY_HEADER: 'Other cases for this employee',
   NO_CATEGORY_CASES: 'No other conversations found in this case category.',
   POSSIBLE_SAME_PERSON_HEADER: 'Possible same person',
   POSSIBLE_SAME_PERSON_DETAIL:
@@ -78,6 +78,7 @@ export const CANVAS_COPY = {
   LAST_UPDATED_PREFIX: 'Last updated',
   IDENTITY_EVIDENCE_PREFIX: 'Identity evidence',
   RELATED_LINK_EVIDENCE_PREFIX: 'Why this is related',
+  EMPLOYEE_HISTORY_EVIDENCE_PREFIX: 'Why this appears',
   OPERATOR_CORRECTED: 'An operator confirmed these details. They stay until you Re-analyze case.',
   DB_UNAVAILABLE:
     'We could not load this case right now. Click Refresh results. If that does not help, close this conversation and open it again.',

@@ -22,6 +22,7 @@ import {
 import { conversationEmployeesRepository } from '../conversation/conversation-employees.repository.js';
 import { employeeNameVariantService } from '../employee/employee.name-variant.service.js';
 import { scoreExtractedNameMatch } from '../employee/employee.token-match.util.js';
+import { normalizeForMatch } from '../employee/employee.name.util.js';
 import { enrichPossibleSamePersonHints } from '../employee/employee.possible-match-enrichment.util.js';
 import { possibleMatchService } from '../employee/employee.possible-match.service.js';
 import { resolveReporterContext } from '../employee/employee.reporter-context.util.js';
@@ -178,6 +179,53 @@ const dedupePossibleSamePerson = (
       array.findIndex((item) => item.employeeIdentityId === match.employeeIdentityId) === index
   );
 
+/**
+ * A possible-match hint must represent a genuinely different employee.
+ * Exact aliases and strong full-name spelling variants already represented by the resolved
+ * identity are suppressed, while one-word and shared-first-name hints remain reviewable.
+ */
+const RESOLVED_FULL_NAME_EQUIVALENCE_MIN_CONFIDENCE = 90;
+
+const collectResolvedEmployeeNames = (match: IntelligenceEmployeeMatch): string[] =>
+  [
+    match.canonicalName,
+    match.extractedName,
+    ...(match.nameVariants ?? []).map((variant) => variant.variantName)
+  ].filter(
+    (name): name is string => typeof name === 'string' && name.trim().length > 0
+  );
+
+const hasMultipleNameTokens = (name: string): boolean =>
+  normalizeForMatch(name).split(/\s+/).filter(Boolean).length >= 2;
+
+const namesRepresentSameResolvedEmployee = (
+  resolvedName: string,
+  possibleName: string
+): boolean => {
+  const normalizedResolved = normalizeForMatch(resolvedName);
+  const normalizedPossible = normalizeForMatch(possibleName);
+
+  if (!normalizedResolved || !normalizedPossible) {
+    return false;
+  }
+
+  if (normalizedResolved === normalizedPossible) {
+    return true;
+  }
+
+  // Do not hide a different employee merely because a single first or last name overlaps.
+  if (!hasMultipleNameTokens(resolvedName) || !hasMultipleNameTokens(possibleName)) {
+    return false;
+  }
+
+  const score =
+    scoreExtractedNameMatch(resolvedName, possibleName)?.confidenceScore ??
+    scoreExtractedNameMatch(possibleName, resolvedName)?.confidenceScore ??
+    0;
+
+  return score >= RESOLVED_FULL_NAME_EQUIVALENCE_MIN_CONFIDENCE;
+};
+
 const dropAutoLinkedPossibleSamePersonHints = (
   hints: IntelligencePossibleSamePerson[],
   matches: IntelligenceEmployeeMatch[]
@@ -187,16 +235,11 @@ const dropAutoLinkedPossibleSamePersonHints = (
       return false;
     }
 
-    return !matches.some((match) => {
-      const scored =
-        scoreExtractedNameMatch(match.canonicalName, hint.canonicalName) ??
-        (match.extractedName
-          ? scoreExtractedNameMatch(match.extractedName, hint.canonicalName)
-          : null);
-      return Boolean(
-        scored && scored.confidenceScore >= INTERCOM_MATCH.ALIAS_LEARNING_MIN_CONFIDENCE
-      );
-    });
+    return !matches.some((match) =>
+      collectResolvedEmployeeNames(match).some((name) =>
+        namesRepresentSameResolvedEmployee(name, hint.canonicalName)
+      )
+    );
   });
 
 const resolvePossibleSamePersonForDisplay = async (
@@ -419,6 +462,9 @@ export const intelligenceService = {
     const employeeMatches = await employeeNameVariantService.enrichMatches(input.employeeMatches, {
       reportExtractedNames: input.mentionedInReport
     });
+    const possibleSamePerson = input.possibleSamePerson
+      ? dropAutoLinkedPossibleSamePersonHints(input.possibleSamePerson, employeeMatches)
+      : undefined;
 
     return {
       caseType: input.caseTypeFilter ?? undefined,
@@ -435,7 +481,7 @@ export const intelligenceService = {
       employeeSearchNotices: input.employeeSearchNotices,
       awaitingCompanyDomainSearch: input.awaitingCompanyDomainSearch,
       companyDomainSearchAttempted: input.companyDomainSearchAttempted,
-      possibleSamePerson: input.possibleSamePerson,
+      possibleSamePerson,
       domainEmployeeMatches: input.domainEmployeeMatches,
       relatedCaseSearchScope: relatedCaseSearchScope ?? undefined,
       relatedCasesReporterDomain: scopeIncludesCompanyDomain(relatedCaseSearchScope)

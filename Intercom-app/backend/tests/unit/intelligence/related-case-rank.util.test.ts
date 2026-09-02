@@ -25,7 +25,10 @@ describe('rankRelatedCases', () => {
     });
 
     expect(ranked[0]?.relationshipGroup).toBe('employee_history');
-    expect(ranked[0]?.relationshipEvidence).toEqual(['Same employee']);
+    expect(ranked[0]?.relationshipEvidence).toEqual([
+      'Same employee',
+      'Different category: payroll'
+    ]);
   });
 
   it('marks same employee plus category/topic as closely related', () => {

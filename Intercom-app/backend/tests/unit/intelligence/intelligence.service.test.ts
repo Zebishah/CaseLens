@@ -513,6 +513,93 @@ describe('intelligenceService', () => {
     );
   });
 
+  it('removes resolved aliases from possible-person hints without hiding different employees', async () => {
+    mockFindByConversationId.mockResolvedValue([]);
+
+    const enriched = await intelligenceService.enrichSnapshotForCanvasDisplay(
+      {
+        id: 7,
+        reporterName: null,
+        reporterEmail: null
+      } as never,
+      {
+        mentionedInReport: ['Ayesha Sophy'],
+        employeeMatches: [
+          {
+            employeeIdentityId: 12,
+            canonicalName: 'Ayesha Sophie',
+            extractedName: 'Ayesha Sophy',
+            confidenceScore: 99,
+            matchMethod: 'token',
+            nameVariants: [
+              {
+                variantName: 'Ayisha Sophie',
+                confidenceScore: 96,
+                matchMethod: 'token'
+              }
+            ]
+          }
+        ],
+        possibleSamePerson: [
+          {
+            employeeIdentityId: 13,
+            canonicalName: 'Ayisha Sophie',
+            confidenceScore: 85,
+            matchMethod: 'token',
+            sharedTokens: ['ayesha~ayisha', 'sophie']
+          },
+          {
+            employeeIdentityId: 14,
+            canonicalName: 'Ayesha Khan',
+            confidenceScore: 68,
+            matchMethod: 'token',
+            sharedTokens: ['ayesha']
+          }
+        ],
+        relatedCases: [],
+        processedAt: '2026-09-02T00:00:00.000Z'
+      }
+    );
+
+    expect(enriched.possibleSamePerson).toEqual([
+      expect.objectContaining({
+        employeeIdentityId: 14,
+        canonicalName: 'Ayesha Khan'
+      })
+    ]);
+  });
+
+  it('filters resolved aliases before storing a new snapshot', async () => {
+    mockFindRelatedCasesByMentionedNames.mockResolvedValue([]);
+
+    const snapshot = await intelligenceService.storeReadySnapshot({
+      conversationId: 10,
+      employeeMatches: [
+        {
+          employeeIdentityId: 12,
+          canonicalName: 'Ayesha Sophie',
+          extractedName: 'Ayesha Sophy',
+          confidenceScore: 99,
+          matchMethod: 'token'
+        }
+      ],
+      searchTerms: ['Ayesha Sophy'],
+      extractedNames: ['Ayesha Sophy'],
+      caseTypeFilter: 'attendance',
+      possibleSamePerson: [
+        {
+          employeeIdentityId: 13,
+          canonicalName: 'Ayesha Sophy',
+          confidenceScore: 85,
+          matchMethod: 'token',
+          sharedTokens: ['ayesha', 'sophy']
+        }
+      ]
+    });
+
+    expect(snapshot.possibleSamePerson).toEqual([]);
+  });
+
   it('marks conversation intelligence as failed and stores attempt metadata', async () => {
     await intelligenceService.markFailed(10, 'boom', { messageCount: 3 });
 

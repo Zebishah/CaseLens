@@ -137,7 +137,11 @@ const resolveCanvasMentionStatus = (
 
 const formatRelatedCaseEvidence = (relatedCase: IntelligenceRelatedCase): string | null => {
   if (relatedCase.relationshipEvidence && relatedCase.relationshipEvidence.length > 0) {
-    return `${CANVAS_COPY.RELATED_LINK_EVIDENCE_PREFIX}: ${relatedCase.relationshipEvidence.join(' · ')}`;
+    const prefix =
+      relatedCase.relationshipGroup === 'employee_history'
+        ? CANVAS_COPY.EMPLOYEE_HISTORY_EVIDENCE_PREFIX
+        : CANVAS_COPY.RELATED_LINK_EVIDENCE_PREFIX;
+    return `${prefix}: ${relatedCase.relationshipEvidence.join(' · ')}`;
   }
 
   const names = (relatedCase.matchedEmployeeNames ?? []).map((name) => name.trim()).filter(Boolean);

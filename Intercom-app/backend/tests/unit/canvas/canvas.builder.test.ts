@@ -707,6 +707,68 @@ describe('canvasBuilder', () => {
     expect(listComponents[0]?.items[0]?.subtitle).toContain('Also written as: John Liebert');
   });
 
+  it('separates close cases from other employee history with clear evidence copy', () => {
+    const canvas = canvasBuilder.buildIntelligenceSnapshot({
+      employeeMatches: [
+        {
+          employeeIdentityId: 12,
+          canonicalName: 'Ayesha Sophie',
+          confidenceScore: 99,
+          matchMethod: 'token'
+        }
+      ],
+      relatedCases: [
+        {
+          conversationId: 20,
+          intercomId: 'attendance-case',
+          subject: 'Attendance concern for Ayisha Sophie',
+          caseType: 'attendance',
+          matchedEmployeeNames: ['Ayisha Sophie'],
+          reporterName: null,
+          status: 'open',
+          advisorName: null,
+          createdAt: '2026-09-01T00:00:00.000Z',
+          relationshipGroup: 'closely_related',
+          relationshipEvidence: ['Same employee', 'Same category: attendance']
+        },
+        {
+          conversationId: 21,
+          intercomId: 'performance-case',
+          subject: 'Performance concern for Ayesha Sophi',
+          caseType: 'coaching',
+          matchedEmployeeNames: ['Ayesha Sophi'],
+          reporterName: null,
+          status: 'open',
+          advisorName: null,
+          createdAt: '2026-09-01T00:00:00.000Z',
+          relationshipGroup: 'employee_history',
+          relationshipEvidence: ['Same employee', 'Different category: coaching']
+        }
+      ],
+      processedAt: new Date().toISOString()
+    });
+
+    expect(canvas.canvas.content.components).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'text',
+          style: 'header',
+          text: 'Closely related cases'
+        }),
+        expect.objectContaining({
+          type: 'text',
+          style: 'header',
+          text: 'Other cases for this employee'
+        }),
+        expect.objectContaining({
+          type: 'text',
+          style: 'muted',
+          text: 'Why this appears: Same employee · Different category: coaching'
+        })
+      ])
+    );
+  });
+
   it('builds possible same person section when token matches exist', () => {
     const canvas = canvasBuilder.buildIntelligenceSnapshot({
       employeeMatches: [
