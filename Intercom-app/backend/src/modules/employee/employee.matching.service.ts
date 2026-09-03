@@ -25,6 +25,7 @@ import {
 } from './employee.matching.util.js';
 import { filterMatchesByReporterDomain } from './employee.domain-gate.util.js';
 import { parseReporterContext } from './employee.reporter-context.util.js';
+import { isClearlyNonPersonEmployeeName } from './employee.mention-validation.util.js';
 import { employeeRepository, type EmployeeIdentityRow } from './employee.repository.js';
 
 export type EmployeeMatchInput = {
@@ -289,10 +290,18 @@ export const findPossibleSamePersonInRoster = (
   extractedName: string,
   roster?: Array<Pick<EmployeeIdentityRow, 'id' | 'canonicalName'>>
 ): IntelligencePossibleSamePerson[] => {
+  if (isClearlyNonPersonEmployeeName(extractedName)) {
+    return [];
+  }
+
   const identities = roster ?? [];
   const matches: IntelligencePossibleSamePerson[] = [];
 
   for (const identity of identities) {
+    if (isClearlyNonPersonEmployeeName(identity.canonicalName)) {
+      continue;
+    }
+
     const scored = scorePossibleSamePersonCandidate(extractedName, identity.canonicalName);
 
     if (!scored) {

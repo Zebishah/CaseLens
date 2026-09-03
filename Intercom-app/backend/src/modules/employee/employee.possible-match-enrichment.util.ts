@@ -18,6 +18,7 @@ import {
   extractEmployeeNamesFromSubject,
   sanitizeExtractedEmployeeNames
 } from './employee.subject-name.util.js';
+import { isClearlyNonPersonEmployeeName } from './employee.mention-validation.util.js';
 import {
   scorePossibleSamePersonCandidate,
   type TokenMatchScore
@@ -184,11 +185,13 @@ export const enrichPossibleSamePersonHints = async (input: {
     input.conversation,
     input.mentionedInReport,
     input.employeeMatches
-  );
+  ).filter((name) => !isClearlyNonPersonEmployeeName(name));
   const matchedIdentityIds = new Set(
     input.employeeMatches.map((match) => match.employeeIdentityId)
   );
-  const hints = [...(input.existingHints ?? [])];
+  const hints = (input.existingHints ?? []).filter(
+    (hint) => !isClearlyNonPersonEmployeeName(hint.canonicalName)
+  );
   const relatedCases = input.relatedCases ?? [];
 
   if (reporterContext.storeNumber) {
@@ -239,6 +242,7 @@ export const enrichPossibleSamePersonHints = async (input: {
   }
 
   const results = dedupePossibleSamePerson(hints)
+    .filter((hint) => !isClearlyNonPersonEmployeeName(hint.canonicalName))
     .sort((left, right) => right.confidenceScore - left.confidenceScore)
     .slice(0, INTERCOM_MATCH.POSSIBLE_MATCH_LIMIT);
 

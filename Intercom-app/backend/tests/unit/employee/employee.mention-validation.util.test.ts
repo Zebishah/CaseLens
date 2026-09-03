@@ -1,8 +1,16 @@
 import {
+  isClearlyNonPersonEmployeeName,
   validateEmployeeMention
 } from '../../../src/modules/employee/employee.mention-validation.util.js';
 
 describe('validateEmployeeMention', () => {
+  it('identifies invalid persisted names without rejecting valid multi-word names', () => {
+    expect(isClearlyNonPersonEmployeeName('Done Wrong')).toBe(true);
+    expect(isClearlyNonPersonEmployeeName('Work Done')).toBe(true);
+    expect(isClearlyNonPersonEmployeeName('Sarah Saffari')).toBe(false);
+    expect(isClearlyNonPersonEmployeeName('Syed Zohaib Haider')).toBe(false);
+  });
+
   it('rejects the screenshot subject first intercom test conversation', () => {
     const result = validateEmployeeMention({
       subject: 'first intercom test conversation',

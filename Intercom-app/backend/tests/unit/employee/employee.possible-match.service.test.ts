@@ -48,4 +48,20 @@ describe('possibleMatchService', () => {
       sharedTokens: ['zohaib']
     });
   });
+
+  it('does not return persisted action phrases as possible people', async () => {
+    mockFindAllExcept.mockResolvedValue([
+      { id: 8, canonicalName: 'Done Wrong', email: null },
+      { id: 9, canonicalName: 'Sarah Saffari', email: null }
+    ]);
+
+    await expect(
+      possibleMatchService.findPossibleSamePerson({
+        contactName: 'Done Wrong',
+        contactEmail: null,
+        excludeEmployeeIdentityId: 7
+      })
+    ).resolves.toEqual([]);
+  });
+
 });

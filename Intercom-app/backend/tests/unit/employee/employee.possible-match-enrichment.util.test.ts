@@ -119,4 +119,39 @@ describe('employee.possible-match-enrichment.util', () => {
       ])
     );
   });
+
+  it('removes a stale Done Wrong hint while preserving a valid multi-word person', async () => {
+    const hints = await enrichPossibleSamePersonHints({
+      conversation: {
+        id: 3053,
+        reporterName: null,
+        reporterEmail: null,
+        extractedNames: ['Sarah']
+      } as never,
+      mentionedInReport: ['Sarah'],
+      employeeMatches: [],
+      existingHints: [
+        {
+          employeeIdentityId: 20,
+          canonicalName: 'Done Wrong',
+          confidenceScore: 84,
+          matchMethod: 'token',
+          sharedTokens: ['done', 'wrong']
+        },
+        {
+          employeeIdentityId: 21,
+          canonicalName: 'Syed Zohaib Haider',
+          confidenceScore: 80,
+          matchMethod: 'token',
+          sharedTokens: ['zohaib']
+        }
+      ],
+      relatedCases: []
+    });
+
+    expect(hints).toEqual([
+      expect.objectContaining({ canonicalName: 'Syed Zohaib Haider' })
+    ]);
+  });
+
 });

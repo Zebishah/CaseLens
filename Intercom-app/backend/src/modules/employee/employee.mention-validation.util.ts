@@ -126,6 +126,27 @@ const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\
 const isGenericOrPlatformToken = (token: string): boolean =>
   GENERIC_TOKENS.has(token) || PLATFORM_TOKENS.has(token);
 
+/**
+ * Reject persisted/generated labels that are clearly not human names before
+ * they can be reused as fuzzy "possible same person" candidates.
+ * This deliberately does not impose the subject parser's two-word limit.
+ */
+export const isClearlyNonPersonEmployeeName = (
+  value: string | null | undefined
+): boolean => {
+  const normalized = normalizeEvidence(value ?? '');
+  if (!normalized || /@|:\/\/|\d/.test(normalized)) {
+    return true;
+  }
+
+  const tokens = splitTokens(normalized);
+  return (
+    tokens.length === 0 ||
+    BLOCKED_PHRASES.has(normalized) ||
+    tokens.every(isGenericOrPlatformToken)
+  );
+};
+
 export const hasExplicitOneWordEmployeeConstruction = (
   subject: string,
   name: string

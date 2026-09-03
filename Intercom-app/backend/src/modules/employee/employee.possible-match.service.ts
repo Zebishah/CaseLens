@@ -3,6 +3,7 @@ import { INTERCOM_MATCH } from '../../constants/intercom.constants.js';
 import { logger } from '../../config/logger.config.js';
 import type { IntelligencePossibleSamePerson } from '../../types/intelligence.types.js';
 import { scorePossibleSamePersonCandidate } from './employee.token-match.util.js';
+import { isClearlyNonPersonEmployeeName } from './employee.mention-validation.util.js';
 import { employeeRepository } from './employee.repository.js';
 
 export const possibleMatchService = {
@@ -12,7 +13,7 @@ export const possibleMatchService = {
     excludeEmployeeIdentityId: number;
   }): Promise<IntelligencePossibleSamePerson[]> {
     const contactName = input.contactName?.trim();
-    if (!contactName) {
+    if (!contactName || isClearlyNonPersonEmployeeName(contactName)) {
       return [];
     }
 
@@ -21,6 +22,10 @@ export const possibleMatchService = {
     const matches: IntelligencePossibleSamePerson[] = [];
 
     for (const candidate of candidates) {
+      if (isClearlyNonPersonEmployeeName(candidate.canonicalName)) {
+        continue;
+      }
+
       const scored = scorePossibleSamePersonCandidate(
         contactName,
         candidate.canonicalName,
