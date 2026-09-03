@@ -673,4 +673,55 @@ describe('employeeNameExtractionService', () => {
     expect(result.caseType).toBe('attendance');
     expect(result.relatedCaseSearchTerms).toEqual(['attendance', 'absence']);
   });
+
+  it.each([
+    ['Done Wrong', 'Sarah'],
+    ['Sarah', 'Sarah']
+  ])(
+    'resolves Sarah from the middle of the subject when Gemini returns %s',
+    async (geminiName, expectedName) => {
+      global.fetch = jest.fn<typeof fetch>().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      names: [geminiName],
+                      caseType: 'coaching'
+                    })
+                  }
+                ]
+              }
+            }
+          ]
+        })
+      } as Response);
+
+      const { employeeNameExtractionService } = await import(
+        '../../../src/modules/employee/employee.name-extraction.service.js'
+      );
+
+      const result = await employeeNameExtractionService.extract({
+        subject: 'many work is done wrong by sarah company should take notice',
+        messageBodies: ['many work is done wrong by sarah company should take notice'],
+        reporterName: 'Nagumo Miyabi',
+        reporterEmail: 'zohaib@jidatit.uk'
+      });
+
+      expect(result.names).toEqual([expectedName]);
+      expect(result.caseType).toBe('coaching');
+
+      const prompt = JSON.parse(
+        String((global.fetch as jest.Mock).mock.calls[0]?.[1]?.body)
+      ).contents[0].parts[0].text as string;
+      expect(prompt).toContain(
+        'many work is done wrong by sarah company should take notice'
+      );
+      expect(prompt).toContain('["Sarah"] NOT ["Done Wrong"]');
+    }
+  );
+
 });

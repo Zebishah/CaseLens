@@ -67,6 +67,9 @@ const GENERIC_TOKENS = new Set([
   'manager',
   'department',
   'support',
+  'done',
+  'wrong',
+  'work',
   'issue',
   'issues',
   'request',
@@ -92,6 +95,8 @@ const GENERIC_TOKENS = new Set([
 ]);
 
 const BLOCKED_PHRASES = new Set([
+  'done wrong',
+  'work done',
   'first intercom',
   'intercom test',
   'test conversation',

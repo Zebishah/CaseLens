@@ -356,6 +356,8 @@ CORE RULE (most important)
 Find the HUMAN NAME in the subject, no matter where it sits.
 Subject shape is unpredictable — dash, comma, "for", "regarding", no separator, name in the middle.
 Position does NOT matter. Person vs non-person DOES.
+A valid one-word name can appear after a person-introducing cue such as by, with, for, involving, concerning, regarding, or about.
+When an earlier phrase is an action or quality description and a later cue introduces a person, reject the action phrase and keep the person.
 
 Ask yourself: "If I told an HR advisor who this ticket is about, which person name would I say?"
 Return only that person (First, or First Last). Everything else is description.
@@ -398,7 +400,8 @@ G) Several people listed, then a topic
 
 HARD RULES
 - NEVER return pronouns as names: he, she, they, him, her, his, theirs, them, this, that, these, those, someone, somebody.
-- NEVER return verbs/actions as names or surnames: using, teasing, smoking, bullying, yelling, stealing, hitting, arguing, doing, late, etc.
+- NEVER return verbs/actions as names or surnames: using, teasing, smoking, bullying, yelling, stealing, hitting, arguing, doing, done, wrong, late, etc.
+- NEVER return action/outcome phrases as names: "done wrong", "work done", "doing badly", "not working", or similar descriptions.
 - NEVER return issue/topic phrases as names: illegal activities, legal notice, criminal activity, attendance warning, drugs, weed, behavior, misconduct, harassment, payroll, leave, etc.
 - NEVER return role/group words as names: employee, employees, staff, coworkers, manager, team, person, people.
 - NEVER treat ticket labels or system codes as names: follow-up, reminder, update, planner, UI, HR.
@@ -428,6 +431,7 @@ GOLDEN EXAMPLES
 - "Tammy, Maureen, and Pam Request for Guidance on Team Communication and Conflict Resolution 7/29/26" → ["Tammy"] NOT ["Pam Request"]
 - "weed smoked by the Watkins and this is issue now" → ["Watkins"] NOT ["Weed"]
 - "Attendance issues with Ayesha today" → ["Ayesha"]
+- "many work is done wrong by sarah company should take notice" → ["Sarah"] NOT ["Done Wrong"]
 `.trim();
 
 const buildSubjectOnlyPrompt = (input: NameExtractionInput): string => {

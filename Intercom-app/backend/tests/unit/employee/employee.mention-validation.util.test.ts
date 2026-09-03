@@ -210,4 +210,19 @@ describe('validateEmployeeMention', () => {
       }).valid
     ).toBe(false);
   });
+
+  it('rejects action phrases but accepts Sarah after the by cue', () => {
+    const subject = 'many work is done wrong by sarah company should take notice';
+
+    expect(
+      validateEmployeeMention({ subject, name: 'Done Wrong', evidence: 'Done Wrong' })
+    ).toEqual({ valid: false, reason: 'generic_phrase' });
+    expect(
+      validateEmployeeMention({ subject, name: 'Work Done', evidence: 'Work Done' })
+    ).toMatchObject({ valid: false });
+    expect(
+      validateEmployeeMention({ subject, name: 'Sarah', evidence: 'Sarah' })
+    ).toMatchObject({ valid: true, normalizedName: 'Sarah' });
+  });
+
 });

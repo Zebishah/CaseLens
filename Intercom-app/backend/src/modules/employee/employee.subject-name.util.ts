@@ -57,6 +57,7 @@ const SUBJECT_CASE_STOP_WORDS = new Set([
   'do',
   'does',
   'doing',
+  'done',
   'drank',
   'drink',
   'drinking',
@@ -169,6 +170,7 @@ const SUBJECT_CASE_STOP_WORDS = new Set([
   'violation',
   'warning',
   'wages',
+  'wrong',
   'was',
   'weed',
   'were',
@@ -184,6 +186,7 @@ const SUBJECT_CASE_STOP_WORDS = new Set([
 /** First words that usually start an action/issue phrase, not a person name. */
 const ACTION_PHRASE_STARTERS = new Set([
   'doing',
+  'done',
   'using',
   'smoking',
   'drinking',
@@ -210,6 +213,8 @@ const ACTION_PHRASE_STARTERS = new Set([
 ]);
 
 const BLOCKED_NAME_PHRASES = new Set([
+  'done wrong',
+  'work done',
   'legal notice',
   'legal issue',
   'legal warning',
@@ -871,33 +876,40 @@ const parseEmbeddedPersonFromSubject = (subject: string): string | null => {
     const next = words[index + 1] ?? '';
     const twoWord = next ? sanitizeExtractedEmployeeName(`${current} ${next}`) : '';
     const oneWord = sanitizeExtractedEmployeeName(current);
-    const candidate =
-      twoWord && splitSubjectWords(twoWord).length === 2 ? twoWord : oneWord;
+    const twoWordCandidate =
+      twoWord && splitSubjectWords(twoWord).length === 2 ? twoWord : '';
+    const candidateOptions = [
+      ...(twoWordCandidate ? [twoWordCandidate] : []),
+      ...(oneWord && oneWord.toLowerCase() !== twoWordCandidate.toLowerCase() ? [oneWord] : [])
+    ];
 
-    if (!candidate || scorePersonCandidate(candidate, subject) < 0) {
-      continue;
-    }
+    for (const candidate of candidateOptions) {
+      if (scorePersonCandidate(candidate, subject) < 0) {
+        continue;
+      }
 
-    const originalSpan = candidate.includes(' ') ? `${current} ${next}` : current;
-    const isCapitalized = /\p{Lu}/u.test(originalSpan);
-    const afterCue = NAME_CUE_WORDS.has(previous);
-    if (index > 0 && !isCapitalized && !afterCue) {
-      continue;
-    }
+      const originalSpan = candidate.includes(' ') ? `${current} ${next}` : current;
+      const isCapitalized = /\p{Lu}/u.test(originalSpan);
+      const afterCue = NAME_CUE_WORDS.has(previous);
+      if (index > 0 && !isCapitalized && !afterCue) {
+        continue;
+      }
 
-    if (
-      !validateEmployeeMention({
-        subject,
-        name: candidate,
-        evidence: candidate
-      }).valid
-    ) {
-      continue;
-    }
+      if (
+        !validateEmployeeMention({
+          subject,
+          name: candidate,
+          evidence: candidate
+        }).valid
+      ) {
+        continue;
+      }
 
-    candidates.push(candidate);
-    if (twoWord && candidate === twoWord) {
-      index += 1;
+      candidates.push(candidate);
+      if (candidate === twoWordCandidate) {
+        index += 1;
+      }
+      break;
     }
   }
 

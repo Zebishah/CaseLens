@@ -85,7 +85,7 @@ const envSchema = z
     LLM_MODE: z.enum(['live', 'fixture']).default('fixture'),
     GEMINI_API_KEY: optionalSecret,
     GEMINI_MODEL: z.string().default('gemini-3.1-flash-lite'),
-    AI_PROMPT_VERSION: z.string().default('extraction-v4'),
+    AI_PROMPT_VERSION: z.string().default('extraction-v5'),
     EMPLOYEE_MATCH_MIN_CONFIDENCE: z.coerce.number().min(0).max(100).default(75),
     MANUAL_REVIEW_CONFIDENCE: z.coerce.number().min(0).max(100).default(60),
 

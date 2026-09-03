@@ -336,4 +336,20 @@ describe('employee.subject-name.util', () => {
       ).toEqual(['Messi']);
     });
   });
+
+  describe('single-word employee names after grammatical cues', () => {
+    const subject = 'many work is done wrong by sarah company should take notice';
+
+    it('rejects the action phrase and extracts Sarah from the middle of the subject', () => {
+      expect(sanitizeExtractedEmployeeName('Done Wrong')).toBe('');
+      expect(sanitizeExtractedEmployeeName('Work Done')).toBe('');
+      expect(extractEmployeeNamesFromSubject(subject)).toEqual(['Sarah']);
+    });
+
+    it('rejects an incorrect Gemini candidate and recovers the subject employee', () => {
+      expect(resolveSubjectEmployeeNames(subject, ['Done Wrong'])).toEqual(['Sarah']);
+      expect(resolveSubjectEmployeeNames(subject, ['Sarah'])).toEqual(['Sarah']);
+    });
+  });
+
 });

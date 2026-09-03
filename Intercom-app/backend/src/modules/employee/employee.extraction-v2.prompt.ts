@@ -80,12 +80,14 @@ Strict rules:
 - Never treat an isolated word from the middle of an ordinary sentence as a human name merely because it could resemble a name after capitalization.
 - Do not title-case ordinary words and return them as names.
 - Examples of invalid employee names: si, is, this, first, test, issue, workspace, faced, general, intercom, conversation, employee, payroll, attendance, store, manager, support.
-- A one-word first name is valid when it clearly identifies the employee the case is about.
+- A one-word first name or surname is valid when it clearly identifies the employee the case is about, including when it appears in the middle of the subject after a cue such as by, with, for, involving, concerning, regarding or about.
 - Preferred one-word shapes:
   - the subject starts with the person, such as "Braden is talking badly at work"
   - a ticket-style name then issue, such as "messi behavior issue" or "ahsan - using drugs"
   - an explicit construction, such as "Attendance issue for Cher" or "Employee: Cher"
-- A one-word candidate is invalid when it is a typo, a stopword, or a word taken from the middle of ordinary prose, such as "this si the issue".
+- A one-word candidate is invalid when it is a typo, a stopword, or a word taken from ordinary prose without person-identifying context, such as "this si the issue".
+- Never return action or quality-description phrases such as "done wrong", "work done", "doing badly" or "not working" as employee names.
+- When an earlier phrase describes work or an outcome and a later grammatical cue introduces a person, select the person rather than the earlier description.
 - Gemini may return a one-word human name when those person-name rules are met. The backend still rejects typos such as "si".
 - If the subject contains no clear human name, return:
   { "name": null, "evidence": null, "status": "NO_EMPLOYEE_MENTIONED", "confidence": 0 }
@@ -138,6 +140,11 @@ employee.status = "EXPLICIT_NAME_FOUND"
 Subject: "Conduct complaint concerning Jean-Luc Picard"
 employee.name = "Jean-Luc Picard"
 employee.evidence = "Jean-Luc Picard"
+employee.status = "EXPLICIT_NAME_FOUND"
+
+Subject: "many work is done wrong by sarah company should take notice"
+employee.name = "Sarah"
+employee.evidence = "sarah"
 employee.status = "EXPLICIT_NAME_FOUND"
 
 Subject: "Discussion between Ayesha Khan and Sarah Ahmed"
