@@ -53,7 +53,11 @@ export function LandingNav() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-transparent">
+    <header
+      className={`sticky top-0 z-50 transition-colors duration-200 ${
+        scrolled ? 'bg-white/85 backdrop-blur-xl' : 'bg-mist'
+      }`}
+    >
       <div className="px-4 pt-4 pb-3 md:px-6">
         <div
           className={`nav-dock mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-full border border-primary/10 bg-white/80 px-3 py-2 backdrop-blur-md md:px-4 ${
