@@ -158,6 +158,42 @@ export default function DemoPage() {
       title="Sample cases"
       description="Do not submit personal or confidential information. Demonstration data is deleted when the session expires."
     >
+      <section aria-labelledby="product-walkthrough-title" className="mb-8">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Guided product tour</p>
+            <h2 id="product-walkthrough-title" className="mt-2 text-2xl font-semibold text-primary">
+              See HR Intelligence inside Intercom
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm text-muted">
+              Watch the complete workflow for case categorization, employee matching, recipient suggestions, and related-case detection.
+            </p>
+          </div>
+          <a
+            href="https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly"
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm font-medium text-primary hover:text-primary-hover"
+          >
+            Open walkthrough in a new tab
+          </a>
+        </div>
+        <div className="overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm">
+          <div className="aspect-video">
+            <iframe
+              className="h-full w-full"
+              src="https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly"
+              title="HR Intelligence for Intercom product walkthrough"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="clipboard-write; fullscreen"
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </section>
+
       {sleeping ? (
         <AlertBanner
           tone="warning"
