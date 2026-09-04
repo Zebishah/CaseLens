@@ -77,9 +77,8 @@ app.use('/api', apiRateLimit, apiRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.sendStatus(STATUS_CODES.NO_CONTENT);
+  res.status(204).end();
 });
-
 app.get('/ready', async (_req: Request, res: Response) => {
   const readiness = await healthService.readiness();
   res
