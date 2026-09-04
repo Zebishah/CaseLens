@@ -11,6 +11,11 @@ const capabilities = [
   ['Reliable ingestion', 'Tracks webhooks, processing state, retries, and failures.']
 ];
 
+const DEMO_REVIEWER = {
+  email: 'reviewer123@gmail.com',
+  password: 'RecruiterDemo2026#'
+} as const;
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -57,6 +62,13 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const useDemoCredentials = () => {
+    setEmail(DEMO_REVIEWER.email);
+    setPassword(DEMO_REVIEWER.password);
+    setShowPassword(false);
+    setError(null);
   };
 
   return (
@@ -126,7 +138,38 @@ export default function LoginPage() {
                 <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</div>
               ) : null}
 
-              <form className="mt-7 space-y-5" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+              <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-950">Read-only recruiter demo</p>
+                    <p className="mt-1 text-xs leading-5 text-emerald-900/70">
+                      Opens the Overview dashboard with access to cases, directory evidence, and system architecture.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-800">
+                    Viewer
+                  </span>
+                </div>
+                <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                  <div>
+                    <dt className="font-medium text-emerald-900/60">Email</dt>
+                    <dd className="mt-0.5 break-all font-mono text-emerald-950">{DEMO_REVIEWER.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="font-medium text-emerald-900/60">Password</dt>
+                    <dd className="mt-0.5 break-all font-mono text-emerald-950">{DEMO_REVIEWER.password}</dd>
+                  </div>
+                </dl>
+                <button
+                  type="button"
+                  className="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  onClick={useDemoCredentials}
+                >
+                  Use demo credentials
+                </button>
+              </div>
+
+              <form className="mt-5 space-y-5" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
                 <label className="block text-sm font-medium text-slate-700">
                   Email address
                   <input required type="email" autoComplete="username" autoFocus className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-3 text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15" placeholder="operator@example.com" value={email} onChange={(event) => setEmail(event.target.value)} />
