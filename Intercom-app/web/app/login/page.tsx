@@ -111,7 +111,14 @@ export default function LoginPage() {
           <p className="relative text-xs text-slate-500">Synthetic portfolio data only · Role-based access</p>
         </section>
 
-        <section className="flex min-h-screen items-center justify-center bg-slate-50 px-5 py-10 sm:px-10">
+        <section className="relative flex min-h-screen items-center justify-center bg-slate-50 px-5 py-16 sm:px-10">
+          <Link
+            href="/"
+            className="absolute right-5 top-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950 sm:right-10 sm:top-8"
+          >
+            <span aria-hidden="true">←</span>
+            Back to landing page
+          </Link>
           <div className="w-full max-w-md">
             <div className="mb-8 flex items-center gap-3 lg:hidden">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">HI</span>
@@ -199,7 +206,7 @@ export default function LoginPage() {
                     Start with the public walkthrough, or request a personal Intercom invitation using your own email.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold">
-                    <Link href="/#live-demo" className="text-primary hover:text-primary-hover">View public demo</Link>
+                    <Link href="/#live-demo" className="text-primary hover:text-primary-hover">Watch public walkthrough</Link>
                     <Link href="/access" className="text-secondary hover:text-primary">Request Intercom access →</Link>
                   </div>
                 </div>
