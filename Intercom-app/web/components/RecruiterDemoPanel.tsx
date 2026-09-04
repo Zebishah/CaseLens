@@ -5,7 +5,8 @@ import { PRODUCT_DEMO_HIGHLIGHTS, PRODUCT_DEMO_URL } from '../lib/product-demo';
 type Screenshot = {
   title: string;
   description: string;
-  url?: string;
+  alt: string;
+  url: string;
 };
 
 export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
@@ -13,21 +14,26 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
   const screenshots: Screenshot[] = [
     {
       title: 'Intercom case inbox',
-      description: 'Synthetic HR conversations in the operator workspace.',
-      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_INBOX_URL?.trim()
+      description: 'A single-name mention is resolved to Sarah Saffari with confidence evidence and relevant case history.',
+      alt: 'Intercom Inbox showing HR Intelligence matching a Sarah mention to Sarah Saffari and listing closely related cases.',
+      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_INBOX_URL?.trim() ||
+        '/product-screenshots/sarah-identity-resolution.webp'
     },
     {
-      title: 'HR Intelligence panel',
-      description: 'Identity, category, related history, routing, and review evidence.',
-      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_CANVAS_URL?.trim()
+      title: 'Name-variant resolution',
+      description: 'The system preserves the reported spelling, surfaces a possible duplicate, and explains why prior cases are related.',
+      alt: 'Intercom HR Intelligence panel showing Ayesha Sophy matched to Ayesha Sophie with possible-same-person and related-case evidence.',
+      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_CANVAS_URL?.trim() ||
+        '/product-screenshots/ayesha-related-case-evidence.webp'
     },
     {
-      title: 'Operations dashboard',
-      description: 'Case visibility, delivery health, and architecture evidence.',
-      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_DASHBOARD_URL?.trim()
+      title: 'Structured case intelligence',
+      description: 'An exact directory match appears beside category, processing version, routing controls, and connected cases.',
+      alt: 'Intercom conversation showing an exact Darren Watkins employee match, Conduct category, processing metadata, and related cases.',
+      url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_DASHBOARD_URL?.trim() ||
+        '/product-screenshots/darren-exact-match.webp'
     }
   ];
-  const availableScreenshots = screenshots.filter((screenshot) => Boolean(screenshot.url));
 
   return (
     <section className={compact ? 'dash-panel overflow-hidden !p-0' : 'overflow-hidden rounded-3xl border border-primary/10 bg-white shadow-lift'}>
@@ -108,7 +114,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
               </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
-            {availableScreenshots.length > 0 ? <a href="#product-screenshots" className="rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/10">View screenshots</a> : null}
+            <a href="#product-screenshots" className="rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/10">View screenshots</a>
             <Link href="/access" className="rounded-lg bg-white px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-slate-100">
               Request invitation
             </Link>
@@ -130,7 +136,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
 
-      {availableScreenshots.length > 0 ? <div id="product-screenshots" className={compact ? 'border-t border-slate-200 px-5 py-5' : 'border-t border-primary/10 px-6 py-6 md:px-8'}>
+      <div id="product-screenshots" className={compact ? 'scroll-mt-6 border-t border-slate-200 px-5 py-5' : 'scroll-mt-6 border-t border-primary/10 px-6 py-6 md:px-8'}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-primary">Product screenshots</h3>
@@ -139,11 +145,11 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
           <Link href="/access" className="text-sm font-semibold text-primary hover:text-primary-hover">Request personal access →</Link>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {availableScreenshots.map((screenshot) => (
+          {screenshots.map((screenshot) => (
             <ScreenshotCard key={screenshot.title} screenshot={screenshot} />
           ))}
         </div>
-      </div> : null}
+      </div>
     </section>
   );
 }
@@ -171,18 +177,29 @@ function DemoStep({ number, children }: { number: string; children: ReactNode })
   );
 }
 
-function ScreenshotCard({ screenshot }: { screenshot: Screenshot & { url?: string } }) {
+function ScreenshotCard({ screenshot }: { screenshot: Screenshot }) {
   return (
-    <article className="overflow-hidden rounded-xl border border-primary/10 bg-white">
-      <div
+    <article className="group overflow-hidden rounded-xl border border-primary/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <a
+        href={screenshot.url}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`Open full-size screenshot: ${screenshot.title}`}
+        className="block overflow-hidden border-b border-primary/10 bg-slate-950"
+      >
+        <div
           role="img"
-          aria-label={screenshot.title}
-          className="aspect-[16/10] bg-slate-100 bg-cover bg-center"
+          aria-label={screenshot.alt}
+          className="aspect-[16/10] bg-contain bg-center bg-no-repeat transition duration-300 group-hover:scale-[1.015]"
           style={{ backgroundImage: `url("${screenshot.url}")` }}
-      />
+        />
+      </a>
       <div className="p-4">
         <h4 className="text-sm font-semibold text-primary">{screenshot.title}</h4>
         <p className="mt-1 text-xs leading-5 text-muted">{screenshot.description}</p>
+        <a href={screenshot.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-semibold text-primary hover:text-primary-hover">
+          View full size →
+        </a>
       </div>
     </article>
   );
