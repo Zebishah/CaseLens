@@ -63,9 +63,17 @@ export default function AccessRequestPage() {
               <span className="block text-[11px] text-muted">Recruiter access</span>
             </span>
           </Link>
-          <Link href="/" className="text-sm font-medium text-primary hover:text-primary-hover">
-            Return to showcase
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/overview"
+              className="rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm font-medium text-primary shadow-sm transition hover:border-primary/30 hover:bg-paper"
+            >
+              ← Back to dashboard
+            </Link>
+            <Link href="/" className="hidden text-sm font-medium text-primary hover:text-primary-hover sm:inline">
+              Landing page
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -123,7 +131,10 @@ export default function AccessRequestPage() {
                 Canvas intelligence, and operations dashboard without requiring third-party access.
               </div>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/#live-demo" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">
+                <Link href="/overview" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">
+                  Back to dashboard
+                </Link>
+                <Link href="/#live-demo" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">
                   Watch the walkthrough
                 </Link>
                 <Link href="/" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">
