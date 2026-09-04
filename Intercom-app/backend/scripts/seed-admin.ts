@@ -2,20 +2,19 @@ import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { AUTH_CONSTANTS } from '../src/modules/auth/auth.constants.js';
 import { ROLES } from '../src/constants/roles.js';
-import { db } from '../src/database/connection.js';
+import { db, pool } from '../src/database/connection.js';
 import { users } from '../src/database/schema/users.js';
 
 const DEFAULT_EMAIL = 'operator@northwind.co';
-const DEFAULT_PASSWORD = 'CaseOps-Northwind-2026';
 const DEFAULT_NAME = 'Sarah Chen';
 
 const main = async (): Promise<void> => {
   const email = (process.env.SEED_ADMIN_EMAIL?.trim() || DEFAULT_EMAIL).toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD?.trim() || DEFAULT_PASSWORD;
+  const password = process.env.SEED_ADMIN_PASSWORD?.trim();
   const name = process.env.SEED_ADMIN_NAME?.trim() || DEFAULT_NAME;
 
-  if (password.length < 8) {
-    throw new Error('SEED_ADMIN_PASSWORD must be at least 8 characters');
+  if (!password || password.length < 12) {
+    throw new Error('SEED_ADMIN_PASSWORD is required and must be at least 12 characters');
   }
 
   const hashedPassword = await bcrypt.hash(password, AUTH_CONSTANTS.SALT_ROUNDS);
@@ -42,10 +41,8 @@ const main = async (): Promise<void> => {
     console.log(`Created admin operator: ${email}`);
   }
 
-  process.exit(0);
 };
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error) => { console.error(error); process.exitCode = 1; })
+  .finally(() => pool.end());

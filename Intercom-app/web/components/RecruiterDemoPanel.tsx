@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { PRODUCT_DEMO_HIGHLIGHTS, PRODUCT_DEMO_URL } from '../lib/product-demo';
 
 type Screenshot = {
   title: string;
@@ -8,7 +9,7 @@ type Screenshot = {
 };
 
 export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
-  const videoUrl = 'https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly';
+  const videoUrl = PRODUCT_DEMO_URL;
   const screenshots: Screenshot[] = [
     {
       title: 'Intercom case inbox',
@@ -26,6 +27,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
       url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_DASHBOARD_URL?.trim()
     }
   ];
+  const availableScreenshots = screenshots.filter((screenshot) => Boolean(screenshot.url));
 
   return (
     <section className={compact ? 'dash-panel overflow-hidden !p-0' : 'overflow-hidden rounded-3xl border border-primary/10 bg-white shadow-lift'}>
@@ -91,8 +93,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
             </div>
             <span className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-300">5 min</span>
           </div>
-          {videoUrl ? (
-            <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl">
+          <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl">
               <div className="aspect-video">
                 <iframe
                   src={videoUrl}
@@ -105,28 +106,31 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
                   loading="lazy"
                 />
               </div>
-            </div>
-          ) : (
-            <div className="mt-5 flex aspect-video items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/[0.04] px-6 text-center">
-              <div>
-                <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-lg text-white">▶</span>
-                <p className="mt-4 text-sm font-medium text-white">Subtitled walkthrough coming soon</p>
-                <p className="mt-1 text-xs leading-5 text-slate-400">Use the visual tour below while the final recording is prepared.</p>
-              </div>
-            </div>
-          )}
+          </div>
           <div className="mt-4 flex flex-wrap gap-3">
-            <a href="#product-screenshots" className="rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/10">
-              View screenshots
-            </a>
+            {availableScreenshots.length > 0 ? <a href="#product-screenshots" className="rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/10">View screenshots</a> : null}
             <Link href="/access" className="rounded-lg bg-white px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-slate-100">
               Request invitation
             </Link>
           </div>
+          <div className="mt-7 border-t border-white/10 pt-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">What the walkthrough covers</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {PRODUCT_DEMO_HIGHLIGHTS.map((highlight, index) => (
+                <article key={highlight.title} className="rounded-xl border border-white/10 bg-white/[0.045] p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-300/10 text-[11px] font-semibold text-emerald-300">{index + 1}</span>
+                    <div><h4 className="text-sm font-semibold text-white">{highlight.title}</h4><p className="mt-1 text-xs leading-5 text-slate-400">{highlight.description}</p></div>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="mt-4 text-xs leading-5 text-slate-400">5-minute guided tour · Captions included · Synthetic demonstration data only</p>
+          </div>
         </div>
       </div>
 
-      <div id="product-screenshots" className={compact ? 'border-t border-slate-200 px-5 py-5' : 'border-t border-primary/10 px-6 py-6 md:px-8'}>
+      {availableScreenshots.length > 0 ? <div id="product-screenshots" className={compact ? 'border-t border-slate-200 px-5 py-5' : 'border-t border-primary/10 px-6 py-6 md:px-8'}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-primary">Product screenshots</h3>
@@ -135,11 +139,11 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
           <Link href="/access" className="text-sm font-semibold text-primary hover:text-primary-hover">Request personal access →</Link>
         </div>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
-          {screenshots.map((screenshot) => (
+          {availableScreenshots.map((screenshot) => (
             <ScreenshotCard key={screenshot.title} screenshot={screenshot} />
           ))}
         </div>
-      </div>
+      </div> : null}
     </section>
   );
 }
@@ -167,24 +171,15 @@ function DemoStep({ number, children }: { number: string; children: ReactNode })
   );
 }
 
-function ScreenshotCard({ screenshot }: { screenshot: Screenshot }) {
+function ScreenshotCard({ screenshot }: { screenshot: Screenshot & { url?: string } }) {
   return (
     <article className="overflow-hidden rounded-xl border border-primary/10 bg-white">
-      {screenshot.url ? (
-        <div
+      <div
           role="img"
           aria-label={screenshot.title}
           className="aspect-[16/10] bg-slate-100 bg-cover bg-center"
           style={{ backgroundImage: `url("${screenshot.url}")` }}
-        />
-      ) : (
-        <div className="flex aspect-[16/10] items-center justify-center bg-paper px-5 text-center">
-          <div>
-            <span className="mx-auto block h-8 w-8 rounded-lg border border-dashed border-primary/20" />
-            <p className="mt-3 text-xs font-medium text-muted">Screenshot placeholder</p>
-          </div>
-        </div>
-      )}
+      />
       <div className="p-4">
         <h4 className="text-sm font-semibold text-primary">{screenshot.title}</h4>
         <p className="mt-1 text-xs leading-5 text-muted">{screenshot.description}</p>

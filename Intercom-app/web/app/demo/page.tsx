@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, SectionCard } from '../../components/dashboard/ui';
 import { ApiError, api } from '../../lib/api';
+import { PRODUCT_DEMO_HIGHLIGHTS, PRODUCT_DEMO_URL } from '../../lib/product-demo';
 
 type Session = {
   token?: string;
@@ -123,6 +124,9 @@ export default function DemoPage() {
       }
       setCaseId(submitted.conversationId);
       await runProcess(submitted.conversationId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not process the sample case.');
+      setPhase('failed');
     } finally {
       setBusy(false);
     }
@@ -146,6 +150,9 @@ export default function DemoPage() {
       }
       setCaseId(submitted.conversationId);
       await runProcess(submitted.conversationId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not process the custom case.');
+      setPhase('failed');
     } finally {
       setBusy(false);
     }
@@ -156,7 +163,7 @@ export default function DemoPage() {
   return (
     <AppShell
       title="Sample cases"
-      description="Do not submit personal or confidential information. Demonstration data is deleted when the session expires."
+      description="Do not submit personal or confidential information. Demonstration records are temporary and removed after the configured retention window."
     >
       <section aria-labelledby="product-walkthrough-title" className="mb-8">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -170,7 +177,7 @@ export default function DemoPage() {
             </p>
           </div>
           <a
-            href="https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly"
+            href={PRODUCT_DEMO_URL}
             target="_blank"
             rel="noreferrer"
             className="text-sm font-medium text-primary hover:text-primary-hover"
@@ -182,7 +189,7 @@ export default function DemoPage() {
           <div className="aspect-video">
             <iframe
               className="h-full w-full"
-              src="https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly"
+              src={PRODUCT_DEMO_URL}
               title="HR Intelligence for Intercom product walkthrough"
               loading="lazy"
               referrerPolicy="strict-origin-when-cross-origin"
@@ -191,6 +198,15 @@ export default function DemoPage() {
               allowFullScreen
             />
           </div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {PRODUCT_DEMO_HIGHLIGHTS.map((highlight, index) => (
+            <article key={highlight.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold text-secondary">0{index + 1}</p>
+              <h3 className="mt-2 text-sm font-semibold text-primary">{highlight.title}</h3>
+              <p className="mt-1 text-xs leading-5 text-muted">{highlight.description}</p>
+            </article>
+          ))}
         </div>
       </section>
 

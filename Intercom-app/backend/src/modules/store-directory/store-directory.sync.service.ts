@@ -33,7 +33,7 @@ export const syncStoreDirectoryFromBox = async (
 
   try {
     const buffer = await boxClient.downloadFile(boxFileId);
-    const parsed = parseStoreDirectoryWorkbook(buffer);
+    const parsed = await parseStoreDirectoryWorkbook(buffer);
     const storesUpserted = await storeDirectoryRepository.replaceDirectoryData(
       parsed.stores,
       parsed.fixedContacts

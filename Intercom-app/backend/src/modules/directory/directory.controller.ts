@@ -71,7 +71,7 @@ export const directoryController = {
     }
 
     const body = req.body as { csv?: string; xlsxBase64?: string };
-    const stores = parseDirectoryUpload(body);
+    const stores = await parseDirectoryUpload(body);
     const runId = await storeDirectoryRepository.startSyncRun({ source: body.csv ? 'csv-import' : 'xlsx-import' });
 
     try {

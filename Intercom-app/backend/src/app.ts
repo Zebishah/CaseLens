@@ -67,6 +67,7 @@ app.use(requestContext);
 app.use(resendWebhookRoutes);
 app.use(intercomRoutes);
 
+app.use('/api/directory/import', express.json({ limit: '3mb' }));
 app.use(express.json({ limit: '256kb' }));
 
 if (env.NODE_ENV !== 'production') {

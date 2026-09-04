@@ -94,8 +94,8 @@ describe('store-directory.parser', () => {
     expect(normalizeStoreNumber(null)).toBeNull();
   });
 
-  it('parses all three company sheets and finds Store Number header mid-sheet', () => {
-    const parsed = parseStoreDirectoryWorkbook(buildWorkbookBuffer());
+  it('parses all three company sheets and finds Store Number header mid-sheet', async () => {
+    const parsed = await parseStoreDirectoryWorkbook(buildWorkbookBuffer());
 
     expect(parsed.missingSheets).toEqual([]);
     expect(parsed.sheetStats).toHaveLength(3);
@@ -140,7 +140,7 @@ describe('store-directory.parser', () => {
     expect(parsed.fixedContacts).toHaveLength(2);
   });
 
-  it('parses CHC escalation contacts with context and title columns', () => {
+  it('parses CHC escalation contacts with context and title columns', async () => {
     const workbook = XLSX.utils.book_new();
     const rows = [
       ['Helix Hospitality - Full Store Directory'],
@@ -171,7 +171,7 @@ describe('store-directory.parser', () => {
       truncateExcelSheetName(STORE_DIRECTORY_COMPANIES[1]!.sheetName)
     );
 
-    const parsed = parseStoreDirectoryWorkbook(
+    const parsed = await parseStoreDirectoryWorkbook(
       XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer
     );
 
@@ -191,7 +191,7 @@ describe('store-directory.parser', () => {
     ]);
   });
 
-  it('parses client-style CHC HR row with empty Context/Title from Excel', () => {
+  it('parses client-style CHC HR row with empty Context/Title from Excel', async () => {
     const workbook = XLSX.utils.book_new();
     const rows = [
       ['Helix Hospitality - Full Store Directory'],
@@ -210,7 +210,7 @@ describe('store-directory.parser', () => {
       truncateExcelSheetName(STORE_DIRECTORY_COMPANIES[1]!.sheetName)
     );
 
-    const parsed = parseStoreDirectoryWorkbook(
+    const parsed = await parseStoreDirectoryWorkbook(
       XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer
     );
 

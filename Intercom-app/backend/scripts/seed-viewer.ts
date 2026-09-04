@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { AUTH_CONSTANTS } from '../src/modules/auth/auth.constants.js';
 import { ROLES } from '../src/constants/roles.js';
-import { db } from '../src/database/connection.js';
+import { db, pool } from '../src/database/connection.js';
 import { users } from '../src/database/schema/users.js';
 
 const main = async (): Promise<void> => {
@@ -41,10 +41,8 @@ const main = async (): Promise<void> => {
     console.log(`Created read-only reviewer: ${email}`);
   }
 
-  process.exit(0);
 };
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error) => { console.error(error); process.exitCode = 1; })
+  .finally(() => pool.end());

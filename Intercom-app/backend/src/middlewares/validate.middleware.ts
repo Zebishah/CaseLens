@@ -16,7 +16,12 @@ export const validate = (schema: AnyZodObject) => {
 
     req.body = parsed.data.body;
     req.params = parsed.data.params;
-    req.query = parsed.data.query;
+    Object.defineProperty(req, 'query', {
+      configurable: true,
+      enumerable: true,
+      value: parsed.data.query,
+      writable: true
+    });
     next();
   };
 };

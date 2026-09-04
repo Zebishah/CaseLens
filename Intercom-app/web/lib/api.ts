@@ -8,6 +8,8 @@ import {
 } from './auth-token';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
+const DEFAULT_TIMEOUT_MS = 60_000;
+const HEALTH_TIMEOUT_MS = 15_000;
 
 export type AuthSession = {
   token: string;
@@ -21,8 +23,32 @@ export class ApiError extends Error {
     readonly sleeping = false
   ) {
     super(message);
+    this.name = 'ApiError';
   }
 }
+
+const fetchWithTimeout = async (
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<Response> => {
+  const controller = new AbortController();
+  const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+  const abortFromCaller = () => controller.abort();
+  init.signal?.addEventListener('abort', abortFromCaller, { once: true });
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted && !init.signal?.aborted) {
+      throw new ApiError('The service took too long to respond. Please try again.', 408);
+    }
+    throw error;
+  } finally {
+    globalThis.clearTimeout(timeout);
+    init.signal?.removeEventListener('abort', abortFromCaller);
+  }
+};
 
 const parse = async <T>(response: Response): Promise<T> => {
   const body = (await response.json().catch(() => ({}))) as {
@@ -69,7 +95,7 @@ const refreshSession = (): Promise<AuthSession | null> => {
   }
 
   refreshInFlight = (async () => {
-    const response = await fetch(`${API_URL}/api/auth/refresh-token`, {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/refresh-token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -95,7 +121,7 @@ const refreshSession = (): Promise<AuthSession | null> => {
 const expireSession = (): void => {
   clearAdminToken();
   if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-    window.location.assign('/login?reason=session-expired');
+    window.location.replace('/login?reason=session-expired');
   }
 };
 
@@ -105,7 +131,7 @@ const request = async <T>(
   token?: string,
   retryAfterRefresh = true
 ): Promise<T> => {
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetchWithTimeout(`${API_URL}${path}`, {
     ...init,
     headers: {
       ...headersFor(token, Boolean(init.body)),
@@ -128,17 +154,17 @@ const request = async <T>(
 
 export const api = {
   async ready() {
-    const response = await fetch(`${API_URL}/ready`, { cache: 'no-store' });
+    const response = await fetchWithTimeout(`${API_URL}/ready`, { cache: 'no-store' }, HEALTH_TIMEOUT_MS);
     return parse<{ status: 'ready' | 'starting' }>(response);
   },
 
   async health() {
-    const response = await fetch(`${API_URL}/health`, { cache: 'no-store' });
+    const response = await fetchWithTimeout(`${API_URL}/health`, { cache: 'no-store' }, HEALTH_TIMEOUT_MS);
     return parse<{ status: string }>(response);
   },
 
   async login(email: string, password: string): Promise<AuthSession> {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -161,7 +187,7 @@ export const api = {
 
   async logout(): Promise<void> {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, {
+      await fetchWithTimeout(`${API_URL}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         cache: 'no-store'

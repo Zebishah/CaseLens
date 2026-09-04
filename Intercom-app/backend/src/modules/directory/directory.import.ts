@@ -104,7 +104,7 @@ export const parseDirectoryCsv = (csv: string): ParsedStoreRow[] => {
   return stores;
 };
 
-export const parseDirectoryUpload = (input: { csv?: string; xlsxBase64?: string }): ParsedStoreRow[] => {
+export const parseDirectoryUpload = async (input: { csv?: string; xlsxBase64?: string }): Promise<ParsedStoreRow[]> => {
   if (input.csv?.trim()) {
     return parseDirectoryCsv(input.csv);
   }
@@ -114,7 +114,7 @@ export const parseDirectoryUpload = (input: { csv?: string; xlsxBase64?: string 
     if (buffer.length > 2_000_000) {
       throw AppError.badRequest('Workbook exceeds the 2MB import limit');
     }
-    return parseStoreDirectoryWorkbook(buffer).stores;
+    return (await parseStoreDirectoryWorkbook(buffer)).stores;
   }
 
   throw AppError.badRequest('Provide csv or xlsxBase64');

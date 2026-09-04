@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import readXlsxFile, { type Sheet } from 'read-excel-file/node';
 import {
   STORE_DIRECTORY_COLUMN_MAP,
   STORE_DIRECTORY_COMPANIES,
@@ -94,22 +94,23 @@ const readMapped = (
 };
 
 const findSheetByExpectedName = (
-  workbook: XLSX.WorkBook,
+  workbook: Sheet[],
   expectedName: string,
   companyName: string
-): { sheet: XLSX.WorkSheet; actualName: string } | null => {
+): { rows: unknown[][]; actualName: string } | null => {
   const candidates = [expectedName, truncateExcelSheetName(expectedName), companyName];
 
   for (const candidate of candidates) {
-    if (workbook.Sheets[candidate]) {
-      return { sheet: workbook.Sheets[candidate]!, actualName: candidate };
+    const sheet = workbook.find((item) => item.sheet === candidate);
+    if (sheet) {
+      return { rows: sheet.data as unknown[][], actualName: candidate };
     }
   }
 
   const loweredCompany = companyName.toLowerCase();
-  const match = workbook.SheetNames.find((name) => name.toLowerCase().startsWith(loweredCompany));
-  if (match && workbook.Sheets[match]) {
-    return { sheet: workbook.Sheets[match]!, actualName: match };
+  const match = workbook.find((item) => item.sheet.toLowerCase().startsWith(loweredCompany));
+  if (match) {
+    return { rows: match.data as unknown[][], actualName: match.sheet };
   }
 
   return null;
@@ -233,13 +234,6 @@ const parseFixedContactsFromRows = (
   return contacts;
 };
 
-const sheetToRows = (sheet: XLSX.WorkSheet): unknown[][] =>
-  XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-    header: 1,
-    defval: null,
-    raw: true
-  });
-
 const parseStoreRowsFromGrid = (
   rows: unknown[][],
   companySlug: StoreDirectoryCompanySlug
@@ -286,19 +280,17 @@ const parseStoreRowsFromGrid = (
 };
 
 const parseCompanySheet = (
-  sheet: XLSX.WorkSheet,
+  rows: unknown[][],
   companySlug: StoreDirectoryCompanySlug
 ): { stores: ParsedStoreRow[]; fixedContacts: ParsedFixedContact[] } => {
-  const rows = sheetToRows(sheet);
-
   return {
     fixedContacts: parseFixedContactsFromRows(rows, companySlug),
     stores: parseStoreRowsFromGrid(rows, companySlug)
   };
 };
 
-export const parseStoreDirectoryWorkbook = (buffer: Buffer): ParsedStoreDirectoryWorkbook => {
-  const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: false });
+export const parseStoreDirectoryWorkbook = async (buffer: Buffer): Promise<ParsedStoreDirectoryWorkbook> => {
+  const workbook = await readXlsxFile(buffer);
   const stores: ParsedStoreRow[] = [];
   const fixedContacts: ParsedFixedContact[] = [];
   const sheetStats: ParsedStoreDirectoryWorkbook['sheetStats'] = [];
@@ -311,7 +303,7 @@ export const parseStoreDirectoryWorkbook = (buffer: Buffer): ParsedStoreDirector
       continue;
     }
 
-    const parsed = parseCompanySheet(resolved.sheet, company.slug);
+    const parsed = parseCompanySheet(resolved.rows, company.slug);
     stores.push(...parsed.stores);
     fixedContacts.push(...parsed.fixedContacts);
     sheetStats.push({

@@ -5,6 +5,6 @@ export const getRelatedCaseCreatedAfterDate = (
   maxAgeMonths = RELATED_CASE_MAX_AGE_MONTHS
 ): Date => {
   const cutoff = new Date(now);
-  cutoff.setMonth(cutoff.getMonth() - maxAgeMonths);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - maxAgeMonths);
   return cutoff;
 };
