@@ -25,7 +25,7 @@ const submitSchema = z.object({
 });
 
 const listSchema = z.object({
-  body: z.object({}).passthrough(),
+  body: z.unknown().optional(),
   params: z.object({}).default({}),
   query: z.object({
     status: z.enum(statuses).optional()

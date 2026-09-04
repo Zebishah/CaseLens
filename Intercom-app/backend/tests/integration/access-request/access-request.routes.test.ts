@@ -21,6 +21,7 @@ await jest.unstable_mockModule(
 const { accessRequestRoutes } = await import(
   '../../../src/modules/access-request/access-request.routes.js'
 );
+const { generateToken } = await import('../../../src/services/jwt.service.js');
 
 const app = express();
 app.set('trust proxy', false);
@@ -71,5 +72,22 @@ describe('recruiter access request routes', () => {
     const response = await request(app).get('/api/access-requests');
     expect(response.statusCode).toBe(401);
     expect(mockList).not.toHaveBeenCalled();
+  });
+
+  test('lists requests for an authenticated administrator without requiring a GET body', async () => {
+    mockList.mockResolvedValue([]);
+    const token = generateToken({
+      sub: 1,
+      email: 'admin@example.com',
+      role: 'admin'
+    });
+
+    const response = await request(app)
+      .get('/api/access-requests?status=pending')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ success: true, data: [] });
+    expect(mockList).toHaveBeenCalledWith('pending');
   });
 });
