@@ -8,7 +8,7 @@ type Screenshot = {
 };
 
 export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
-  const videoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_EMBED_URL?.trim();
+  const videoUrl = 'https://embed.app.guidde.com/playbooks/t7C9ZYEfhucV5Bh2iwYw14?mode=videoOnly';
   const screenshots: Screenshot[] = [
     {
       title: 'Intercom case inbox',
@@ -89,7 +89,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">Immediate walkthrough</p>
               <h3 className="mt-2 text-lg font-semibold text-white">Watch the complete subtitled demo</h3>
             </div>
-            <span className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-300">3–5 min</span>
+            <span className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-300">5 min</span>
           </div>
           {videoUrl ? (
             <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl">
@@ -98,7 +98,9 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
                   src={videoUrl}
                   title="HR Intelligence product walkthrough"
                   className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="clipboard-write; fullscreen"
+                  sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                   loading="lazy"
                 />
