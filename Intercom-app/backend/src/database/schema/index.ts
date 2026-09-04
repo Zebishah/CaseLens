@@ -1,5 +1,4 @@
 export * from './users.js';
-export * from './example.js';
 export * from './employee_identities.js';
 export * from './employee_aliases.js';
 export * from './conversations.js';

@@ -1,85 +1,64 @@
-# Intercom HR Intelligence — Backend
+# HR Intelligence API
 
-Node.js + TypeScript API for the Operational Intelligence Layer (Milestone 1: employee match + related conversations sidebar).
+The backend is a strict-TypeScript Express API for signed conversation ingestion, HR intelligence processing, employee resolution, related-case retrieval, Intercom Canvas rendering, and portfolio operations.
 
-## Setup (SM1)
-1. Clone repository and go to the `backend` folder.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create your env file and fill in Intercom credentials:
-   ```bash
-   cp .env.example .env
-   ```
-   Required Intercom variables when `INTERCOM_ENABLED=true`: `INTERCOM_ACCESS_TOKEN`, `INTERCOM_CLIENT_SECRET`, `INTERCOM_WORKSPACE_ID`, `INTERCOM_ADMIN_ID`. `INTERCOM_BOT_ADMIN_ID` and `INTERCOM_WEBHOOK_SECRET` remain aliases. See `../../docs/INTERCOM_DEVELOPER_HUB.md`.
-4. Infrastructure — pick one:
-   - **Railway Postgres (public URL) + local Redis** — no Docker. Set `DATABASE_URL` to Railway public URL, `REDIS_URL=redis://localhost:6379`, ensure local Redis is running (`redis-cli ping` → `PONG`).
-   - **All local** — `docker compose up -d`, then `DATABASE_URL=postgresql://user:password@localhost:5432/db_name`.
-5. Run in development:
-   ```bash
-   npm run dev
-   ```
-   The API listens on `http://localhost:3002` (`PORT` in `.env`).
+See the [repository README](../../README.md) for the product overview and complete architecture.
 
-## Database setup (SM2)
-1. Enable extensions, then push schema (`vector` for embedding column, `pg_trgm` for name matching):
-   ```bash
-   npm run db:push
-   ```
-   (`db:push` runs `db:extensions` first on whatever `DATABASE_URL` points to.) If Railway rejects `vector`, use Docker Postgres instead.
-   Or generate SQL migrations: `npm run migrate` then apply with your migration runner.
-3. Optional dev seed (Jonathan Fritz + related cases):
-   ```bash
-   npm run db:seed
-   ```
+## Development setup
 
-### SM3 — Intercom layer
-- `src/modules/intercom/intercom.signature.ts` — webhook (`x-hub-signature`) + canvas (`x-body-signature`) verification
-- `src/modules/intercom/intercom.client.ts` — `getConversation`, `getAdmin` (Intercom REST API)
-- `src/modules/intercom/intercom.types.ts` — Zod schemas for webhook/canvas payloads
-- `src/middlewares/intercomWebhook.middleware.ts` — raw body parser + verify
-- `POST /webhooks/intercom` — SM4 conversation sync (wired in `src/routes/intercom.routes.ts`)
-- `src/middlewares/intercomCanvas.middleware.ts` — canvas verify (wire on `/canvas/*` in SM7)
-
-### Milestone 1 tables
-- `employee_identities` — one row per real person
-- `employee_aliases` — name spellings linked to an identity
-- `conversations` — synced Intercom cases + `intelligence_snapshot` for the sidebar
-- `conversation_messages` — message text (embeddings column reserved for M5)
-
-## Scripts
-- `npm run build` - Compile TypeScript
-- `npm run start` - Run production build
-- `npm run test` - Run tests once
-- `npm run test:watch` - Watch tests
-- `npm run test:coverage` - Coverage report
-- `npm run lint` - Run ESLint
-- `npm run format` - Run Prettier
-- `npm run migrate` - Generate Drizzle migrations from schema
-- `npm run db:push` - Apply schema directly to Postgres (local dev)
-- `npm run db:seed` - Load Milestone 1 sample data
-
-## Testing
-Run all tests:
 ```bash
-npm run test
+cp .env.example .env
+npm ci
+docker compose up -d
+npm run db:push
+npm run dev
 ```
 
-Integration tests use Supertest with the Express app.
+The API listens on `http://localhost:3002` by default. Interactive API documentation is available at `/docs` outside production.
 
-## Drizzle migrations
-This project includes schema definitions only. To generate migrations:
+## Processing modes
+
+- `JOB_PROCESSING_MODE=inline`: processes work in the API process and does not require Redis. This is the recommended low-cost demo configuration.
+- `JOB_PROCESSING_MODE=bullmq`: dispatches durable jobs to BullMQ. It requires `REDIS_URL` and allows separate workers and configurable concurrency.
+
+`RUN_API` and `RUN_WORKERS` control which process roles start. Environment validation rejects incomplete production, provider, and queue configuration.
+
+## Main modules
+
+| Module                      | Responsibility                                                         |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `ingestion`                 | Idempotent inbound events, transactional outbox records and recovery   |
+| `intercom` / `webhook`      | Signature verification, conversation synchronization and write-back    |
+| `canvas`                    | Embedded Intercom UI state, actions and error-safe rendering           |
+| `intelligence`              | Processing lifecycle, related-case search, ranking and summaries       |
+| `employee`                  | Extraction, validation, directory matching and name-variant resolution |
+| `store-directory`           | Directory imports, synchronization and CC-recipient routing            |
+| `demo`                      | Rate-limited synthetic sessions and deterministic/live processing      |
+| `auth` / `user`             | Session issuance, password hashing and role-based access               |
+| `operations` / `evaluation` | Restricted reliability controls and quality evidence                   |
+
+## Database changes
+
+For local schema development:
+
 ```bash
-npm run migrate
+npm run db:push
 ```
 
-## Project Structure
-- `src/config` - environment, db, redis, intercom, logger config
-- `src/constants` - shared constants (`intercom.constants.ts` for M1 thresholds and webhook topics)
-- `src/modules` - feature modules (auth, user, example; intercom modules added in later sub-milestones)
-- `src/middlewares` - auth, validation, error, rate limit, request logger
-- `src/services` - shared JWT/cache services
-- `src/database` - drizzle connection and schema definitions
-- `src/queues`, `src/jobs` - BullMQ queue and processor
-- `tests/unit`, `tests/integration` - unit and integration tests
+Deployment-safe SQL migrations and their TypeScript runners are stored in `scripts/`. Run only the migration needed for the target environment and review the selected `DATABASE_URL` first.
+
+## Useful commands
+
+```bash
+npm run lint                 # Static code-quality checks
+npm run typecheck            # Strict TypeScript validation
+npm test                     # Unit and integration suite
+npm run test:coverage        # Coverage report
+npm run build                # Production compilation
+npm run eval:run             # Deterministic quality evaluation
+npm run bench:local          # Local matching benchmarks
+npm run intercom:smoke       # Live Intercom integration check
+npm run intercom:canvas-smoke
+```
+
+Seed scripts require explicit credentials through environment variables. Never commit `.env` files, provider secrets, database URLs, or generated credentials.

@@ -4,7 +4,6 @@ import { AppError } from '../../utils/error.util.js';
 import { verifyRefreshToken } from '../../services/jwt.service.js';
 import { userService } from '../user/user.service.js';
 import { authRepository } from './auth.repository.js';
-import { AUTH_CONSTANTS } from './auth.constants.js';
 
 type AuthUser = {
   id: number;
@@ -31,8 +30,7 @@ const createSession = (user: AuthUser) => {
 
 export const authService = {
   async register(payload: { email: string; password: string; name: string }) {
-    const hashedPassword = await bcrypt.hash(payload.password, AUTH_CONSTANTS.SALT_ROUNDS);
-    const user = await userService.createUser({ ...payload, password: hashedPassword });
+    const user = await userService.createUser(payload);
     return createSession(user);
   },
 

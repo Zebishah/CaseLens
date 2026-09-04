@@ -3,9 +3,18 @@ import { db } from '../../database/connection.js';
 import { users } from '../../database/schema/users.js';
 import type { CreateUserDto } from './user.dto.js';
 
+const publicUserColumns = {
+  id: users.id,
+  email: users.email,
+  name: users.name,
+  role: users.role,
+  createdAt: users.createdAt,
+  updatedAt: users.updatedAt
+};
+
 export const userRepository = {
   async create(payload: CreateUserDto & { password: string }) {
-    const [user] = await db.insert(users).values(payload).returning();
+    const [user] = await db.insert(users).values(payload).returning(publicUserColumns);
     return user;
   },
 
@@ -14,20 +23,25 @@ export const userRepository = {
   },
 
   async findAll() {
-    return db.select().from(users);
+    return db.select(publicUserColumns).from(users);
   },
 
   async findById(id: number) {
-    return db.query.users.findFirst({ where: eq(users.id, id) });
+    const [user] = await db.select(publicUserColumns).from(users).where(eq(users.id, id)).limit(1);
+    return user;
   },
 
   async updateById(id: number, payload: Partial<CreateUserDto>) {
-    const [user] = await db.update(users).set(payload).where(eq(users.id, id)).returning();
+    const [user] = await db
+      .update(users)
+      .set({ ...payload, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning(publicUserColumns);
     return user;
   },
 
   async deleteById(id: number) {
-    const [user] = await db.delete(users).where(eq(users.id, id)).returning();
+    const [user] = await db.delete(users).where(eq(users.id, id)).returning(publicUserColumns);
     return user;
   }
 };

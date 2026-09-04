@@ -5,33 +5,60 @@ on:
     branches: [main, portfolio-hardening]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
+    name: Backend quality
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Intercom-app/backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 22
           cache: npm
           cache-dependency-path: Intercom-app/backend/package-lock.json
-      - name: Install
+      - name: Install dependencies
         run: npm ci
       - name: Lint
         run: npm run lint
-      - name: Typecheck
-        run: npx tsc -p tsconfig.json --noEmit
-      - name: Unit and integration tests
+      - name: Type-check
+        run: npm run typecheck
+      - name: Test
         run: npm test
       - name: Build
         run: npm run build
-      - name: Migration file present
-        run: test -f scripts/migrate-portfolio-ingestion-schema.sql
-      - name: Evaluation dataset present
-        run: test -f eval/dataset.v1.json
-      - name: Frontend typecheck and build
+
+  frontend:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
         working-directory: Intercom-app/web
-        run: npm install && npx tsc --noEmit && npm run build
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Intercom-app/web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type-check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build

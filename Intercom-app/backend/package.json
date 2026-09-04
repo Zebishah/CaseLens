@@ -64,7 +64,6 @@
     "read-excel-file": "^9.3.10",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^11.0.3",
     "winston": "^3.17.0",
     "zod": "^3.24.1",
     "zod-to-json-schema": "^3.24.1"

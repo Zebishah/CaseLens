@@ -15,9 +15,9 @@ const idSchema = z.object({
 
 const createSchema = z.object({
   body: z.object({
-    email: z.string().email(),
+    email: z.string().trim().toLowerCase().email(),
     password: z.string().min(8),
-    name: z.string().min(1),
+    name: z.string().trim().min(1).max(255),
     role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
   }),
   params: z.object({}).default({}),
@@ -27,9 +27,9 @@ const createSchema = z.object({
 const updateSchema = z.object({
   body: z
     .object({
-      email: z.string().email().optional(),
+      email: z.string().trim().toLowerCase().email().optional(),
       password: z.string().min(8).optional(),
-      name: z.string().min(1).optional(),
+      name: z.string().trim().min(1).max(255).optional(),
       role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
     })
     .refine((v) => Object.keys(v).length > 0, 'At least one field is required'),

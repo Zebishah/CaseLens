@@ -1,4 +1,6 @@
+import bcrypt from 'bcrypt';
 import { AppError } from '../../utils/error.util.js';
+import { AUTH_CONSTANTS } from '../auth/auth.constants.js';
 import type { CreateUserDto } from './user.dto.js';
 import { userRepository } from './user.repository.js';
 
@@ -8,11 +10,13 @@ export const userService = {
   },
 
   async createUser(payload: CreateUserDto & { password: string }) {
-    const existing = await userRepository.findByEmail(payload.email);
+    const email = payload.email.trim().toLowerCase();
+    const existing = await userRepository.findByEmail(email);
     if (existing) {
       throw AppError.conflict('Email already exists');
     }
-    return userRepository.create(payload);
+    const password = await bcrypt.hash(payload.password, AUTH_CONSTANTS.SALT_ROUNDS);
+    return userRepository.create({ ...payload, email, password });
   },
 
   async getUserById(id: number) {
@@ -24,7 +28,14 @@ export const userService = {
   },
 
   async updateUser(id: number, payload: Partial<CreateUserDto>) {
-    const user = await userRepository.updateById(id, payload);
+    const normalized = {
+      ...payload,
+      ...(payload.email ? { email: payload.email.trim().toLowerCase() } : {}),
+      ...(payload.password
+        ? { password: await bcrypt.hash(payload.password, AUTH_CONSTANTS.SALT_ROUNDS) }
+        : {})
+    };
+    const user = await userRepository.updateById(id, normalized);
     if (!user) {
       throw AppError.notFound('User not found');
     }

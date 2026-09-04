@@ -1,76 +1,118 @@
-# HR Case Operations Platform (CaseOps)
+# HR Intelligence
 
-Sanitized, recruiter-demonstrable HR intelligence system. **Intercom is the operator workspace** (inbox + Canvas Kit). This application is the intelligence, operations, and evaluation layer. Demo and inbound email are optional source adapters.
+HR Intelligence turns employee-related Intercom conversations into structured, reviewable HR case intelligence. It classifies the reported concern, resolves employee identity against a directory, suggests store-aware recipients, and surfaces related case history with transparent matching evidence.
 
-The portfolio can run as a self-contained sanitized demo or connect to an Intercom Developer Workspace. Recruiter access is read-only by default; operator and reliability controls remain admin-only.
+[View the live recruiter showcase](https://nagumo-hr-intelligence.vercel.app)
 
-## What it does
+![HR Intelligence resolving an employee identity and related cases inside Intercom](Intercom-app/web/public/product-screenshots/sarah-identity-resolution.webp)
 
-1. Ingests a conversation (Intercom webhook, demo form, or Resend email).
-2. Resolves employees and stores against a directory.
-3. Classifies the case, finds related cases, and recommends store stakeholders.
-4. Shows results in the Intercom Canvas Inbox App and writes a concise internal note.
-5. Exposes the same persisted records on an authenticated dashboard (not a second inbox).
+## What this project demonstrates
+
+- Signed Intercom webhook ingestion and embedded Canvas Kit workflows
+- LLM-assisted extraction with deterministic fixture mode and confidence-based review
+- Exact, alias, token, and fuzzy employee-name resolution
+- Related-case retrieval with explainable evidence and time-window controls
+- Store-directory routing and CC-recipient suggestions
+- Idempotent inbound-event recording, transactional outbox dispatch, retries, and recovery
+- Role-based dashboard access for administrators and read-only reviewers
+- Public synthetic demo sessions with request limits and data retention controls
+
+## Architecture
+
+```mermaid
+flowchart LR
+  A[Intercom or inbound email] --> B[Signed ingestion API]
+  B --> C[(PostgreSQL and outbox)]
+  C --> D[Inline or BullMQ processor]
+  D --> E[Gemini and matching engine]
+  E --> C
+  C --> F[Intercom Canvas and dashboard]
+```
+
+The same application service processes work inline for a low-cost demo deployment or through BullMQ workers for an asynchronous production topology. PostgreSQL remains the source of truth in both modes.
 
 ## Repository layout
 
-- `Intercom-app/backend` — Express API, optional BullMQ workers, PostgreSQL. Redis is required only for `JOB_PROCESSING_MODE=bullmq`.
-- `Intercom-app/web` — Next.js intelligence/ops dashboard
-- `docs/` — architecture, security, case study, Intercom hub, production-readiness audit, acceptance matrix
+```text
+Intercom-app/
+├── backend/
+│   ├── src/
+│   │   ├── config/       Environment, database, logging, Redis and provider configuration
+│   │   ├── database/     Drizzle schemas, connection management and startup schema checks
+│   │   ├── middlewares/  Authentication, RBAC, validation, rate limiting and signatures
+│   │   ├── modules/      Feature-oriented domain and application modules
+│   │   ├── jobs/         Background worker entry points
+│   │   ├── queues/       BullMQ dispatch adapters
+│   │   └── routes/       API and provider route composition
+│   ├── scripts/          Migrations, seeds, evaluations and integration smoke tests
+│   └── tests/            Unit, integration, contract and end-to-end tests
+└── web/
+    ├── app/              Next.js App Router pages and route-level error/loading UI
+    ├── components/       Dashboard, landing-page and recruiter-demo components
+    ├── lib/              Typed API, authentication and display utilities
+    └── public/           Sanitized product evidence
+```
 
-## Quick start (local)
+## Technology
 
-1. PostgreSQL (`Intercom-app/backend/docker-compose.yml` or a hosted equivalent). Redis is optional for `JOB_PROCESSING_MODE=inline`.
-2. Backend:
+| Layer            | Technology                                             |
+| ---------------- | ------------------------------------------------------ |
+| Frontend         | Next.js, React, TypeScript, Tailwind CSS               |
+| API              | Node.js, Express, TypeScript, Zod                      |
+| Data             | PostgreSQL, Drizzle ORM, pgvector, trigram search      |
+| Async processing | BullMQ and Redis, with an inline deployment mode       |
+| Integrations     | Intercom, Gemini, Box and optional inbound email       |
+| Quality          | Jest, Supertest, ESLint, TypeScript and GitHub Actions |
+
+## Security and reliability
+
+- HMAC verification is applied to Intercom and inbound-email webhooks before parsing.
+- Access and refresh tokens have separate secrets, issuer and audience validation.
+- Refresh tokens use secure, HTTP-only cookies; dashboard authorization is enforced by backend RBAC.
+- Passwords are bcrypt-hashed and are excluded from API projections.
+- Production configuration validates required secrets and provider dependencies at startup.
+- Rate limits protect authentication, public demos, webhooks and invitation requests.
+- Synthetic portfolio records are isolated from real customer and employee data.
+
+## Local development
+
+Requirements: Node.js 20+, Docker, and npm.
 
 ```bash
 cd Intercom-app/backend
 cp .env.example .env
-# Set DATABASE_URL and JWT_SECRET
-# Portfolio demo: JOB_PROCESSING_MODE=inline, INTERCOM_ENABLED=false, LLM_MODE=fixture
-# Queue architecture: JOB_PROCESSING_MODE=bullmq plus REDIS_URL
-npm install
-npm run db:push          # or npm run db:migrate-portfolio after an existing schema
-npm run db:seed-portfolio
-# Optional: set SEED_VIEWER_EMAIL/PASSWORD/NAME, then:
-npm run db:seed-viewer
-npm test
+docker compose up -d
+npm ci
+npm run db:push
 npm run dev
 ```
 
-The API listens on `http://localhost:3002`.
-
-3. Frontend:
+In another terminal:
 
 ```bash
 cd Intercom-app/web
 cp .env.example .env.local
-npm install
-npm run lint
-npm run typecheck
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3001`. Sign in to the dashboard. Use **Try Demo** only with synthetic data.
+The web application runs at `http://localhost:3001`; the API runs at `http://localhost:3002`.
 
-## Tests and measurements
-
-Do not quote a historical test count. Re-run:
+## Verification
 
 ```bash
 cd Intercom-app/backend
-npm test
 npm run lint
 npm run typecheck
-npm run eval:run
-npm run bench:local
-npm run intercom:canvas-smoke
+npm test
+npm run build
+
+cd ../web
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-See `docs/BENCHMARKS.md`, `docs/FINAL_PRODUCTION_READINESS_AUDIT.md`, and `docs/HR_INTELLIGENCE_ACCEPTANCE_MATRIX.md`.
+The recruiter account is intentionally read-only. Intercom access is separately approved because Intercom performs identity verification for new teammates.
 
-For the recruiter-safe dashboard and individually invited Intercom workflow, see `docs/RECRUITER_ACCESS.md`. Live Intercom behavior must be re-verified for each deployment; local contract tests do not replace workspace acceptance.
-
-## Safety
-
-Never commit `.env` files, API keys, or real employee/customer data. See `docs/SECURITY.md`.
+> This repository and its hosted showcase use synthetic portfolio data only. Provider secrets and production credentials are never committed.
