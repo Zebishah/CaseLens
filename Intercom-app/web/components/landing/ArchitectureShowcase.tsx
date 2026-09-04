@@ -39,6 +39,17 @@ const pipeline = [
   'Optional Intercom note/tag write-back'
 ];
 
+const technologies = [
+  'Next.js',
+  'TypeScript',
+  'Express',
+  'PostgreSQL',
+  'Redis',
+  'BullMQ',
+  'Gemini',
+  'Intercom'
+] as const;
+
 export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?: boolean }) {
   const [mode, setMode] = useState<keyof typeof modes>('portfolio');
   const active = modes[mode];
@@ -128,7 +139,7 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
           </ol>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <article className="rounded-[1.5rem] bg-mist/50 p-4">
             <p className="text-xs text-muted">Intelligence</p>
             <p className="mt-2 text-sm font-semibold text-primary">Identity · related cases · stakeholders</p>
@@ -137,6 +148,22 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
             <p className="text-xs text-white/70">Stored result</p>
             <p className="mt-2 text-sm font-semibold">Snapshot stays on the case</p>
           </article>
+        </div>
+
+        <div className="mt-6 border-t border-primary/10 pt-5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-secondary">
+            Core technology
+          </p>
+          <ul className="mt-3 flex flex-wrap gap-2" aria-label="Core technology stack">
+            {technologies.map((technology) => (
+              <li
+                key={technology}
+                className="rounded-full border border-primary/10 bg-white px-3 py-1.5 text-xs font-medium text-primary shadow-sm"
+              >
+                {technology}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </div>
