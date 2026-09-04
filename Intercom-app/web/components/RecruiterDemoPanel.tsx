@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { PRODUCT_DEMO_HIGHLIGHTS, PRODUCT_DEMO_URL } from '../lib/product-demo';
+import { DemoVideoEmbed } from './DemoVideoEmbed';
 
 type Screenshot = {
   title: string;
@@ -99,19 +100,8 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
             </div>
             <span className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-300">5 min</span>
           </div>
-          <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl">
-              <div className="aspect-video">
-                <iframe
-                  src={videoUrl}
-                  title="HR Intelligence product walkthrough"
-                  className="h-full w-full"
-                  allow="clipboard-write; fullscreen"
-                  sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              </div>
+          <div className="mt-5">
+            <DemoVideoEmbed videoUrl={videoUrl} />
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             <a href="#product-screenshots" className="rounded-lg border border-white/15 px-3.5 py-2 text-xs font-semibold text-white hover:bg-white/10">View screenshots</a>
