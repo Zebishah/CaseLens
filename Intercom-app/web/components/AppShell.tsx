@@ -15,6 +15,7 @@ type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 
 type NavGroup = {
   label: string;
   adminOnly?: boolean;
+  viewerOnly?: boolean;
   items: Array<{ href: string; label: string; hint: string; icon: IconName }>;
 };
 
@@ -40,6 +41,13 @@ const navGroups: NavGroup[] = [
     label: 'System',
     items: [
       { href: '/architecture', label: 'Architecture', hint: 'Verified system design', icon: 'architecture' }
+    ]
+  },
+  {
+    label: 'Intercom demo',
+    viewerOnly: true,
+    items: [
+      { href: '/access', label: 'Request Intercom access', hint: 'Personal workspace invitation', icon: 'access' }
     ]
   }
 ];
@@ -115,7 +123,9 @@ export function AppShell({
   };
 
   const isAdmin = user?.role === 'admin';
-  const visibleNavGroups = navGroups.filter((group) => isAdmin || !group.adminOnly);
+  const visibleNavGroups = navGroups.filter(
+    (group) => (isAdmin || !group.adminOnly) && (!group.viewerOnly || !isAdmin)
+  );
   const intercomWorkspaceUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
   const restrictedPath =
     !isAdmin && ['/operations', '/evaluation', '/access-requests'].some(
@@ -209,6 +219,13 @@ export function AppShell({
                 <span aria-hidden="true">↗</span>
               </a>
             ) : null}
+            <Link
+              href="/"
+              className="mb-4 flex items-center justify-between rounded-lg border border-white/10 px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+            >
+              <span>Back to landing page</span>
+              <span aria-hidden="true">←</span>
+            </Link>
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold uppercase text-white">
                 {(user?.name ?? user?.email ?? 'O').slice(0, 2)}
@@ -254,6 +271,9 @@ export function AppShell({
                     Open Intercom inbox ↗
                   </a>
                 ) : null}
+                <Link href="/" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-slate-700">
+                  Back to landing page
+                </Link>
                 <button type="button" className="mt-2 w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-danger" onClick={() => void signOut()}>
                   Sign out
                 </button>
