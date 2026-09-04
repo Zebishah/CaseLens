@@ -6,7 +6,6 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { corsAllowlist, env } from './config/env.config.js';
 import { errorHandler } from './middlewares/error.middleware.js';
-import { sendSuccess } from './utils/response.util.js';
 import { apiRateLimit } from './middlewares/rateLimit.middleware.js';
 import { requestContext } from './middlewares/requestContext.middleware.js';
 import { apiRouter } from './routes/index.js';
@@ -21,19 +20,19 @@ const swaggerSpec = swaggerJSDoc({
     openapi: '3.0.0',
     info: {
       title: 'HR Case Operations API',
-      version: '1.0.0'
+      version: '1.0.0',
     },
     components: {
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
-  apis: ['./src/**/*.ts']
+  apis: ['./src/**/*.ts'],
 });
 
 export const app = express();
@@ -44,8 +43,8 @@ app.set('trust proxy', env.TRUST_PROXY);
 app.use(
   helmet({
     contentSecurityPolicy: env.NODE_ENV === 'production',
-    crossOriginEmbedderPolicy: false
-  })
+    crossOriginEmbedderPolicy: false,
+  }),
 );
 app.use(
   cors({
@@ -57,8 +56,8 @@ app.use(
       }
       callback(new Error('Origin not allowed by CORS'));
     },
-    credentials: true
-  })
+    credentials: true,
+  }),
 );
 app.use(compression());
 app.use(requestContext);
@@ -77,18 +76,25 @@ if (env.NODE_ENV !== 'production') {
 app.use('/api', apiRateLimit, apiRouter);
 
 app.get('/health', (_req: Request, res: Response) => {
-  sendSuccess(res, healthService.liveness());
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendStatus(STATUS_CODES.NO_CONTENT);
 });
 
 app.get('/ready', async (_req: Request, res: Response) => {
   const readiness = await healthService.readiness();
-  res.status(readiness.status === 'ready' ? STATUS_CODES.OK : STATUS_CODES.SERVICE_UNAVAILABLE).json({
-    success: true,
-    data: {
-      ...readiness,
-      process: healthService.processFlags()
-    }
-  });
+  res
+    .status(
+      readiness.status === 'ready'
+        ? STATUS_CODES.OK
+        : STATUS_CODES.SERVICE_UNAVAILABLE,
+    )
+    .json({
+      success: true,
+      data: {
+        ...readiness,
+        process: healthService.processFlags(),
+      },
+    });
 });
 
 app.use((_req: Request, _res: Response, next) => {
