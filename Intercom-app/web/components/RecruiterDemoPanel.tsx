@@ -63,7 +63,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
             <WorkspaceCard
               number="01"
               title="Portfolio dashboard"
-              copy="Read-only case intelligence, directory evidence, reliability status, and verified architecture. Reviewer credentials are issued separately."
+              copy="Read-only case intelligence, directory evidence, reliability status, and verified architecture. The demo session is issued by the server and expires automatically."
             />
             <WorkspaceCard
               number="02"

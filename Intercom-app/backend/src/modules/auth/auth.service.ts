@@ -1,9 +1,11 @@
 import bcrypt from 'bcrypt';
-import { createAccessToken, createRefreshToken } from '../../utils/token.util.js';
+import { createAccessToken, createRefreshToken, createShortLivedAccessToken } from '../../utils/token.util.js';
 import { AppError } from '../../utils/error.util.js';
 import { verifyRefreshToken } from '../../services/jwt.service.js';
 import { userService } from '../user/user.service.js';
 import { authRepository } from './auth.repository.js';
+import { demoSessionService } from '../demo/demo-session.service.js';
+import { env } from '../../config/env.config.js';
 
 type AuthUser = {
   id: number;
@@ -47,6 +49,26 @@ export const authService = {
     }
 
     return createSession(user);
+  },
+
+  async enterDemo() {
+    const created = await demoSessionService.create();
+    const expiresAt = new Date(Date.now() + env.DEMO_AUTH_TTL_MINUTES * 60 * 1000);
+    const user = {
+      id: created.session.id,
+      email: 'demo-reviewer@hr-intelligence.local',
+      name: 'Recruiter Demo',
+      role: 'viewer'
+    };
+    return {
+      token: createShortLivedAccessToken(
+        { sub: user.id, email: user.email, role: user.role },
+        `${env.DEMO_AUTH_TTL_MINUTES}m`
+      ),
+      user,
+      expiresAt: expiresAt.toISOString(),
+      access: 'read-only demo'
+    };
   },
 
   async refreshToken(refreshToken: string) {

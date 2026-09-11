@@ -26,17 +26,13 @@ The optional `NEXT_PUBLIC_INTERCOM_WORKSPACE_URL` is rendered only for authentic
 
 ## Dashboard reviewer
 
-Create a separate read-only dashboard viewer:
+The public login page does not expose reviewer credentials. A recruiter selects **Enter read-only demo** and the backend issues a short-lived, server-generated viewer token for the sanitized portfolio workspace. It has no refresh cookie and expires automatically.
 
-```bash
-cd Intercom-app/backend
-SEED_VIEWER_EMAIL=reviewer@example.com \
-SEED_VIEWER_PASSWORD='use-a-unique-strong-password' \
-SEED_VIEWER_NAME='Recruiter Review' \
-npm run db:seed-viewer
-```
+The preferred dashboard path is the controlled demo button, not a shared account:
 
-A viewer can inspect Overview, sanitized cases, People & stores, and Architecture. Server authorization blocks corrections, imports, recovery, Operations, AI Quality, invitation administration, and user management.
+The server-side `DEMO_AUTH_TTL_MINUTES` setting defaults to 30 minutes and is bounded to 5–120 minutes.
+
+A demo viewer can inspect Overview, sanitized cases, People & stores, and Architecture. Server authorization blocks corrections, imports, recovery, Operations, AI Quality, invitation administration, and user management. Seeded reviewer accounts remain an internal fallback and must never be shared publicly.
 
 ## Intercom invitation request
 

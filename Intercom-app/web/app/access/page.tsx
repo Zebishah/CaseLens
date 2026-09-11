@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { AppShell } from '../../components/AppShell';
 import { ApiError, api } from '../../lib/api';
+import { getAdminToken, getAdminUser, isAccessTokenUsable } from '../../lib/auth-token';
 
 type FormState = {
   fullName: string;
@@ -25,6 +27,20 @@ const initialForm: FormState = {
 };
 
 export default function AccessRequestPage() {
+  const [authenticated, setAuthenticated] = useState(() => isAccessTokenUsable(getAdminToken()) && Boolean(getAdminUser()));
+
+  useEffect(() => {
+    api.restoreSession().then((session) => setAuthenticated(Boolean(session))).catch(() => setAuthenticated(false));
+  }, []);
+
+  if (authenticated) {
+    return <AppShell title="Request Intercom access" description="Request a personal invitation to the synthetic Intercom workspace. Your existing reviewer session remains visible in the workspace shell."><AccessRequestForm embedded /></AppShell>;
+  }
+
+  return <AccessRequestForm />;
+}
+
+function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
   const [form, setForm] = useState<FormState>(initialForm);
   const [state, setState] = useState<'idle' | 'submitting' | 'complete'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +69,8 @@ export default function AccessRequestPage() {
   };
 
   return (
-    <main className="theme-light min-h-screen bg-paper text-foreground">
-      <header className="mx-3 mt-3 rounded-2xl border border-primary/10 bg-white shadow-sm">
+    <main className={embedded ? 'min-h-0 text-foreground' : 'theme-light min-h-screen bg-paper text-foreground'}>
+      {!embedded ? <header className="mx-3 mt-3 rounded-2xl border border-primary/10 bg-white shadow-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-6">
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-primary">HI</span>
@@ -75,9 +91,9 @@ export default function AccessRequestPage() {
             </Link>
           </div>
         </div>
-      </header>
+      </header> : null}
 
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 md:px-6 md:py-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1.15fr)]">
+      <div className={`mx-auto grid max-w-6xl gap-8 ${embedded ? 'px-0 py-0 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1.15fr)]' : 'px-4 py-10 md:px-6 md:py-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1.15fr)]'}`}>
         <section className="lg:py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Controlled workspace access</p>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">
@@ -92,7 +108,7 @@ export default function AccessRequestPage() {
             <h2 className="text-base font-semibold text-primary">What you can review immediately</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
               <li>• The public product story, architecture, screenshots, and subtitled walkthrough.</li>
-              <li>• The protected read-only dashboard using separately issued reviewer credentials.</li>
+              <li>• The protected read-only dashboard through a short-lived, server-issued demo session.</li>
               <li>• Sanitized case intelligence, directory matching, and system-design evidence.</li>
             </ul>
           </div>

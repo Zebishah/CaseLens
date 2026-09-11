@@ -38,8 +38,15 @@ npm run db:migrate-intercom-source-revision
 npm run db:seed-portfolio
 ```
 
-Frontend: deploy `Intercom-app/web` with `NEXT_PUBLIC_API_URL` pointing at the API origin. Add that origin to `CORS_ORIGINS`.
+## Render backend settings
+
+Use `Intercom-app/backend` as the service **Root Directory**. Use `npm run build:render` as the **Build Command** and `npm start` as the **Start Command**. The Render build script uses `npm install --include=dev` so deployment remains resilient if Render invokes the command from a workspace where npm does not discover the nested lockfile; the tracked lockfile remains available for normal local and CI installs.
+
+Frontend: deploy `Intercom-app/web` with `NEXT_PUBLIC_API_URL` pointing at the API origin. The backend allowlist includes the current portfolio origins (`https://nagumo-hr-intelligence.vercel.app` and `https://hr-intercom.onrender.com`) plus `RENDER_EXTERNAL_URL` for same-service Render deployments. For another frontend domain, add its exact origin to `CORS_ORIGINS` with no trailing slash.
 
 ## Cold start
 
 The UI Wake Demo button polls `/ready`. A sleeping free instance is shown as “Starting demo service”, not as an application bug.
+# Recruiter-facing deployment note
+
+The hosted portfolio should expose the public landing story and deterministic assistant even when optional providers are unavailable. Configure the API URL and CORS origin for the web app, keep recruiter credentials separate from Intercom invitations, and use synthetic or sanitized records only. The assistant is not a dependency of core case ingestion or processing.

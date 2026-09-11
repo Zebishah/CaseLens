@@ -90,7 +90,7 @@ export default function DirectoryPage() {
   const visibleCount = tab === 'employees' ? employees.length : tab === 'stores' ? stores.length : tab === 'companies' ? companies.length : tab === 'stakeholders' ? contacts.length : data?.importHistory.length ?? 0;
 
   return (
-    <AppShell title="People & stores" description="The resolution directory behind employee matching, store ownership, and stakeholder routing.">
+    <AppShell title="People & stores" description="The context layer behind safer employee resolution and store-aware stakeholder routing: employee, store, company, and ownership relationships in one view.">
       {error ? <AlertBanner tone="danger" title="Could not load the directory" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {loading ? <PageSkeleton variant="directory" /> : null}
 

@@ -51,6 +51,9 @@ const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayl
 export const generateToken = (payload: AppJwtPayload): string =>
   sign(payload, 'access', env.JWT_SECRET, env.JWT_EXPIRES_IN);
 
+export const generateTokenWithExpiry = (payload: AppJwtPayload, expiresIn: string): string =>
+  sign(payload, 'access', env.JWT_SECRET, expiresIn);
+
 export const generateRefreshToken = (payload: AppJwtPayload): string =>
   sign(payload, 'refresh', env.JWT_REFRESH_SECRET, env.JWT_REFRESH_EXPIRES_IN);
 

@@ -5,8 +5,11 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const links = [
-  { href: '/#product', label: 'Product', match: 'product' },
+  { href: '/#problem', label: 'Problem', match: 'problem' },
+  { href: '/#ai-intelligence', label: 'AI intelligence', match: 'ai-intelligence' },
+  { href: '/#impact', label: 'Impact', match: 'impact' },
   { href: '/#architecture', label: 'Architecture', match: 'architecture' },
+  { href: '/#faq', label: 'FAQ', match: 'faq' },
   { href: '/#live-demo', label: 'Live demo', match: 'live-demo' }
 ];
 
@@ -45,9 +48,6 @@ export function LandingNav() {
   const isActive = (match: string) => {
     if (pathname !== '/') {
       return false;
-    }
-    if (match === 'product') {
-      return hash === 'product';
     }
     return hash === match;
   };

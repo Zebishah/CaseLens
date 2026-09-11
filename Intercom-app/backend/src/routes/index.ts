@@ -7,11 +7,13 @@ import { operationsRoutes } from '../modules/operations/operations.routes.js';
 import { directoryRoutes } from '../modules/directory/directory.routes.js';
 import { evaluationRoutes } from '../modules/evaluation/evaluation.routes.js';
 import { accessRequestRoutes } from '../modules/access-request/access-request.routes.js';
+import { assistantRoutes } from '../modules/assistant/assistant.routes.js';
 
 export const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/access-requests', accessRequestRoutes);
+apiRouter.use('/assistant', assistantRoutes);
 apiRouter.use('/users', userRoutes);
 apiRouter.use('/demo', demoRoutes);
 apiRouter.use('/cases', casesRoutes);

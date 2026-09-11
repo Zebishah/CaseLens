@@ -71,7 +71,7 @@ export default function CasesPage() {
   };
 
   return (
-    <AppShell title="Case explorer" description="Search and inspect every persisted conversation, employee match, classification, and related-case result.">
+    <AppShell title="Case explorer" description="Centralize processed conversations and inspect the identity, classification, related history, and routing context that reduces repetitive operator lookup.">
       <section className="dash-panel mb-4">
         <form className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_12rem_12rem_auto]" onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
           <label className="relative">

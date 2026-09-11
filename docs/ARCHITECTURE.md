@@ -60,3 +60,8 @@ PostgreSQL is the durable source of truth. Redis is required only for BullMQ mod
 ## Human corrections
 
 `POST /api/cases/:id/corrections` writes `case_corrections` **and** updates the snapshot (`operatorConfirmedFields`). Later intelligence runs keep confirmed `caseType`, `employee`, `stakeholders`, and `manualReview` unless Canvas **Re-analyze** (`forceReprocess`) clears them. Related-case hide is Canvas dismiss, stored on the snapshot.
+# Product framing
+
+The architecture exists to reduce repetitive HR operator lookup while preserving Intercom as the operator workspace. Intake is normalized, identity and related-case evidence are stored, routing context is surfaced, and the result can be written beside the conversation.
+
+The public product story intentionally precedes this implementation view. See [the product audit](PRODUCT_AUDIT.md) and [assistant boundary](AI_ASSISTANT.md) for the business-to-engineering mapping and read-only assistant contract.

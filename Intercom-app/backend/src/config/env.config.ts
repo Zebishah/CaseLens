@@ -122,6 +122,7 @@ const envSchema = z
     RESEND_RECEIVING_DOMAIN: optionalSecret,
 
     DEMO_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(24),
+    DEMO_AUTH_TTL_MINUTES: z.coerce.number().int().min(5).max(120).default(30),
     DEMO_MAX_EMAILS: z.coerce.number().int().positive().default(8),
     DEMO_MAX_SAMPLE_CASES: z.coerce.number().int().positive().default(12),
     DEMO_MAX_LIVE_LLM: z.coerce.number().int().nonnegative().default(3),
@@ -243,12 +244,27 @@ export const parseAppEnv = (input: NodeJS.ProcessEnv) => envSchema.parse(input);
 
 export const env = parseAppEnv(process.env);
 
+const PORTFOLIO_BROWSER_ORIGINS = [
+  'https://nagumo-hr-intelligence.vercel.app',
+  'https://hr-intercom.onrender.com'
+];
+
 export const corsAllowlist = (): string[] => {
-  if (env.CORS_ORIGINS?.trim()) {
-    return env.CORS_ORIGINS.split(',')
+  const configured = env.CORS_ORIGINS?.trim()
+    ? env.CORS_ORIGINS.split(',')
       .map((origin) => origin.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+    : env.NODE_ENV === 'production' ? [] : ['http://localhost:3001'];
+
+  // Render exposes the service's public origin at runtime. Allowing that exact
+  // origin keeps same-service deployments functional without opening CORS.
+  const renderOrigin = process.env.RENDER_EXTERNAL_URL?.trim();
+  if (renderOrigin && !configured.includes(renderOrigin)) {
+    configured.push(renderOrigin);
+  }
+  for (const origin of PORTFOLIO_BROWSER_ORIGINS) {
+    if (!configured.includes(origin)) configured.push(origin);
   }
 
-  return env.NODE_ENV === 'production' ? [] : ['http://localhost:3001'];
+  return configured;
 };

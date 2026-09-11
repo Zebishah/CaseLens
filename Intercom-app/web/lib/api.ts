@@ -176,6 +176,19 @@ export const api = {
     return session;
   },
 
+  async enterDemo(): Promise<AuthSession & { expiresAt: string; access: string }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      cache: 'no-store',
+      body: '{}'
+    });
+    const session = await parse<AuthSession & { expiresAt: string; access: string }>(response);
+    setAdminToken(session.token, session.user);
+    return session;
+  },
+
   async restoreSession(): Promise<AuthSession | null> {
     const token = getAdminToken();
     const user = getAdminUser();

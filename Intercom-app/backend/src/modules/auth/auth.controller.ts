@@ -1,5 +1,4 @@
 import type { Request, Response } from 'express';
-import { env } from '../../config/env.config.js';
 import { AppError } from '../../utils/error.util.js';
 import { STATUS_CODES } from '../../constants/statusCodes.js';
 import { sendSuccess } from '../../utils/response.util.js';
@@ -17,17 +16,17 @@ const sendSession = (
 };
 
 export const authController = {
-  async register(req: Request, res: Response): Promise<void> {
-    if (env.NODE_ENV === 'production') {
-      throw AppError.forbidden('Public registration is disabled');
-    }
-    const result = await authService.register(req.body);
-    sendSession(res, result, STATUS_CODES.CREATED);
+  async register(_req: Request, _res: Response): Promise<void> {
+    throw AppError.forbidden('Public registration is disabled; access is invite-controlled');
   },
 
   async login(req: Request, res: Response): Promise<void> {
     const result = await authService.login(req.body);
     sendSession(res, result);
+  },
+
+  async enterDemo(_req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.enterDemo());
   },
 
   async refreshToken(req: Request, res: Response): Promise<void> {

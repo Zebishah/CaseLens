@@ -112,7 +112,7 @@ export default function OverviewPage() {
   return (
     <AppShell
       title="Overview"
-      description="Live counts from this environment’s PostgreSQL store — processed Intercom cases, directory matches, and related-case links. Nothing here is seeded demo copy."
+      description="A live view of what the intelligence layer is helping operators accomplish: processed cases, directory matches, related history, and work that needs human review."
     >
       {sleeping ? (
         <AlertBanner

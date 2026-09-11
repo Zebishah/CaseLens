@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
-import { authLoginRateLimit } from '../../middlewares/rateLimit.middleware.js';
+import { authLoginRateLimit, publicDemoRateLimit } from '../../middlewares/rateLimit.middleware.js';
 import { authController } from './auth.controller.js';
 import { loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 
@@ -14,6 +14,7 @@ authRoutes.post(
   validate(loginSchema),
   asyncHandler(authController.login)
 );
+authRoutes.post('/demo', publicDemoRateLimit, asyncHandler(authController.enterDemo));
 authRoutes.post(
   '/refresh-token',
   validate(refreshTokenSchema),

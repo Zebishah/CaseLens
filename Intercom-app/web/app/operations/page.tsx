@@ -68,7 +68,7 @@ export default function OperationsPage() {
       : 'Portfolio-safe inline processing';
 
   return (
-    <AppShell title="Operations" description="Live operational health for case ingestion, durable delivery, AI processing, and Intercom synchronization.">
+    <AppShell title="Operations" description="Monitor the risks that can interrupt case work: ingestion, durable delivery, queue processing, retries, outbox recovery, and Intercom synchronization.">
       {error ? <AlertBanner tone="danger" title="Operation could not be completed" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {message ? <AlertBanner tone="success" title="Action completed">{message}</AlertBanner> : null}
       {loading ? <PageSkeleton variant="overview" /> : null}

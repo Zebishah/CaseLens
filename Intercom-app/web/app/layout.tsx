@@ -1,17 +1,18 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { HRIntelligenceAssistant } from '../components/HRIntelligenceAssistant';
 
 export const metadata: Metadata = {
   title: {
-    default: 'HR Intelligence — AI-Powered Case Intelligence',
+    default: 'HR Intelligence — AI-Powered HR Case Intelligence Platform',
     template: '%s · HR Intelligence'
   },
   description:
-    'Portfolio demonstration of an HR case operations platform. Ingest cases, resolve employee identity, find related conversations, surface stakeholders, and inspect a shared intelligence pipeline.',
+    'Intercom-integrated HR case intelligence with employee identity resolution, related-case discovery, stakeholder routing, auditable AI workflows, and operational reliability.',
   openGraph: {
     title: 'HR Intelligence — AI-Powered Case Intelligence',
     description:
-      'Ingest HR cases, identify employees, connect related conversations, and inspect intelligence results through a durable processing workflow.',
+      'Turn fragmented HR conversations into explainable identity, history, routing, and auditable operator context.',
     type: 'website'
   }
 };
@@ -25,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">{children}<HRIntelligenceAssistant /></body>
     </html>
   );
 }

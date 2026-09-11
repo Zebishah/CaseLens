@@ -21,6 +21,16 @@ describe('Auth integration tests', () => {
     );
   });
 
+  test('POST /api/auth/register is invite-controlled', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'new-user@example.com',
+      password: 'not-a-shared-password',
+      name: 'New User'
+    });
+    expect(res.statusCode).toBe(403);
+    expect(res.body.message).toContain('invite-controlled');
+  });
+
   test('POST /api/auth/refresh-token requires the signed HttpOnly cookie', async () => {
     const res = await request(app).post('/api/auth/refresh-token').send({});
     expect(res.statusCode).toBe(401);

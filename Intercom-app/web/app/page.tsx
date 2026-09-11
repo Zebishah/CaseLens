@@ -9,6 +9,7 @@ import { UseCases } from '../components/landing/UseCases';
 import { WaveEdge } from '../components/landing/WaveEdge';
 import { WorkflowStory } from '../components/landing/WorkflowStory';
 import { RecruiterDemoPanel } from '../components/RecruiterDemoPanel';
+import { ProductStorySections } from '../components/landing/ProductStorySections';
 
 export default function LandingPage() {
   return (
@@ -34,21 +35,21 @@ export default function LandingPage() {
                 AI-powered HR case intelligence
               </p>
               <h1 className="reveal reveal-delay-1 mt-5 max-w-xl text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-primary sm:text-[2.6rem] md:text-6xl">
-                Turn fragmented employee cases into actionable intelligence.
+                Turn fragmented HR conversations into explainable employee intelligence.
               </h1>
               <p className="reveal reveal-delay-2 mt-6 max-w-lg text-base leading-7 text-muted md:text-lg">
-                Ingest HR cases from Intercom, email, or demo, resolve employee identity, connect related
-                conversations, and inspect auditable intelligence — without replacing the Intercom inbox.
+                HR Intelligence transforms Intercom, email, and demo intake into identity, related history, store
+                context, and stakeholder guidance while keeping operators inside their existing Intercom workflow.
               </p>
-              <div className="reveal reveal-delay-3 mt-8 flex flex-wrap items-center gap-3">
-                <Link href="#live-demo" className="btn-primary rounded-full px-5 py-2.5 text-sm font-medium">
+              <div className="reveal reveal-delay-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                <Link href="#live-demo" className="btn-primary inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:w-auto">
                   Watch product walkthrough
                 </Link>
-                <Link href="/login" className="btn-secondary rounded-full px-5 py-2.5 text-sm">
-                  Open read-only dashboard
+                <Link href="/login?mode=demo" className="btn-secondary inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium transition hover:-translate-y-0.5 sm:w-auto">
+                  Explore recruiter demo
                 </Link>
-                <Link href="/access" className="text-sm font-medium text-primary hover:text-primary-hover">
-                  Request Intercom access
+                <Link href="/access" className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-primary/20 bg-white/75 px-5 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-white sm:w-auto">
+                  Request Intercom access <span aria-hidden="true">→</span>
                 </Link>
               </div>
             </div>
@@ -58,6 +59,8 @@ export default function LandingPage() {
           </div>
           <WaveEdge fill="#ffffff" className="relative mt-4 h-16 md:h-24" />
         </section>
+
+        <ProductStorySections />
 
         <WorkflowStory />
 

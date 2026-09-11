@@ -26,6 +26,17 @@ export const publicDemoRateLimit = rateLimit({
   legacyHeaders: false
 });
 
+export const assistantRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many assistant questions. Please try again later.'
+  }
+});
+
 export const webhookRateLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 120,

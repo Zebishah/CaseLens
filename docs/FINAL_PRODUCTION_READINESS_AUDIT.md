@@ -44,7 +44,7 @@ It is appropriate to claim the concrete patterns listed below. It is not appropr
 - HS256 JWT verification with issuer/audience and distinct production secrets.
 - HttpOnly refresh cookie, production-disabled registration, login throttling, and general endpoint rate limits.
 - Helmet, CORS allowlist, request-size limits, mutation schemas, generic production errors, and bounded request IDs.
-- Server-only provider/database/secrets; intentionally public recruiter credentials are restricted to a synthetic Intercom teammate.
+- Server-only provider/database/secrets; dashboard demos are short-lived server-issued sessions and Intercom access is restricted to personal synthetic-workspace invitations.
 - Payload hashing, secret-safe logging rules, and disabled public attachments.
 
 See `docs/SECURITY.md` for limitations.
@@ -66,13 +66,13 @@ The migration scripts must be run in each deployed database. An index existing i
 
 The landing page and dashboard Overview include an environment-driven recruiter walkthrough:
 
-1. Copy the restricted synthetic teammate email/password.
-2. Open the configured Intercom workspace/inbox URL.
-3. Sign in and open the demo inbox.
+1. Enter the short-lived read-only dashboard demo from `/login`.
+2. Open the configured Intercom workspace/inbox URL only when separately invited.
+3. Sign in with the reviewer’s own approved Intercom account.
 4. Select existing synthetic tickets and inspect the HR Intelligence panel.
 5. Return to the dashboard for operational and architectural evidence.
 
-Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled guided video. Credentials and video configuration are deployment environment values, not committed secrets.
+Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled guided video. The dashboard demo is server-issued and short-lived; Intercom access is always personal and invitation-based.
 
 ## Remaining limitations
 

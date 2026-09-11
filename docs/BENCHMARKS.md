@@ -70,3 +70,6 @@ A prior local `eval-v1` fixture run used 6 anonymized cases and fixture heuristi
 | Manual-review rate | 0.33 |
 
 Do not put these fixture values on the CV as production AI accuracy. The defensible numerical evidence today is the passing CI suite; product impact should be described through verified failure modes prevented, not invented percentages.
+# Evidence boundary
+
+Assistant responses and fixture evaluation are engineering evidence, not proof of customer savings or production performance. Keep fixture metrics explicitly labeled as fixture metrics and report any future latency, throughput, or business outcomes with the environment and measurement method.

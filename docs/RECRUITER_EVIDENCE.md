@@ -4,6 +4,8 @@ This file separates demonstrable engineering from claims that would overstate th
 
 ## Live recruiter demonstration
 
+The recommended review order is: public problem/value story → AI intelligence and impact → recruiter dashboard → case detail → architecture → operations/evaluation evidence → optional invited Intercom workspace. The global Ask HR Intelligence assistant can explain the current screen, but its responses are read-only and its live counts should not be treated as customer outcome metrics.
+
 The portfolio can demonstrate, using synthetic data:
 
 - A real Intercom inbox as the operator workspace.

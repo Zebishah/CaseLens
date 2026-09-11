@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ApiError, api } from '../lib/api';
+import { PRODUCT_DEMO_URL } from '../lib/product-demo';
+import { DemoVideoEmbed } from './DemoVideoEmbed';
 import {
   AUTH_STATE_EVENT,
   getAdminUser,
@@ -45,7 +47,6 @@ const navGroups: NavGroup[] = [
   },
   {
     label: 'Intercom demo',
-    viewerOnly: true,
     items: [
       { href: '/access', label: 'Request Intercom access', hint: 'Personal workspace invitation', icon: 'access' }
     ]
@@ -284,6 +285,23 @@ export function AppShell({
           <main id="main" className="flex-1 px-4 py-6 md:px-8 md:py-8">
             <div className="mx-auto max-w-[96rem]">
               {description ? <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
+              {pathname === '/overview' ? (
+                <section className="mb-8 overflow-hidden rounded-2xl border border-primary/10 bg-slate-950 shadow-lift" aria-labelledby="app-walkthrough-title">
+                  <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">Product walkthrough</p>
+                      <h2 id="app-walkthrough-title" className="mt-1 text-lg font-semibold text-white">See HR Intelligence inside Intercom</h2>
+                      <p className="mt-1 text-sm text-slate-400">A five-minute, subtitled tour of the workflow behind this page.</p>
+                    </div>
+                    <Link href="/demo" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15">
+                      Open interactive demo →
+                    </Link>
+                  </div>
+                  <div className="p-4 md:p-6">
+                    <DemoVideoEmbed videoUrl={PRODUCT_DEMO_URL} />
+                  </div>
+                </section>
+              ) : null}
               {children}
             </div>
           </main>

@@ -11,11 +11,6 @@ const capabilities = [
   ['Reliable ingestion', 'Tracks webhooks, processing state, retries, and failures.']
 ];
 
-const DEMO_REVIEWER = {
-  email: 'reviewer123@gmail.com',
-  password: 'RecruiterDemo2026#'
-} as const;
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -23,24 +18,29 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const reason = new URLSearchParams(window.location.search).get('reason');
+    const launchDemo = new URLSearchParams(window.location.search).get('mode') === 'demo';
     if (reason === 'session-expired') {
       setNotice('Your access session ended. Sign in again to continue.');
     } else if (reason === 'signed-out') {
       setNotice('You have been signed out securely.');
     }
 
-    api.restoreSession()
-      .then((session) => {
-        if (session) {
-          router.replace('/overview');
-        }
+    const sessionCheck = (launchDemo
+      ? api.enterDemo().then(() => { router.replace('/overview'); })
+      : api.restoreSession().then((session) => {
+          if (session) {
+            router.replace('/overview');
+          }
+        }))
+      .catch((err: unknown) => {
+        if (launchDemo) setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The recruiter demo is temporarily unavailable. Please try again shortly.');
       })
-      .catch(() => undefined)
       .finally(() => setChecking(false));
   }, [router]);
 
@@ -64,11 +64,18 @@ export default function LoginPage() {
     }
   };
 
-  const useDemoCredentials = () => {
-    setEmail(DEMO_REVIEWER.email);
-    setPassword(DEMO_REVIEWER.password);
-    setShowPassword(false);
+  const enterDemo = async () => {
     setError(null);
+    setNotice(null);
+    setDemoLoading(true);
+    try {
+      await api.enterDemo();
+      router.replace('/overview');
+    } catch (err) {
+      setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The recruiter demo is temporarily unavailable. Please try again shortly.');
+    } finally {
+      setDemoLoading(false);
+    }
   };
 
   return (
@@ -112,14 +119,17 @@ export default function LoginPage() {
         </section>
 
         <section className="relative flex min-h-screen items-center justify-center bg-slate-50 px-5 py-16 sm:px-10">
-          <Link
-            href="/"
-            className="absolute right-5 top-5 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950 sm:right-10 sm:top-8"
-          >
-            <span aria-hidden="true">←</span>
-            Back to landing page
-          </Link>
           <div className="w-full max-w-md">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Secure workspace access</span>
+              <Link
+                href="/"
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+              >
+                <span aria-hidden="true">←</span>
+                Back to landing page
+              </Link>
+            </div>
             <div className="mb-8 flex items-center gap-3 lg:hidden">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white">HI</span>
               <span className="text-sm font-semibold text-slate-900">HR Intelligence</span>
@@ -129,7 +139,7 @@ export default function LoginPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Secure access</p>
               <h2 id="login-form" className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Sign in with issued dashboard reviewer credentials. This account is separate from an approved
+                Sign in with your issued dashboard account. This account is separate from an approved
                 Intercom teammate invitation.
               </p>
 
@@ -150,29 +160,20 @@ export default function LoginPage() {
                   <div>
                     <p className="text-sm font-semibold text-emerald-950">Read-only recruiter demo</p>
                     <p className="mt-1 text-xs leading-5 text-emerald-900/70">
-                      Opens the Overview dashboard with access to cases, directory evidence, and system architecture.
+                      Enter a short-lived, server-issued read-only session for sanitized cases, directory evidence, and architecture.
                     </p>
                   </div>
                   <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-800">
                     Viewer
                   </span>
                 </div>
-                <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
-                  <div>
-                    <dt className="font-medium text-emerald-900/60">Email</dt>
-                    <dd className="mt-0.5 break-all font-mono text-emerald-950">{DEMO_REVIEWER.email}</dd>
-                  </div>
-                  <div>
-                    <dt className="font-medium text-emerald-900/60">Password</dt>
-                    <dd className="mt-0.5 break-all font-mono text-emerald-950">{DEMO_REVIEWER.password}</dd>
-                  </div>
-                </dl>
                 <button
                   type="button"
-                  className="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                  onClick={useDemoCredentials}
+                  disabled={demoLoading || checking}
+                  className="mt-3 w-full rounded-lg border border-emerald-300 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={() => void enterDemo()}
                 >
-                  Use demo credentials
+                  {demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}
                 </button>
               </div>
 
@@ -198,14 +199,15 @@ export default function LoginPage() {
               <div className="mt-6 border-t border-slate-100 pt-5">
                 <div className="flex items-start gap-2 text-xs leading-5 text-slate-500">
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /></svg>
-                  <span>Sessions renew securely in the background. Public registration is disabled.</span>
+                  <span>Demo sessions expire automatically. Accounts are invite-controlled; public registration is disabled.</span>
                 </div>
                 <div className="mt-4 rounded-xl bg-paper p-4">
                   <p className="text-sm font-semibold text-primary">Need reviewer access?</p>
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    Start with the public walkthrough, or request a personal Intercom invitation using your own email.
+                    Start with the public walkthrough, use the controlled demo above, or request a personal invitation using your own email.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold">
+                    <Link href="/forgot-password" className="text-primary hover:text-primary-hover">Forgot password?</Link>
                     <Link href="/#live-demo" className="text-primary hover:text-primary-hover">Watch public walkthrough</Link>
                     <Link href="/access" className="text-secondary hover:text-primary">Request Intercom access →</Link>
                   </div>

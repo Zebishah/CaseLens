@@ -69,7 +69,7 @@ export default function EvaluationPage() {
   return (
     <AppShell
       title="AI Quality"
-      description="Versioned offline regression suite for extraction, classification, and safe human-review behavior on anonymized cases."
+      description="A measured fixture baseline for extraction, classification, identity resolution, related-case behavior, and safe human-review decisions — separate from live production quality."
     >
       {error ? (
         <AlertBanner tone="danger" title="Could not load evaluation">
