@@ -24,3 +24,18 @@ export const refreshTokenSchema = z.object({
   params: z.object({}).default({}),
   query: z.object({}).default({})
 });
+
+export const inspectInviteSchema = z.object({
+  body: z.object({}).default({}),
+  params: z.object({}).default({}),
+  query: z.object({ token: z.string().min(32).max(200) })
+});
+
+export const acceptInviteSchema = z.object({
+  body: z.object({
+    token: z.string().min(32).max(200),
+    password: z.string().min(12).max(200)
+  }),
+  params: z.object({}).default({}),
+  query: z.object({}).default({})
+});

@@ -68,17 +68,31 @@ describe('Canvas Kit contract (local, never contacts Intercom)', () => {
     assertSupportedCanvas(canvasBuilder.buildUpdatingIntelligence(null));
   });
 
-  it('intelligence ready without internal version, timestamp, or match-method evidence', () => {
+  it('intelligence ready with compact system state and match evidence', () => {
     const canvas = canvasBuilder.buildIntelligenceSnapshot(readySnapshot());
     assertSupportedCanvas(canvas);
     const text = JSON.stringify(canvas);
     expect(text).toContain('Jordan Hale');
     expect(text).toContain('Matched');
     expect(text).toContain(CANVAS_COPY.RELATED_LINK_EVIDENCE_PREFIX);
-    expect(text).not.toContain(CANVAS_COPY.PROCESSING_VERSION_PREFIX);
-    expect(text).not.toContain(CANVAS_COPY.LAST_UPDATED_PREFIX);
-    expect(text).not.toContain(CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX);
+    expect(text).toContain(CANVAS_COPY.PROCESSING_VERSION_PREFIX);
+    expect(text).toContain(CANVAS_COPY.LAST_UPDATED_PREFIX);
+    expect(text).toContain(CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX);
     expect(text).not.toContain('exact · 100%');
+  });
+
+  it('includes an exact dashboard deep link when the Canvas has a persisted case id', () => {
+    const canvas = canvasBuilder.buildIntelligenceSnapshot(readySnapshot(), { caseId: 42 });
+    expect(canvas.canvas.content.components).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'button',
+          id: 'open-hr-intelligence-case',
+          label: 'Open in HR Intelligence',
+          action: { type: 'url', url: expect.stringContaining('/cases/42') }
+        })
+      ])
+    );
   });
 
   it('low confidence / manual review', () => {

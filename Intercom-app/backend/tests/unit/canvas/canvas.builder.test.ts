@@ -142,7 +142,7 @@ describe('canvasBuilder', () => {
     );
   });
 
-  it('hides processing version, timestamps, and match internals from the client sidebar', () => {
+  it('shows a compact system state and safe match evidence in the client sidebar', () => {
     const canvas = canvasBuilder.buildIntelligenceSnapshot({
       employeeMatches: [
         {
@@ -158,9 +158,9 @@ describe('canvasBuilder', () => {
     });
 
     const text = JSON.stringify(canvas);
-    expect(text).not.toContain(CANVAS_COPY.PROCESSING_VERSION_PREFIX);
-    expect(text).not.toContain(CANVAS_COPY.LAST_UPDATED_PREFIX);
-    expect(text).not.toContain(CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX);
+    expect(text).toContain(`${CANVAS_COPY.PROCESSING_VERSION_PREFIX}: v38`);
+    expect(text).toContain(`${CANVAS_COPY.LAST_UPDATED_PREFIX}: Sep 2, 2026`);
+    expect(text).toContain(CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX);
     expect(text).not.toContain('38:1:1788344456000');
     expect(text).not.toContain('2026-09-02T10:37:42.442Z');
     expect(text).toContain('Matched · 100%');

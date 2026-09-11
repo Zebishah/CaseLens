@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { RecruiterDemoPanel } from '../../components/RecruiterDemoPanel';
-import { AlertBanner, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, DashboardIcon, MetricCard, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { ApiError, api } from '../../lib/api';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
 
@@ -111,8 +110,8 @@ export default function OverviewPage() {
 
   return (
     <AppShell
-      title="Overview"
-      description="A live view of what the intelligence layer is helping operators accomplish: processed cases, directory matches, related history, and work that needs human review."
+      title="Organization overview"
+      description="A live view of what HR Intelligence is helping your organization accomplish: processed cases, directory matches, related history, and work that needs human review."
     >
       {sleeping ? (
         <AlertBanner
@@ -154,23 +153,26 @@ export default function OverviewPage() {
             </button>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <MetricCard
               label="Cases processed"
               value={total}
               hint={`${data.completed} ready · ${data.processing ?? 0} running · ${data.failed} failed`}
+              icon="cases"
             />
-            <KpiCard
+            <MetricCard
               label="Employees matched"
               value={matched}
               hint={`${percent(matched, total)} of cases linked to the directory · ${data.employeeDirectoryCount ?? 0} identities`}
+              icon="users"
             />
-            <KpiCard
+            <MetricCard
               label="Related cases found"
               value={related}
               hint={`${percent(related, total)} of cases have at least one related conversation`}
+              icon="link"
             />
-            <KpiCard
+            <MetricCard
               label="Manual review"
               value={review}
               hint={
@@ -179,14 +181,21 @@ export default function OverviewPage() {
                   : 'Waiting on an operator'
               }
               tone={review > 0 ? 'warning' : 'default'}
+              icon="review"
+            />
+            <MetricCard
+              label="Processing health"
+              value={data.failed > 0 ? 'Needs attention' : 'Healthy'}
+              hint={`${data.failed} failed · ${data.processing ?? 0} in progress · ${data.pending ?? 0} pending`}
+              tone={data.failed > 0 ? 'warning' : 'success'}
+              icon="activity"
             />
           </div>
 
-          <RecruiterDemoPanel compact />
-
           <div className="grid gap-4 lg:grid-cols-5">
-            <section className="dash-panel lg:col-span-3">
-              <h2 className="text-sm font-semibold tracking-tight text-primary">Case categories</h2>
+            <section className="dash-panel lg:col-span-2">
+              <p className="dashboard-section-label">Distribution</p>
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Case categories</h2>
               <p className="mt-1 text-sm text-muted">From extracted case type on each conversation.</p>
               {categoryEntries.length === 0 ? (
                 <p className="mt-8 text-sm text-muted">No categorized cases yet.</p>
@@ -200,9 +209,9 @@ export default function OverviewPage() {
                           {count} · {percent(count, total)}
                         </span>
                       </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-paper">
+                      <div className="chart-track mt-2">
                         <div
-                          className="h-full rounded-full bg-secondary"
+                          className="chart-fill bg-secondary"
                           style={{ width: percent(count, total) }}
                         />
                       </div>
@@ -213,7 +222,8 @@ export default function OverviewPage() {
             </section>
 
             <section className="dash-panel lg:col-span-2">
-              <h2 className="text-sm font-semibold tracking-tight text-primary">Identity resolution</h2>
+              <p className="dashboard-section-label">Resolution</p>
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Identity resolution</h2>
               <p className="mt-1 text-sm text-muted">How extracted names landed against the employee directory.</p>
               <ul className="mt-5 space-y-4">
                 {mentionBars
@@ -226,9 +236,9 @@ export default function OverviewPage() {
                         <span className="text-primary">{row.label}</span>
                         <span className="tabular-nums text-muted">{count}</span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-paper">
+                      <div className="chart-track mt-2">
                         <div
-                          className={`h-full rounded-full ${row.color}`}
+                          className={`chart-fill ${row.color}`}
                           style={{ width: percent(count, mentionTotal || total) }}
                         />
                       </div>
@@ -249,7 +259,43 @@ export default function OverviewPage() {
                 </div>
               ) : null}
             </section>
+
+            <section className="dash-panel lg:col-span-1">
+              <p className="dashboard-section-label">Pipeline</p>
+              <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Processing status</h2>
+              <p className="mt-1 text-sm text-muted">Current case state, not a historical trend.</p>
+              <div className="mt-5 space-y-3">
+                {[
+                  ['Ready', data.completed, 'bg-success'],
+                  ['Processing', data.processing ?? 0, 'bg-secondary'],
+                  ['Pending', data.pending ?? 0, 'bg-slate-400'],
+                  ['Failed', data.failed, 'bg-danger']
+                ].map(([label, count, color]) => (
+                  <div key={String(label)}>
+                    <div className="flex items-center justify-between text-sm"><span className="text-primary">{label}</span><span className="tabular-nums text-muted">{count}</span></div>
+                    <div className="chart-track mt-2"><div className={`chart-fill ${color}`} style={{ width: percent(Number(count), total) }} /></div>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
+
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
+            <SectionCard title="Attention queue" description="Only items that can change an operator’s next action appear here.">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <AttentionItem label="Manual review" value={review} copy={review > 0 ? 'Cases need an operator decision.' : 'All current cases resolved without manual review.'} tone={review > 0 ? 'warning' : 'success'} />
+                <AttentionItem label="Failed processing" value={data.failed} copy={data.failed > 0 ? 'Inspect failures in Operations.' : 'No failed case jobs require intervention.'} tone={data.failed > 0 ? 'warning' : 'success'} />
+                <AttentionItem label="Pending work" value={data.pending ?? 0} copy={data.pending ? 'Cases are waiting to be processed.' : 'No cases are waiting in the pipeline.'} tone={data.pending ? 'warning' : 'success'} />
+                <AttentionItem label="Duplicate events blocked" value={data.duplicateEventsPrevented} copy="Repeated inbound events safely ignored." tone="success" />
+              </div>
+            </SectionCard>
+            <SectionCard title="Platform proof" description="A compact tour of the workflow behind these live records." action={<Link href="/demo" className="text-sm font-semibold text-primary hover:text-primary-hover">Open walkthrough →</Link>}>
+              <div className="flex items-start gap-3 rounded-xl border border-primary/10 bg-emerald-50/60 p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-secondary shadow-sm"><DashboardIcon name="spark" /></span>
+                <div><p className="text-sm font-semibold text-primary">Cases become explainable work</p><p className="mt-1 text-sm leading-5 text-muted">Identity evidence, related history, routing context, and safe processing state are shown together.</p></div>
+              </div>
+            </SectionCard>
+          </section>
 
           <section className="dash-panel overflow-hidden p-0">
             <div className="flex items-center justify-between px-5 py-4">
@@ -301,31 +347,18 @@ export default function OverviewPage() {
             )}
           </section>
 
-          <p className="text-xs text-muted">
-            Duplicates blocked: {data.duplicateEventsPrevented}. These figures update when Intercom conversations are processed.
-          </p>
+          <p className="text-xs text-muted">Live database snapshot · Last Intercom webhook: {data.lastIntercomWebhookAt ? formatRelativeTime(data.lastIntercomWebhookAt) : 'none recorded'}.</p>
         </div>
       ) : null}
     </AppShell>
   );
 }
 
-function KpiCard({
-  label,
-  value,
-  hint,
-  tone = 'default'
-}: {
-  label: string;
-  value: number;
-  hint: string;
-  tone?: 'default' | 'warning';
-}) {
+function AttentionItem({ label, value, copy, tone }: { label: string; value: number; copy: string; tone: 'warning' | 'success' }) {
   return (
-    <div className={`dash-panel ${tone === 'warning' && value > 0 ? 'ring-1 ring-highlight/40' : ''}`}>
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight text-primary">{value}</p>
-      <p className="mt-2 text-sm leading-5 text-muted">{hint}</p>
+    <div className={`attention-item ${tone === 'success' ? 'is-clear' : ''} rounded-xl px-4 py-3`}>
+      <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold text-primary">{label}</p><span className="text-lg font-semibold tabular-nums text-primary">{value}</span></div>
+      <p className="mt-1 text-xs leading-5 text-muted">{copy}</p>
     </div>
   );
 }

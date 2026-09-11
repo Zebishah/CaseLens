@@ -34,15 +34,15 @@ type KnowledgeArticle = {
 
 const KNOWLEDGE: KnowledgeArticle[] = [
   {
-    terms: ['what can this project do', 'what can this do', 'for clients', 'client value', 'customer value', 'business value', 'benefit'],
+    terms: ['what can this project do', 'what can this do', 'what is hr intelligence', 'what is this platform', 'capabilities', 'features', 'use cases', 'who is it for', 'for clients', 'for organizations', 'client value', 'customer value', 'business value', 'benefit'],
     tool: 'explainClientValue',
-    answer: 'For clients, HR Intelligence reduces the time spent searching across HR conversations and systems. It turns incoming Intercom or email cases into structured topics, employee identity evidence, related history, store context, stakeholder guidance, and a traceable review snapshot. Teams keep working in Intercom while gaining faster context, safer matching, fewer duplicate-processing mistakes, and clearer human review.',
+    answer: 'For clients and HR operations teams, HR Intelligence is an AI-Powered B2B HR Intelligence Platform. It turns Intercom and email conversations into structured case intelligence: classification, employee identity evidence, related history, store and company context, stakeholder routing, and an auditable snapshot. Organizations keep working in Intercom while gaining centralized context, safer matching, more consistent handling, durable processing, measurable AI quality, and controlled human review.',
     suggestedPrompts: ['How does it reduce manual work?', 'Why does it integrate with Intercom?', 'How is sensitive HR data protected?']
   },
   {
-    terms: ['what does the recruiter demo include', 'recruiter demo', 'demo session', 'demo include'],
+    terms: ['what does the recruiter demo include', 'what does the product walkthrough include', 'recruiter demo', 'reviewer walkthrough', 'demo session', 'demo include'],
     tool: 'getRecruiterDemoHelp',
-    answer: 'The recruiter demo is a short-lived, read-only tour of the sanitized workspace. It includes Overview, case intelligence, employee and store context, related-case evidence, architecture, and reliability signals. It does not expose shared passwords, customer data, mutations, or administrator controls.',
+    answer: 'The product walkthrough is a short-lived, read-only tour of the sanitized HR Intelligence workspace. It includes organization overview, case operations, employee and store context, related-case evidence, architecture, operational health, and AI quality signals. It does not expose shared passwords, customer data, mutations, or administrator controls.',
     suggestedPrompts: ['How is HR data protected?', 'What can I inspect in a case?']
   },
   {
@@ -99,12 +99,12 @@ const KNOWLEDGE: KnowledgeArticle[] = [
   {
     terms: ['protect', 'security', 'sensitive', 'data', 'safe'],
     tool: 'getPlatformHelp',
-    answer: 'The assistant is read-only, validates structured input, applies authentication and role checks before accessing case data, returns bounded fields, and never exposes tokens, raw provider payloads, SQL, shell access, or arbitrary browsing. Recruiter views use sanitized portfolio data.'
+    answer: 'The assistant is read-only, validates structured input, applies authentication and role checks before accessing case data, returns bounded fields, and never exposes tokens, raw provider payloads, SQL, shell access, or arbitrary browsing. Reviewer views use sanitized workspace data.'
   },
   {
     terms: ['recruiter', 'inspect', 'demo'],
     tool: 'getPlatformHelp',
-    answer: 'Recruiters can start with the public product story, then use their own read-only dashboard session to inspect cases, directory context, architecture, operations evidence when authorized, and fixture evaluation results. Intercom access is separately invitation-based and uses synthetic records.'
+    answer: 'Reviewers can start with the public product story, then use their own read-only workspace session to inspect case operations, directory intelligence, architecture, operational evidence when authorized, and fixture evaluation results. Intercom access is separately invitation-based and uses synthetic records.'
   }
 ];
 
@@ -214,16 +214,16 @@ export const assistantService = {
 
     if (isGreeting(normalized)) {
       return {
-        answer: 'Hi — I’m the HR Intelligence assistant. I can explain the product, recruiter demo, identity matching, related cases, Intercom workflow, reliability, security, or evaluation approach. What would you like to explore?',
+        answer: 'Hi — I’m the HR Intelligence assistant. I can explain the platform, organization use cases, case operations, identity matching, related history, Intercom workflow, reviewer access, reliability, security, or AI quality. What would you like to explore?',
         tool: 'conversationGreeting',
         sources: ['product:knowledge'],
-        suggestedPrompts: ['What problem does HR Intelligence solve?', 'What does the recruiter demo include?', 'How is HR data protected?']
+        suggestedPrompts: ['What can HR Intelligence do for organizations?', 'What does the product walkthrough include?', 'How is HR data protected?']
       };
     }
 
     if (isThanks(normalized)) {
       return {
-        answer: 'You’re welcome. Ask me about a product capability, a case explanation, the recruiter demo, or the system architecture whenever you’re ready.',
+        answer: 'You’re welcome. Ask me about a platform capability, a case explanation, the product walkthrough, reviewer access, or the system architecture whenever you’re ready.',
         tool: 'conversationCourtesy',
         sources: ['product:knowledge'],
         suggestedPrompts: ['How does employee matching work?', 'Why use a transactional outbox?', 'What can I inspect in the demo?']
@@ -286,10 +286,10 @@ export const assistantService = {
     const article = findKnowledgeArticle(normalized);
     if (article) return withNaturalLanguageAnswer(knowledgeAnswer(article), normalized, context);
     return withNaturalLanguageAnswer({
-      answer: 'I can help with HR Intelligence product questions, but I’m not sure what you mean yet. Try asking about the recruiter demo, employee matching, related cases, Intercom, security, reliability, or AI quality.',
+      answer: 'I can help with HR Intelligence questions about the platform, organization use cases, case operations, employee identity, related history, stakeholder routing, reviewer access, Intercom, security, reliability, and AI quality. Try asking what the platform can do for an HR team or how a capability works.',
       tool: 'clarifyQuestion',
       sources: ['product:knowledge'],
-      suggestedPrompts: ['What does the recruiter demo include?', 'How does employee matching work?', 'Why does it integrate with Intercom?']
+      suggestedPrompts: ['What can HR Intelligence do for organizations?', 'How does employee matching work?', 'Why does it integrate with Intercom?']
     }, normalized, context);
   }
 };

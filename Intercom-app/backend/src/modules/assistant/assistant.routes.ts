@@ -11,7 +11,7 @@ const askSchema = z.object({
   body: z.object({
     message: z.string().trim().min(1).max(1200),
     route: z.string().trim().min(1).max(120).default('/'),
-    workspace: z.string().trim().min(1).max(80).default('portfolio'),
+    workspace: z.string().trim().min(1).max(80).default('hr-intelligence-workspace'),
     entityId: z.coerce.number().int().positive().optional()
   }),
   params: z.object({}).default({}),

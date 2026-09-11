@@ -10,7 +10,7 @@ import type {
   IntelligenceRelatedCase,
   IntelligenceSnapshot
 } from '../../types/intelligence.types.js';
-import { buildIntercomConversationUrl } from './canvas.url.util.js';
+import { buildHrIntelligenceCaseUrl, buildIntercomConversationUrl } from './canvas.url.util.js';
 import {
   buildDismissRelatedCaseComponentId,
   filterDismissedRelatedCases
@@ -135,7 +135,10 @@ const resolveCanvasMentionStatus = (
   return 'no_employee_mentioned';
 };
 
-const formatRelatedCaseEvidence = (relatedCase: IntelligenceRelatedCase): string | null => {
+const formatRelatedCaseEvidence = (
+  relatedCase: IntelligenceRelatedCase,
+  context?: { caseType?: string; storeNumber?: string | null }
+): string | null => {
   if (relatedCase.relationshipEvidence && relatedCase.relationshipEvidence.length > 0) {
     const prefix =
       relatedCase.relationshipGroup === 'employee_history'
@@ -144,11 +147,25 @@ const formatRelatedCaseEvidence = (relatedCase: IntelligenceRelatedCase): string
     return `${prefix}: ${relatedCase.relationshipEvidence.join(' · ')}`;
   }
 
+  const evidence: string[] = [];
   const names = (relatedCase.matchedEmployeeNames ?? []).map((name) => name.trim()).filter(Boolean);
-  if (names.length === 0) {
-    return null;
+  if (names.length > 0) {
+    evidence.push(`same employee (${names.join(', ')})`);
   }
-  return `${CANVAS_COPY.RELATED_LINK_EVIDENCE_PREFIX}: same employee (${names.join(', ')})`;
+  if (context?.caseType && relatedCase.caseType?.toLowerCase() === context.caseType.toLowerCase()) {
+    evidence.push('same category');
+  }
+  if (
+    context?.storeNumber &&
+    relatedCase.reporterStoreNumber &&
+    context.storeNumber === relatedCase.reporterStoreNumber
+  ) {
+    evidence.push('same store');
+  }
+
+  return evidence.length > 0
+    ? `${CANVAS_COPY.RELATED_LINK_EVIDENCE_PREFIX}: ${evidence.join(' · ')}`
+    : null;
 };
 
 const formatMatchMethodLabel = (matchMethod: string): string => {
@@ -166,6 +183,23 @@ const formatMatchMethodLabel = (matchMethod: string): string => {
     default:
       return 'Matched';
   }
+};
+
+const formatIdentityEvidence = (match: IntelligenceEmployeeMatch): string => {
+  const method = (() => {
+    switch (match.matchMethod) {
+      case 'exact': return 'Exact name match';
+      case 'alias': return 'Known alias';
+      case 'token': return 'Shared name tokens';
+      case 'fuzzy': return 'Similar spelling';
+      case 'manual': return 'Operator confirmed';
+      default: return 'Directory match';
+    }
+  })();
+  const extracted = match.extractedName?.trim();
+  return extracted && extracted.toLowerCase() !== match.canonicalName.trim().toLowerCase()
+    ? `${method}: “${extracted}” → ${match.canonicalName} · ${match.confidenceScore}% confidence`
+    : `${method} · ${match.confidenceScore}% confidence`;
 };
 
 const formatNameVariants = (
@@ -472,6 +506,58 @@ const buildSnapshotStatusSection = (
   return components;
 };
 
+const formatProcessingState = (banner: CanvasSnapshotBanner): string => {
+  switch (banner) {
+    case 'pending-update':
+    case 'refresh-pending':
+    case 'domain-search-pending':
+    case 'store-search-pending':
+      return CANVAS_COPY.PROCESSING_ACTIVE;
+    case 'refreshed':
+    case 'current':
+    default:
+      return CANVAS_COPY.PROCESSING_READY;
+  }
+};
+
+const formatWritebackState = (status?: string | null): string => {
+  switch (status) {
+    case 'synced': return CANVAS_COPY.WRITEBACK_SYNCED;
+    case 'failed': return CANVAS_COPY.WRITEBACK_FAILED;
+    case 'pending': return CANVAS_COPY.WRITEBACK_PENDING;
+    case 'skipped': return CANVAS_COPY.WRITEBACK_SKIPPED;
+    default: return CANVAS_COPY.WRITEBACK_NOT_REPORTED;
+  }
+};
+
+const buildSystemStateSection = (
+  snapshot: IntelligenceSnapshot,
+  banner: CanvasSnapshotBanner,
+  intercomSyncStatus?: string | null
+): CanvasComponent[] => {
+  const versionPart = snapshot.intelligenceVersion?.split(':')[0];
+  const version = versionPart ? `v${versionPart}` : '—';
+  return [
+    header(CANVAS_COPY.SYSTEM_STATE_HEADER),
+    muted(`Processing: ${formatProcessingState(banner)}`),
+    muted(`${CANVAS_COPY.PROCESSING_VERSION_PREFIX}: ${version} · ${CANVAS_COPY.LAST_UPDATED_PREFIX}: ${formatDisplayDate(snapshot.processedAt)}`),
+    muted(`Intercom write-back: ${formatWritebackState(intercomSyncStatus)}`)
+  ];
+};
+
+const buildOpenDashboardButton = (caseId?: number): CanvasComponent[] => {
+  if (!caseId) {
+    return [];
+  }
+  return [{
+    type: 'button',
+    id: 'open-hr-intelligence-case',
+    label: 'Open in HR Intelligence',
+    style: 'secondary',
+    action: { type: 'url', url: buildHrIntelligenceCaseUrl(caseId) }
+  }];
+};
+
 const formatEmployeeMatchItem = (match: IntelligenceEmployeeMatch): CanvasListItem => {
   const variantLine = formatNameVariants(match, match.nameVariants);
   const subtitle = variantLine
@@ -521,6 +607,10 @@ const buildEmployeeMatchSection = (
     options?.companyDomainSearchAttempted === true && matches.length > 1;
 
   if (!shouldSplit) {
+    const strongestMatch = matches[0];
+    if (strongestMatch) {
+      components.push(muted(`${CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX}: ${formatIdentityEvidence(strongestMatch)}`));
+    }
     components.push({
       type: 'list',
       items: matches.map(formatEmployeeMatchItem)
@@ -536,6 +626,7 @@ const buildEmployeeMatchSection = (
   );
 
   if (storeMatches.length > 0) {
+    components.push(muted(`${CANVAS_COPY.IDENTITY_EVIDENCE_PREFIX}: ${formatIdentityEvidence(storeMatches[0])}`));
     components.push({
       type: 'list',
       items: storeMatches.map(formatEmployeeMatchItem)
@@ -649,7 +740,8 @@ const buildDismissCaseButton = (
 const buildRelatedCasesSection = (
   relatedCases: IntelligenceRelatedCase[],
   openCaseEmployeeLabel?: string | null,
-  mentionStatus?: IntelligenceEmployeeMentionStatus
+  mentionStatus?: IntelligenceEmployeeMentionStatus,
+  context?: { caseType?: string; storeNumber?: string | null }
 ): CanvasComponent[] => {
   if (mentionStatus === 'no_employee_mentioned') {
     return [
@@ -687,7 +779,7 @@ const buildRelatedCasesSection = (
       if (preview) {
         components.push(paragraph(preview));
       }
-      const evidence = formatRelatedCaseEvidence(relatedCase);
+      const evidence = formatRelatedCaseEvidence(relatedCase, context);
       if (evidence) {
         components.push(muted(evidence));
       }
@@ -811,9 +903,14 @@ export const canvasBuilder = {
   buildPending(
     preview?: CanvasPendingPreview,
     ccRecipients?: CcRecipientsResult | null,
-    options?: { editingStore?: boolean; storeInputRequired?: boolean }
+    options?: { editingStore?: boolean; storeInputRequired?: boolean; caseId?: number }
   ): CanvasResponse {
-    const components: CanvasComponent[] = [header(CANVAS_COPY.APP_TITLE)];
+    const components: CanvasComponent[] = [
+      header(CANVAS_COPY.APP_TITLE),
+      ...buildOpenDashboardButton(options?.caseId),
+      header(CANVAS_COPY.CASE_SUMMARY_HEADER),
+      muted('Status: Processing')
+    ];
 
     const reporterName = preview?.reporterName?.trim();
     if (reporterName) {
@@ -911,6 +1008,8 @@ export const canvasBuilder = {
       editingStore?: boolean;
       storeInputRequired?: boolean;
       intercomSyncFailed?: boolean;
+      intercomSyncStatus?: string | null;
+      caseId?: number;
     }
   ): CanvasResponse {
     const banner = options?.banner ?? 'current';
@@ -950,8 +1049,11 @@ export const canvasBuilder = {
     const components: CanvasComponent[] = [
       header(CANVAS_COPY.APP_TITLE),
       ...buildSnapshotStatusSection(banner, options?.scopeSearch),
+      ...buildOpenDashboardButton(options?.caseId),
       ...metaLines,
       divider(),
+      header(CANVAS_COPY.CASE_SUMMARY_HEADER),
+      muted(`Status: ${formatProcessingState(banner)}`),
       ...caseCategorySection,
       ...mentionedInReportSection,
       ...(hasReportContext ? [divider()] : []),
@@ -960,8 +1062,13 @@ export const canvasBuilder = {
       ...buildEmployeeMatchSection(snapshot),
       ...(possibleSection.length > 0 ? [divider(), ...possibleSection] : []),
       divider(),
-      ...buildRelatedCasesSection(relatedCases, openCaseEmployeeLabel, mentionStatus),
-      ...(fuzzyRelatedSection.length > 0 ? [divider(), ...fuzzyRelatedSection] : [])
+      ...buildRelatedCasesSection(relatedCases, openCaseEmployeeLabel, mentionStatus, {
+        caseType: snapshot.caseType,
+        storeNumber: options?.scopeSearch?.storeNumber
+      }),
+      ...(fuzzyRelatedSection.length > 0 ? [divider(), ...fuzzyRelatedSection] : []),
+      divider(),
+      ...buildSystemStateSection(snapshot, banner, options?.intercomSyncStatus)
     ];
 
     return wrapCanvas(components);

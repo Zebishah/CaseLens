@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ApiError, api } from '../lib/api';
 
 type AssistantResponse = {
@@ -43,14 +43,14 @@ function FormattedAssistantText({ text }: { text: string }) {
 
 const pagePrompts: Record<string, string[]> = {
   '/': ['What problem does HR Intelligence solve?', 'Why does it integrate with Intercom?', 'How are duplicates prevented?'],
-  '/overview': ['Summarize this workspace', 'What requires attention?', 'Explain these metrics'],
+  '/overview': ['Summarize this organization workspace', 'What requires attention?', 'Explain these metrics'],
   '/cases': ['Show attendance cases', 'Which cases need review?', 'What does related history mean?'],
   '/directory': ['Explain employee identity', 'How does store routing help?', 'What context is in this directory?'],
   '/architecture': ['Explain the system simply', 'Why BullMQ and Redis?', 'Why use a transactional outbox?'],
   '/operations': ['What is failing?', 'Why are jobs waiting?', 'How does outbox recovery work?'],
   '/evaluation': ['Explain classification accuracy', 'What does employee precision mean?', 'Which fixture cases failed?'],
-  '/access': ['What can recruiters inspect?', 'How is HR data protected?', 'Why is Intercom access invitation-based?'],
-  '/login': ['What does the recruiter demo include?', 'How is HR data protected?', 'What problem does this solve?']
+  '/access': ['What can reviewers inspect?', 'How is HR data protected?', 'Why is Intercom access invitation-based?'],
+  '/login': ['What does the product walkthrough include?', 'How is HR data protected?', 'What problem does this solve?']
 };
 
 const routePrompts = (pathname: string): string[] => {
@@ -69,6 +69,12 @@ export function HRIntelligenceAssistant() {
   const prompts = useMemo(() => routePrompts(pathname), [pathname]);
   const entityId = pathname.match(/^\/cases\/(\d+)/)?.[1];
 
+  useEffect(() => {
+    const openAssistant = () => setOpen(true);
+    window.addEventListener('hr-assistant:open', openAssistant);
+    return () => window.removeEventListener('hr-assistant:open', openAssistant);
+  }, []);
+
   const ask = async (question = input) => {
     const message = question.trim();
     if (!message || loading) return;
@@ -84,7 +90,7 @@ export function HRIntelligenceAssistant() {
       const result = await api.post<AssistantResponse>('/api/assistant/ask', {
         message,
         route: pathname,
-        workspace: 'portfolio',
+        workspace: 'hr-intelligence-workspace',
         ...(entityId ? { entityId: Number(entityId) } : {})
       });
       setMessages((current) => [...current, { role: 'assistant', text: result.answer, meta: `${result.tool} · ${result.provider}` }]);
@@ -120,7 +126,7 @@ export function HRIntelligenceAssistant() {
             <button type="button" className="rounded-md px-2 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setOpen(false)} aria-label="Close assistant">×</button>
           </div>
           <div className="max-h-72 space-y-3 overflow-y-auto bg-slate-50 p-4">
-            {messages.length === 0 ? <p className="rounded-xl border border-primary/10 bg-white p-3 text-sm leading-6 text-slate-600">Ask about the product problem, employee matching, related cases, reliability, evaluation, or the current screen.</p> : null}
+            {messages.length === 0 ? <p className="rounded-xl border border-primary/10 bg-white p-3 text-sm leading-6 text-slate-600">Ask about the platform, organization workflow, employee matching, related cases, access, reliability, evaluation, or the current screen.</p> : null}
             {messages.map((message, index) => (
               <div key={`${message.role}-${index}`} className={message.role === 'user' ? 'ml-8 rounded-xl bg-primary px-3 py-2 text-sm leading-5 text-white' : 'mr-4 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm leading-5 text-slate-700'}>
                 {message.role === 'assistant' ? <FormattedAssistantText text={message.text} /> : message.text}

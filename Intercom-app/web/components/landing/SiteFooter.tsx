@@ -5,11 +5,11 @@ export function SiteFooter() {
     <footer className="bg-[#214f5c] text-white">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 text-sm md:grid-cols-3 md:px-6">
         <div>
-          <p className="text-[11px] tracking-[0.2em] text-secondary">Portfolio</p>
+          <p className="text-[11px] tracking-[0.2em] text-secondary">AI-POWERED B2B HR INTELLIGENCE</p>
           <p className="mt-2 text-lg font-semibold">HR Intelligence</p>
           <p className="mt-3 max-w-xs text-white/70">
-            HR case operations built as a real backend: Postgres, identity matching, related cases,
-            and a shared intelligence processor. Not a customer system of record.
+            Explainable HR case intelligence for organizations using Intercom and email. AI assists interpretation;
+            deterministic systems verify and resolve; human reviewers remain authoritative.
           </p>
         </div>
         <div>
@@ -33,16 +33,16 @@ export function SiteFooter() {
           </ul>
         </div>
         <div>
-          <p className="text-white/50">Project</p>
+          <p className="text-white/50">Workspace</p>
           <ul className="mt-3 space-y-2 text-white/80">
             <li>
               <Link href="/overview" className="hover:text-white">
-                Application overview
+                Organization overview
               </Link>
             </li>
             <li>
               <Link href="/login" className="hover:text-white">
-                Administrator sign in
+                Administrator access
               </Link>
             </li>
           </ul>

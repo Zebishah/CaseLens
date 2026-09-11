@@ -39,7 +39,7 @@ export default function LoginPage() {
           }
         }))
       .catch((err: unknown) => {
-        if (launchDemo) setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The recruiter demo is temporarily unavailable. Please try again shortly.');
+        if (launchDemo) setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The reviewer walkthrough is temporarily unavailable. Please try again shortly.');
       })
       .finally(() => setChecking(false));
   }, [router]);
@@ -72,7 +72,7 @@ export default function LoginPage() {
       await api.enterDemo();
       router.replace('/overview');
     } catch (err) {
-      setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The recruiter demo is temporarily unavailable. Please try again shortly.');
+      setError(err instanceof ApiError && err.sleeping ? 'The demo service is starting. Please try again in a moment.' : 'The reviewer walkthrough is temporarily unavailable. Please try again shortly.');
     } finally {
       setDemoLoading(false);
     }
@@ -95,12 +95,12 @@ export default function LoginPage() {
           </div>
 
           <div className="relative my-auto max-w-xl py-14">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Protected product showcase</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Protected HR Intelligence workspace</p>
             <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight xl:text-5xl">
               Turn every HR conversation into actionable case intelligence.
             </h1>
             <p className="mt-5 max-w-lg text-base leading-7 text-slate-300">
-              Review employee matches, related history, stakeholder routing, and processing health from one protected workspace. Recruiter accounts are read-only.
+                Review employee matches, related history, stakeholder routing, and processing health from one protected workspace. Reviewer accounts are read-only.
             </p>
             <div className="mt-10 space-y-5">
               {capabilities.map(([title, copy], index) => (
@@ -115,7 +115,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="relative text-xs text-slate-500">Synthetic portfolio data only · Role-based access</p>
+          <p className="relative text-xs text-slate-500">Synthetic reviewer data only · Role-based access</p>
         </section>
 
         <section className="relative flex min-h-screen items-center justify-center bg-slate-50 px-5 py-16 sm:px-10">
@@ -139,7 +139,7 @@ export default function LoginPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Secure access</p>
               <h2 id="login-form" className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">Welcome back</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Sign in with your issued dashboard account. This account is separate from an approved
+                Sign in with your issued workspace account. This account is separate from an approved
                 Intercom teammate invitation.
               </p>
 
@@ -158,7 +158,7 @@ export default function LoginPage() {
               <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-emerald-950">Read-only recruiter demo</p>
+                    <p className="text-sm font-semibold text-emerald-950">Read-only reviewer walkthrough</p>
                     <p className="mt-1 text-xs leading-5 text-emerald-900/70">
                       Enter a short-lived, server-issued read-only session for sanitized cases, directory evidence, and architecture.
                     </p>

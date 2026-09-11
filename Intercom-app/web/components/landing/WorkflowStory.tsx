@@ -8,7 +8,7 @@ const beats = [
   {
     n: '01',
     title: 'Case arrives',
-    copy: 'A recruiter session creates a queued case. Demo, email, and Intercom all become the same event.',
+    copy: 'A reviewer session creates a queued case. Sample, email, and Intercom all become the same event.',
     chip: 'Queued',
     chipClass: 'status-queued'
   },
@@ -81,7 +81,7 @@ export function WorkflowStory() {
             See the system think through a case.
           </h2>
           <p className="max-w-md text-muted">
-            A recruiter session creates a case, claims processing, and runs the shared intelligence
+            A reviewer session creates a case, claims processing, and runs the shared intelligence
             function. Custom live AI is optional and rate-limited.
           </p>
         </div>

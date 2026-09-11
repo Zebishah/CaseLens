@@ -121,6 +121,16 @@ const envSchema = z
     RESEND_WEBHOOK_SECRET: optionalSecret,
     RESEND_RECEIVING_DOMAIN: optionalSecret,
 
+    BREVO_ENABLED: booleanFlag(false),
+    BREVO_API_KEY: optionalSecret,
+    BREVO_SENDER_EMAIL: z.preprocess(
+      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+      z.string().email().optional()
+    ),
+    BREVO_SENDER_NAME: z.string().trim().min(1).max(120).default('HR Intelligence'),
+    PUBLIC_APP_URL: z.string().url().default('http://localhost:3001'),
+    INVITE_TTL_HOURS: z.coerce.number().int().positive().max(168).default(48),
+
     DEMO_SESSION_TTL_HOURS: z.coerce.number().int().positive().default(24),
     DEMO_AUTH_TTL_MINUTES: z.coerce.number().int().min(5).max(120).default(30),
     DEMO_MAX_EMAILS: z.coerce.number().int().positive().default(8),
@@ -202,6 +212,18 @@ const envSchema = z
             code: z.ZodIssueCode.custom,
             path: [key],
             message: `${key} is required when RESEND_ENABLED=true`
+          });
+        }
+      }
+    }
+
+    if (value.BREVO_ENABLED) {
+      for (const key of ['BREVO_API_KEY', 'BREVO_SENDER_EMAIL'] as const) {
+        if (!value[key]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `${key} is required when BREVO_ENABLED=true`
           });
         }
       }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, EmptyState, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, EmptyState, MetricCard, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
 import { AUTH_STATE_EVENT, getAdminUser } from '../../lib/auth-token';
 
@@ -16,6 +16,7 @@ type Directory = {
 };
 
 type Tab = 'employees' | 'stores' | 'companies' | 'stakeholders' | 'imports';
+type DirectorySelection = { kind: string; title: string; subtitle: string; details: Array<[string, string]> };
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'employees', label: 'Employees' },
@@ -37,6 +38,7 @@ export default function DirectoryPage() {
   const [importing, setImporting] = useState(false);
   const [csv, setCsv] = useState('company_slug,store_number,store_name,district_manager_name,district_manager_email\nnorthwind-bakery,1042,Harbor Street,Sam Patel,sam.patel@northwind.co');
   const [message, setMessage] = useState<string | null>(null);
+  const [selected, setSelected] = useState<DirectorySelection | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,7 +92,7 @@ export default function DirectoryPage() {
   const visibleCount = tab === 'employees' ? employees.length : tab === 'stores' ? stores.length : tab === 'companies' ? companies.length : tab === 'stakeholders' ? contacts.length : data?.importHistory.length ?? 0;
 
   return (
-    <AppShell title="People & stores" description="The context layer behind safer employee resolution and store-aware stakeholder routing: employee, store, company, and ownership relationships in one view.">
+    <AppShell title="Directory intelligence" description="The organizational context layer behind safer employee resolution and store-aware stakeholder routing: employee, store, company, and ownership relationships in one view.">
       {error ? <AlertBanner tone="danger" title="Could not load the directory" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {loading ? <PageSkeleton variant="directory" /> : null}
 
@@ -99,18 +101,10 @@ export default function DirectoryPage() {
           {message ? <AlertBanner tone="success" title="Directory updated">{message}</AlertBanner> : null}
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ['Employees', data.employees?.length ?? 0, 'Resolvable identities'],
-              ['Stores', data.stores.length, 'Routing locations'],
-              ['Companies', data.companies.length, 'Tenant organizations'],
-              ['Stakeholders', data.fixedContacts.length, 'Escalation contacts']
-            ].map(([label, value, hint]) => (
-              <div key={String(label)} className="dash-panel">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">{label}</p>
-                <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">{value}</p>
-                <p className="mt-2 text-sm text-slate-500">{hint}</p>
-              </div>
-            ))}
+            <MetricCard label="Employees" value={data.employees?.length ?? 0} hint="Resolvable identities" icon="users" />
+            <MetricCard label="Stores" value={data.stores.length} hint="Routing locations" icon="store" />
+            <MetricCard label="Companies" value={data.companies.length} hint="Tenant organizations" icon="cases" />
+            <MetricCard label="Stakeholders" value={data.fixedContacts.length} hint="Escalation contacts" icon="review" />
           </div>
 
           <section className="dash-panel overflow-hidden !p-0">
@@ -130,17 +124,17 @@ export default function DirectoryPage() {
               </div>
               <div className="flex gap-1 overflow-x-auto" role="tablist" aria-label="Directory views">
                 {visibleTabs.map((item) => (
-                  <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => { setTab(item.id); setQuery(''); }} className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition ${tab === item.id ? 'border-secondary text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                  <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => { setTab(item.id); setQuery(''); setSelected(null); }} className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition ${tab === item.id ? 'border-secondary text-slate-900' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
                     {item.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {tab === 'employees' ? <EmployeesTable items={employees} /> : null}
-            {tab === 'stores' ? <StoresTable items={stores} /> : null}
-            {tab === 'companies' ? <CompaniesTable items={companies} /> : null}
-            {tab === 'stakeholders' ? <ContactsTable items={contacts} /> : null}
+            {tab === 'employees' ? <EmployeesTable items={employees} onSelect={setSelected} /> : null}
+            {tab === 'stores' ? <StoresTable items={stores} onSelect={setSelected} /> : null}
+            {tab === 'companies' ? <CompaniesTable items={companies} onSelect={setSelected} /> : null}
+            {tab === 'stakeholders' ? <ContactsTable items={contacts} onSelect={setSelected} /> : null}
             {isAdmin && tab === 'imports' ? (
               <div className="grid gap-6 p-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)]">
                 <div>
@@ -174,6 +168,7 @@ export default function DirectoryPage() {
               </div>
             ) : null}
           </section>
+          {selected ? <DirectoryDrawer selection={selected} onClose={() => setSelected(null)} /> : null}
         </div>
       ) : null}
     </AppShell>
@@ -184,22 +179,29 @@ function EmptyTable({ label }: { label: string }) {
   return <div className="p-5"><EmptyState title={`No ${label} match your search`}>Clear the search or choose another directory view.</EmptyState></div>;
 }
 
-function EmployeesTable({ items }: { items: NonNullable<Directory['employees']> }) {
+function EmployeesTable({ items, onSelect }: { items: NonNullable<Directory['employees']>; onSelect: (selection: DirectorySelection) => void }) {
   if (!items.length) return <EmptyTable label="employees" />;
-  return <div className="overflow-x-auto"><table className="dash-table min-w-[48rem] w-full text-left text-sm"><thead><tr>{['Employee', 'Store', 'Company domain', 'Directory ID'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.id} className="dash-row border-t border-slate-100"><td className="px-5 py-4 font-semibold text-primary">{row.canonicalName}</td><td className="px-5 py-4 text-slate-600">{row.storeNumber ?? 'Unassigned'}</td><td className="px-5 py-4 text-slate-600">{row.companyDomain ?? 'Not available'}</td><td className="px-5 py-4 font-mono text-xs text-slate-400">EMP-{String(row.id).padStart(4, '0')}</td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="dash-table min-w-[48rem] w-full text-left text-sm"><thead><tr>{['Employee', 'Store', 'Company domain', 'Directory ID'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.id} tabIndex={0} className="dash-row cursor-pointer border-t border-slate-100" onClick={() => onSelect({ kind: 'Employee', title: row.canonicalName, subtitle: 'Directory identity', details: [['Store', row.storeNumber ?? 'Unassigned'], ['Company domain', row.companyDomain ?? 'Not available'], ['Directory ID', `EMP-${String(row.id).padStart(4, '0')}`]] })} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.click(); }}><td className="px-5 py-4 font-semibold text-primary">{row.canonicalName}</td><td className="px-5 py-4 text-slate-600">{row.storeNumber ?? 'Unassigned'}</td><td className="px-5 py-4 text-slate-600">{row.companyDomain ?? 'Not available'}</td><td className="px-5 py-4 font-mono text-xs text-slate-400">EMP-{String(row.id).padStart(4, '0')}</td></tr>)}</tbody></table></div>;
 }
 
-function StoresTable({ items }: { items: Directory['stores'] }) {
+function StoresTable({ items, onSelect }: { items: Directory['stores']; onSelect: (selection: DirectorySelection) => void }) {
   if (!items.length) return <EmptyTable label="stores" />;
-  return <div className="overflow-x-auto"><table className="dash-table min-w-[52rem] w-full text-left text-sm"><thead><tr>{['Store', 'Location name', 'District manager', 'VP owner'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.storeNumber} className="dash-row border-t border-slate-100"><td className="px-5 py-4 font-semibold tabular-nums text-primary">{row.storeNumber}</td><td className="px-5 py-4 text-slate-700">{row.storeName ?? 'Unnamed location'}</td><td className="px-5 py-4 text-slate-600">{row.districtManagerName ?? 'Not assigned'}</td><td className="px-5 py-4 text-slate-600">{row.vpName ?? 'Not assigned'}</td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="dash-table min-w-[52rem] w-full text-left text-sm"><thead><tr>{['Store', 'Location name', 'District manager', 'VP owner'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.storeNumber} tabIndex={0} className="dash-row cursor-pointer border-t border-slate-100" onClick={() => onSelect({ kind: 'Store', title: row.storeNumber, subtitle: row.storeName ?? 'Unnamed location', details: [['District manager', row.districtManagerName ?? 'Not assigned'], ['VP owner', row.vpName ?? 'Not assigned']] })} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.click(); }}><td className="px-5 py-4 font-semibold tabular-nums text-primary">{row.storeNumber}</td><td className="px-5 py-4 text-slate-700">{row.storeName ?? 'Unnamed location'}</td><td className="px-5 py-4 text-slate-600">{row.districtManagerName ?? 'Not assigned'}</td><td className="px-5 py-4 text-slate-600">{row.vpName ?? 'Not assigned'}</td></tr>)}</tbody></table></div>;
 }
 
-function CompaniesTable({ items }: { items: Directory['companies'] }) {
+function CompaniesTable({ items, onSelect }: { items: Directory['companies']; onSelect: (selection: DirectorySelection) => void }) {
   if (!items.length) return <EmptyTable label="companies" />;
-  return <div className="overflow-x-auto"><table className="dash-table min-w-[38rem] w-full text-left text-sm"><thead><tr><th className="px-5 py-3.5">Company</th><th className="px-5 py-3.5">Tenant slug</th></tr></thead><tbody>{items.map((row) => <tr key={row.slug} className="dash-row border-t border-slate-100"><td className="px-5 py-4 font-semibold text-primary">{row.name}</td><td className="px-5 py-4 font-mono text-xs text-slate-500">{row.slug}</td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="dash-table min-w-[38rem] w-full text-left text-sm"><thead><tr><th className="px-5 py-3.5">Company</th><th className="px-5 py-3.5">Tenant slug</th></tr></thead><tbody>{items.map((row) => <tr key={row.slug} tabIndex={0} className="dash-row cursor-pointer border-t border-slate-100" onClick={() => onSelect({ kind: 'Company', title: row.name, subtitle: 'Tenant organization', details: [['Tenant slug', row.slug]] })} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.click(); }}><td className="px-5 py-4 font-semibold text-primary">{row.name}</td><td className="px-5 py-4 font-mono text-xs text-slate-500">{row.slug}</td></tr>)}</tbody></table></div>;
 }
 
-function ContactsTable({ items }: { items: Directory['fixedContacts'] }) {
+function ContactsTable({ items, onSelect }: { items: Directory['fixedContacts']; onSelect: (selection: DirectorySelection) => void }) {
   if (!items.length) return <EmptyTable label="stakeholders" />;
-  return <div className="overflow-x-auto"><table className="dash-table min-w-[44rem] w-full text-left text-sm"><thead><tr>{['Stakeholder', 'Role', 'Email'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.email} className="dash-row border-t border-slate-100"><td className="px-5 py-4 font-semibold text-primary">{row.name}</td><td className="px-5 py-4 text-slate-600">{row.role ?? 'General contact'}</td><td className="px-5 py-4 text-slate-600">{row.email}</td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="dash-table min-w-[44rem] w-full text-left text-sm"><thead><tr>{['Stakeholder', 'Role', 'Email'].map((h) => <th key={h} className="px-5 py-3.5">{h}</th>)}</tr></thead><tbody>{items.map((row) => <tr key={row.email} tabIndex={0} className="dash-row cursor-pointer border-t border-slate-100" onClick={() => onSelect({ kind: 'Stakeholder', title: row.name, subtitle: row.role ?? 'General contact', details: [['Email', row.email], ['Role', row.role ?? 'General contact']] })} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.click(); }}><td className="px-5 py-4 font-semibold text-primary">{row.name}</td><td className="px-5 py-4 text-slate-600">{row.role ?? 'General contact'}</td><td className="px-5 py-4 text-slate-600">{row.email}</td></tr>)}</tbody></table></div>;
+}
+
+function DirectoryDrawer({ selection, onClose }: { selection: DirectorySelection; onClose: () => void }) {
+  return <aside className="mt-4 rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift" aria-label={`${selection.kind} details`}>
+    <div className="flex items-start justify-between gap-4"><div><p className="dashboard-section-label text-emerald-300">{selection.kind} detail</p><h3 className="mt-2 text-xl font-semibold">{selection.title}</h3><p className="mt-1 text-sm text-slate-400">{selection.subtitle}</p></div><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Close</button></div>
+    <dl className="mt-5 grid gap-3 sm:grid-cols-2">{selection.details.map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3"><dt className="text-xs text-slate-400">{label}</dt><dd className="mt-1 text-sm font-medium text-white">{value}</dd></div>)}</dl>
+  </aside>;
 }

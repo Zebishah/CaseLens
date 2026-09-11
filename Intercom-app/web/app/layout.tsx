@@ -4,15 +4,15 @@ import { HRIntelligenceAssistant } from '../components/HRIntelligenceAssistant';
 
 export const metadata: Metadata = {
   title: {
-    default: 'HR Intelligence — AI-Powered HR Case Intelligence Platform',
+    default: 'HR Intelligence — AI-Powered B2B HR Intelligence Platform',
     template: '%s · HR Intelligence'
   },
   description:
-    'Intercom-integrated HR case intelligence with employee identity resolution, related-case discovery, stakeholder routing, auditable AI workflows, and operational reliability.',
+    'AI-Powered B2B HR Intelligence Platform for explainable HR case intelligence across Intercom and email, with identity resolution, related history, stakeholder routing, auditable AI workflows, and operational reliability.',
   openGraph: {
-    title: 'HR Intelligence — AI-Powered Case Intelligence',
+    title: 'HR Intelligence — AI-Powered B2B HR Intelligence Platform',
     description:
-      'Turn fragmented HR conversations into explainable identity, history, routing, and auditable operator context.',
+      'Turn fragmented HR conversations into explainable case intelligence while keeping human reviewers in control.',
     type: 'website'
   }
 };

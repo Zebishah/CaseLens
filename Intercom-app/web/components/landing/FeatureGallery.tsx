@@ -65,7 +65,7 @@ const features = [
   },
   {
     title: 'Operational visibility',
-    copy: 'Administrators can inspect operations; recruiters can use the public demo without an account.',
+    copy: 'Administrators can inspect operations; reviewers can use the public walkthrough without an account.',
     detail: 'Evaluation and demo sessions remain available without admin login.',
     wide: false,
     panel: (

@@ -3,7 +3,7 @@ import { asyncHandler } from '../../middlewares/asyncHandler.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
 import { authLoginRateLimit, publicDemoRateLimit } from '../../middlewares/rateLimit.middleware.js';
 import { authController } from './auth.controller.js';
-import { loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
+import { acceptInviteSchema, inspectInviteSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 
 export const authRoutes = Router();
 
@@ -15,6 +15,8 @@ authRoutes.post(
   asyncHandler(authController.login)
 );
 authRoutes.post('/demo', publicDemoRateLimit, asyncHandler(authController.enterDemo));
+authRoutes.get('/invite', validate(inspectInviteSchema), asyncHandler(authController.inspectInvite));
+authRoutes.post('/invite/accept', validate(acceptInviteSchema), asyncHandler(authController.acceptInvite));
 authRoutes.post(
   '/refresh-token',
   validate(refreshTokenSchema),

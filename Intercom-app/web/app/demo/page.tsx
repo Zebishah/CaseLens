@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, SectionCard } from '../../components/dashboard/ui';
+import { AlertBanner, DashboardIcon, SectionCard } from '../../components/dashboard/ui';
+import { DemoVideoEmbed } from '../../components/DemoVideoEmbed';
 import { ApiError, api } from '../../lib/api';
 import { PRODUCT_DEMO_HIGHLIGHTS, PRODUCT_DEMO_URL } from '../../lib/product-demo';
 
@@ -162,52 +164,110 @@ export default function DemoPage() {
 
   return (
     <AppShell
-      title="Sample cases"
-      description="Do not submit personal or confidential information. Demonstration records are temporary and removed after the configured retention window."
+      title="Product walkthrough & access"
+      description="Understand the HR Intelligence workflow, the two controlled access paths, and a safe sample case. Organization overview stays focused on live operating stats."
     >
-      <section aria-labelledby="product-walkthrough-title" className="mb-8">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <section aria-labelledby="product-walkthrough-title" className="reveal mb-8 overflow-hidden rounded-[2rem] border border-primary/15 bg-slate-950 shadow-lift">
+        <div className="border-b border-white/10 px-5 py-6 md:px-8 md:py-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Dedicated product tour</p>
+              <h2 id="product-walkthrough-title" className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                See HR Intelligence inside Intercom
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                Follow a conversation from intake to explainable matching, related history, stakeholder routing, and a safe write-back.
+              </p>
+            </div>
+            <a href={PRODUCT_DEMO_URL} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15">
+              Open video in new tab ↗
+            </a>
+          </div>
+        </div>
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)] lg:p-8">
+          <DemoVideoEmbed videoUrl={PRODUCT_DEMO_URL} />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {PRODUCT_DEMO_HIGHLIGHTS.map((highlight, index) => (
+              <article key={highlight.title} className="lift-hover rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-300/10 text-xs font-semibold text-emerald-300">0{index + 1}</span>
+                  <h3 className="text-sm font-semibold text-white">{highlight.title}</h3>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{highlight.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="access-paths-title" className="mb-8">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-secondary">Guided product tour</p>
-            <h2 id="product-walkthrough-title" className="mt-2 text-2xl font-semibold text-primary">
-              See HR Intelligence inside Intercom
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm text-muted">
-              Watch the complete workflow for case categorization, employee matching, recipient suggestions, and related-case detection.
-            </p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Controlled access</p>
+            <h2 id="access-paths-title" className="mt-2 text-2xl font-semibold tracking-tight text-primary">Choose how you want to review</h2>
           </div>
-          <a
-            href={PRODUCT_DEMO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-primary hover:text-primary-hover"
-          >
-            Open walkthrough in a new tab
-          </a>
+          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">No shared credentials</span>
         </div>
-        <div className="overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white shadow-sm">
-          <div className="aspect-video">
-            <iframe
-              className="h-full w-full"
-              src={PRODUCT_DEMO_URL}
-              title="HR Intelligence for Intercom product walkthrough"
-              loading="lazy"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allow="clipboard-write; fullscreen"
-              sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-forms allow-same-origin allow-presentation"
-              allowFullScreen
-            />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <article className="reveal reveal-delay-1 lift-hover overflow-hidden rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-emerald-300"><DashboardIcon name="shield" /></span>
+              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-800">Fastest</span>
+            </div>
+            <h3 className="mt-5 text-lg font-semibold text-primary">Instant workspace walkthrough</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">Start a short-lived, server-issued viewer session with synthetic data. No account setup and no admin tools are exposed.</p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link href="/login?mode=demo" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">Enter read-only demo →</Link>
+              <span className="text-xs text-muted">Read-only · temporary · sanitized</span>
+            </div>
+          </article>
+          <article className="reveal reveal-delay-2 lift-hover overflow-hidden rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/15 text-secondary"><DashboardIcon name="users" /></span>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Personal</span>
+            </div>
+            <h3 className="mt-5 text-lg font-semibold text-primary">Request approved access</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">Submit your work email for review. After approval, you receive a one-time password setup email and your own read-only workspace account.</p>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Link href="/access" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">Request access →</Link>
+              <span className="text-xs text-muted">Admin approved · your email · viewer role</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="workspace-guide-title" className="mb-10 rounded-2xl border border-primary/10 bg-white p-5 shadow-sm md:p-7">
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Reviewer guide</p>
+          <h2 id="workspace-guide-title" className="mt-2 text-2xl font-semibold tracking-tight text-primary">How to use the two workspaces together</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Use Intercom to see the conversation and the HR Intelligence workspace to see the intelligence, evidence, and processing state built around it.</p>
+        </div>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="rounded-2xl bg-paper p-5">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-bold text-white">01</span><h3 className="font-semibold text-primary">Open the workspace</h3></div>
+            <ol className="mt-5 space-y-3 text-sm leading-6 text-muted">
+              <li><span className="font-semibold text-primary">Overview.</span> Start with cases processed, identity matches, related history, and attention items.</li>
+              <li><span className="font-semibold text-primary">Case operations.</span> Open a case to inspect evidence, timeline, routing, and the explainable result.</li>
+              <li><span className="font-semibold text-primary">Directory intelligence.</span> Check organizational records and the matching context used by the processor.</li>
+              <li><span className="font-semibold text-primary">Architecture.</span> Follow the webhook, queue, intelligence, and snapshot path.</li>
+            </ol>
+          </div>
+          <div className="rounded-2xl bg-slate-950 p-5 text-white">
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-300 text-sm font-bold text-slate-950">02</span><h3 className="font-semibold">Open Intercom separately</h3></div>
+            <ol className="mt-5 space-y-3 text-sm leading-6 text-slate-300">
+              <li><span className="font-semibold text-white">Accept the official invitation.</span> Intercom access is separate from the dashboard account and is never created by public sign-up.</li>
+              <li><span className="font-semibold text-white">Open the assigned workspace.</span> Review the synthetic inbox conversation that triggered the case.</li>
+              <li><span className="font-semibold text-white">Inspect the intelligence panel.</span> Compare the original message with identity, related-case, and routing evidence.</li>
+              <li><span className="font-semibold text-white">Keep access private.</span> Use your own invitation and contact the administrator if the link expires.</li>
+            </ol>
           </div>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {PRODUCT_DEMO_HIGHLIGHTS.map((highlight, index) => (
-            <article key={highlight.title} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold text-secondary">0{index + 1}</p>
-              <h3 className="mt-2 text-sm font-semibold text-primary">{highlight.title}</h3>
-              <p className="mt-1 text-xs leading-5 text-muted">{highlight.description}</p>
-            </article>
-          ))}
-        </div>
+      </section>
+
+      <section aria-labelledby="sample-lab-title" className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Interactive sample lab</p>
+        <h2 id="sample-lab-title" className="mt-2 text-2xl font-semibold tracking-tight text-primary">Try the processing workflow</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">These actions use temporary demonstration records. Do not submit personal or confidential information.</p>
       </section>
 
       {sleeping ? (

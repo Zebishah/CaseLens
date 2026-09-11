@@ -32,24 +32,25 @@ export default function LandingPage() {
           <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-10 md:px-6 md:pb-4 md:pt-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
             <div>
               <p className="reveal text-sm font-medium tracking-[0.14em] text-primary">
-                AI-powered HR case intelligence
+                AI-Powered B2B HR Intelligence Platform
               </p>
               <h1 className="reveal reveal-delay-1 mt-5 max-w-xl text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-primary sm:text-[2.6rem] md:text-6xl">
-                Turn fragmented HR conversations into explainable employee intelligence.
+                Turn fragmented HR conversations into explainable case intelligence.
               </h1>
               <p className="reveal reveal-delay-2 mt-6 max-w-lg text-base leading-7 text-muted md:text-lg">
-                HR Intelligence transforms Intercom, email, and demo intake into identity, related history, store
-                context, and stakeholder guidance while keeping operators inside their existing Intercom workflow.
+                HR Intelligence helps organizations transform Intercom and email conversations into structured employee
+                identity, related history, stakeholder context, and auditable case intelligence — while keeping human
+                reviewers in control.
               </p>
               <div className="reveal reveal-delay-3 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                 <Link href="#live-demo" className="btn-primary inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:w-auto">
                   Watch product walkthrough
                 </Link>
                 <Link href="/login?mode=demo" className="btn-secondary inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium transition hover:-translate-y-0.5 sm:w-auto">
-                  Explore recruiter demo
+                  Explore reviewer walkthrough
                 </Link>
                 <Link href="/access" className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-primary/20 bg-white/75 px-5 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-white sm:w-auto">
-                  Request Intercom access <span aria-hidden="true">→</span>
+                  Request reviewer access <span aria-hidden="true">→</span>
                 </Link>
               </div>
             </div>
@@ -110,18 +111,19 @@ export default function LandingPage() {
             <div className="max-w-3xl">
               <p className="text-sm font-medium tracking-[0.18em] text-secondary">Live product proof</p>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">
-                Review the system in two connected workspaces.
+                See HR Intelligence across the organization workflow.
               </h2>
               <p className="mt-5 max-w-2xl leading-7 text-muted">
-                The recruiter dashboard presents sanitized case intelligence and verified system behavior.
-                Intercom remains the operator inbox where conversations arrive and intelligence is written back.
+                The reviewer workspace presents sanitized case intelligence, directory context, quality signals, and
+                operational health. Intercom remains the operator inbox where conversations arrive and intelligence is
+                written back.
               </p>
             </div>
             <div className="mt-10">
               <RecruiterDemoPanel />
             </div>
             <p className="mt-6 text-sm text-muted">
-              Portfolio environment only · Synthetic records · No employer or customer data
+              Reviewer environment · Synthetic records · No employer or customer data
             </p>
           </div>
         </section>

@@ -176,6 +176,23 @@ export const api = {
     return session;
   },
 
+  async inspectInvite(token: string): Promise<{ email: string; name: string; expiresAt: string }> {
+    return request(`/api/auth/invite?token=${encodeURIComponent(token)}`, { method: 'GET' }, undefined, false);
+  },
+
+  async acceptInvite(token: string, password: string): Promise<AuthSession> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/invite/accept`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      cache: 'no-store',
+      body: JSON.stringify({ token, password })
+    });
+    const session = await parse<AuthSession>(response);
+    setAdminToken(session.token, session.user);
+    return session;
+  },
+
   async enterDemo(): Promise<AuthSession & { expiresAt: string; access: string }> {
     const response = await fetchWithTimeout(`${API_URL}/api/auth/demo`, {
       method: 'POST',

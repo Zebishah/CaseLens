@@ -34,7 +34,7 @@ The server-side `DEMO_AUTH_TTL_MINUTES` setting defaults to 30 minutes and is bo
 
 A demo viewer can inspect Overview, sanitized cases, People & stores, and Architecture. Server authorization blocks corrections, imports, recovery, Operations, AI Quality, invitation administration, and user management. Seeded reviewer accounts remain an internal fallback and must never be shared publicly.
 
-## Intercom invitation request
+## Reviewer account invitation
 
 Apply the recruiter-access migration once per database:
 
@@ -51,12 +51,14 @@ Public workflow:
 4. The response confirms receipt without revealing whether that email already has a pending request.
 5. An administrator reviews the request under Dashboard → Access requests.
 6. After verifying the requester, the administrator marks it approved.
-7. The administrator manually invites that exact email from Intercom teammate settings with minimum permissions.
-8. The administrator marks the request invited.
-9. The reviewer accepts the official email and completes Intercom's own verification.
-10. They select **Nagumo Workspace [DEV]**, open **Inbox → All or Unassigned**, and inspect a synthetic ticket.
+7. The backend creates or confirms a `viewer` account and sends a one-time password setup link through Brevo.
+8. The reviewer creates a password at `/set-password`; the link is hashed, expires, and can be consumed once.
+9. The reviewer is signed into the read-only dashboard. Backend RBAC blocks Operations, AI Quality, Access Requests, user management, imports, corrections, and recovery actions.
+10. If Intercom access is also needed, the administrator separately invites that exact email from Intercom teammate settings with minimum permissions.
 
 Approval in this application intentionally does not call an undocumented or privileged Intercom invitation API. It records an auditable operator decision; Intercom remains the identity and invitation authority.
+
+Brevo configuration is backend-only. Never put `BREVO_API_KEY` in `NEXT_PUBLIC_*` variables or the frontend environment.
 
 ## Intercom teammate restrictions
 

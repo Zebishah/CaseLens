@@ -14,7 +14,7 @@ The portfolio can demonstrate, using synthetic data:
 - Employee directory resolution, related employee history, stakeholder suggestions, manual review, and internal-note/tag write-back.
 - A separate dashboard for case exploration, directory data, operational health, and labelled evaluation results.
 - A restricted viewer account and a separate synthetic Intercom teammate account.
-- A guided subtitled video from the landing page and Overview.
+- A guided subtitled video from the landing page and the dashboard’s Demo & access tab.
 
 The workspace owner has manually exercised the Intercom integration. This is demonstration evidence, not a production customer SLA or independent load test.
 

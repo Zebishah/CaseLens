@@ -54,7 +54,7 @@ export function LandingNav() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors duration-200 ${
+      className={`relative z-50 transition-colors duration-200 ${
         scrolled ? 'bg-white/85 backdrop-blur-xl' : 'bg-mist'
       }`}
     >
@@ -65,7 +65,7 @@ export function LandingNav() {
           }`}
         >
           <Link href="/" className="min-w-0 shrink-0 rounded-full px-2 py-1">
-            <span className="block text-[10px] font-medium tracking-[0.2em] text-secondary">Portfolio</span>
+            <span className="block text-[10px] font-medium tracking-[0.2em] text-secondary">AI-POWERED B2B HR</span>
             <span className="block text-sm font-semibold text-primary">HR Intelligence</span>
           </Link>
           <nav className="hidden items-center gap-1 text-sm text-muted md:flex" aria-label="Landing">

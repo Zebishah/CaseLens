@@ -4,15 +4,14 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { ApiError, api } from '../lib/api';
-import { PRODUCT_DEMO_URL } from '../lib/product-demo';
-import { DemoVideoEmbed } from './DemoVideoEmbed';
+import { DashboardHero, type DashboardIconName } from './dashboard/ui';
 import {
   AUTH_STATE_EVENT,
   getAdminUser,
   type AdminUser
 } from '../lib/auth-token';
 
-type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'access' | 'architecture';
+type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 'access' | 'architecture' | 'demo';
 
 type NavGroup = {
   label: string;
@@ -23,20 +22,20 @@ type NavGroup = {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Workspace',
+    label: 'Organization workspace',
     items: [
-      { href: '/overview', label: 'Overview', hint: 'Performance and attention', icon: 'overview' },
-      { href: '/cases', label: 'Case explorer', hint: 'Processed conversations', icon: 'cases' },
-      { href: '/directory', label: 'People & stores', hint: 'Resolution directory', icon: 'directory' }
+      { href: '/overview', label: 'Organization overview', hint: 'Performance and attention', icon: 'overview' },
+      { href: '/cases', label: 'Case operations', hint: 'Explainable case records', icon: 'cases' },
+      { href: '/directory', label: 'Directory intelligence', hint: 'People, stores, and ownership', icon: 'directory' }
     ]
   },
   {
     label: 'Reliability',
     adminOnly: true,
     items: [
-      { href: '/operations', label: 'Operations', hint: 'Ingestion and processing', icon: 'operations' },
+      { href: '/operations', label: 'Operational health', hint: 'Ingestion and processing', icon: 'operations' },
       { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' },
-      { href: '/access-requests', label: 'Access requests', hint: 'Reviewer invitations', icon: 'access' }
+      { href: '/access-requests', label: 'Access management', hint: 'Reviewer invitations', icon: 'access' }
     ]
   },
   {
@@ -46,12 +45,25 @@ const navGroups: NavGroup[] = [
     ]
   },
   {
-    label: 'Intercom demo',
+    label: 'Product tour & access',
     items: [
-      { href: '/access', label: 'Request Intercom access', hint: 'Personal workspace invitation', icon: 'access' }
+      { href: '/demo', label: 'Product walkthrough', hint: 'Video and guided tour', icon: 'demo' },
+      { href: '/access', label: 'Reviewer access', hint: 'Controlled workspace invitation', icon: 'access' }
     ]
   }
 ];
+
+const heroByPath: Record<string, { eyebrow: string; title: string; icon: DashboardIconName; meta: string }> = {
+  '/overview': { eyebrow: 'Organization overview', title: 'See the operating picture across your HR workspace.', icon: 'activity', meta: 'Live operating view' },
+  '/cases': { eyebrow: 'Case operations', title: 'Turn fragmented conversations into explainable case intelligence.', icon: 'cases', meta: 'Persisted case evidence' },
+  '/directory': { eyebrow: 'Directory intelligence', title: 'Resolve people, stores, and ownership with confidence.', icon: 'users', meta: 'Organization context' },
+  '/operations': { eyebrow: 'Operational health', title: 'Keep intake, processing, and write-back observable.', icon: 'activity', meta: 'Runtime health' },
+  '/evaluation': { eyebrow: 'AI quality', title: 'Measure assistance before it reaches an operator.', icon: 'spark', meta: 'Versioned baseline' },
+  '/architecture': { eyebrow: 'Intercom-integrated architecture', title: 'See how conversations become explainable case intelligence.', icon: 'link', meta: 'Verified flow' },
+  '/demo': { eyebrow: 'Product walkthrough', title: 'Review the HR Intelligence workflow from intake to human review.', icon: 'spark', meta: 'Guided platform tour' },
+  '/access': { eyebrow: 'Reviewer access', title: 'Choose a secure path into the HR Intelligence workspace.', icon: 'shield', meta: 'Invite-only access' },
+  '/access-requests': { eyebrow: 'Access management', title: 'Review who should receive organization workspace access.', icon: 'shield', meta: 'Admin approval queue' }
+};
 
 function NavIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -61,6 +73,7 @@ function NavIcon({ name }: { name: IconName }) {
     operations: <><path d="M4 7h10M4 17h16M18 7h2" /><circle cx="15.5" cy="7" r="1.5" /><circle cx="8.5" cy="17" r="1.5" /></>,
     quality: <><path d="m12 3 2.2 5.2L20 10l-4.2 3.8L17 20l-5-3-5 3 1.2-6.2L4 10l5.8-1.8L12 3Z" /></>,
     access: <><path d="M4 20c.5-4 2.4-6 6-6s5.5 2 6 6" /><circle cx="10" cy="8" r="3" /><path d="M17 8h4M19 6v4" /></>,
+    demo: <><path d="m8 5 11 7-11 7V5Z" /><path d="M4 5v14" /></>,
     architecture: <><rect x="3" y="4" width="7" height="6" /><rect x="14" y="14" width="7" height="6" /><path d="M10 7h4a3 3 0 0 1 3 3v4M7 10v7h7" /></>
   };
   return (
@@ -133,6 +146,7 @@ export function AppShell({
       (route) => pathname === route || pathname.startsWith(`${route}/`)
     );
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const hero = pathname.startsWith('/cases/') ? null : heroByPath[pathname] ?? null;
 
   useEffect(() => {
     if (status === 'ready' && restrictedPath) {
@@ -146,11 +160,11 @@ export function AppShell({
         <div className="w-full max-w-sm text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">HI</div>
           <h1 className="mt-5 text-xl font-semibold text-primary">
-            {restrictedPath ? 'Opening the read-only showcase' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
+            {restrictedPath ? 'Opening the read-only reviewer workspace' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted">
             {restrictedPath
-              ? 'Administrative tools are not part of recruiter access.'
+              ? 'Administrative tools are not part of reviewer access.'
               : status === 'checking'
                 ? 'Restoring the protected workspace session.'
                 : 'The backend host may be waking up. Your session has not been discarded.'}
@@ -194,7 +208,7 @@ export function AppShell({
                   {group.items.map((item) => {
                     const active = isActive(item.href);
                     return (
-                      <Link key={item.href} href={item.href} className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'}`}>
+                      <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'}`}>
                         <span className={`mt-0.5 ${active ? 'text-secondary' : 'text-slate-500 group-hover:text-slate-300'}`}><NavIcon name={item.icon} /></span>
                         <span className="min-w-0">
                           <span className="block text-sm font-medium">{item.label}</span>
@@ -250,10 +264,18 @@ export function AppShell({
                 <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 md:text-2xl">{title}</h1>
               </div>
               <div className="flex items-center gap-3">
-                <span className="hidden items-center gap-2 text-xs font-medium text-slate-500 sm:flex">
+                <span className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 sm:flex">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  {isAdmin ? 'Admin workspace' : 'Read-only showcase'}
+                  {isAdmin ? 'Admin workspace' : 'Read-only reviewer workspace'}
                 </span>
+                <button
+                  type="button"
+                  className="hidden items-center gap-2 rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-secondary/50 hover:bg-emerald-50 sm:flex"
+                  onClick={() => window.dispatchEvent(new CustomEvent('hr-assistant:open'))}
+                >
+                  <span className="text-secondary" aria-hidden="true">✦</span>
+                  Ask assistant
+                </button>
                 <button type="button" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm md:hidden" aria-expanded={open} aria-controls="mobile-app-nav" onClick={() => setOpen((value) => !value)}>
                   {open ? 'Close' : 'Menu'}
                 </button>
@@ -284,24 +306,15 @@ export function AppShell({
 
           <main id="main" className="flex-1 px-4 py-6 md:px-8 md:py-8">
             <div className="mx-auto max-w-[96rem]">
-              {description ? <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
-              {pathname === '/overview' ? (
-                <section className="mb-8 overflow-hidden rounded-2xl border border-primary/10 bg-slate-950 shadow-lift" aria-labelledby="app-walkthrough-title">
-                  <div className="flex flex-col gap-3 border-b border-white/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">Product walkthrough</p>
-                      <h2 id="app-walkthrough-title" className="mt-1 text-lg font-semibold text-white">See HR Intelligence inside Intercom</h2>
-                      <p className="mt-1 text-sm text-slate-400">A five-minute, subtitled tour of the workflow behind this page.</p>
-                    </div>
-                    <Link href="/demo" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-white/15">
-                      Open interactive demo →
-                    </Link>
-                  </div>
-                  <div className="p-4 md:p-6">
-                    <DemoVideoEmbed videoUrl={PRODUCT_DEMO_URL} />
-                  </div>
-                </section>
-              ) : null}
+              {hero ? (
+                <DashboardHero
+                  eyebrow={hero.eyebrow}
+                  title={hero.title}
+                  description={description}
+                  icon={hero.icon}
+                  meta={hero.meta}
+                />
+              ) : description ? <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
               {children}
             </div>
           </main>

@@ -17,10 +17,24 @@ const confidenceLabel = (score: number | null | undefined): string => {
   return 'Low';
 };
 
-export const intercomSyncMarker = (fingerprint: string): string => `HR Intelligence · sync:${fingerprint.slice(0, 12)}`;
+const escapeHtml = (value: string): string => value
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+/** Hidden idempotency marker; keeping it out of visible note copy avoids operator noise. */
+export const intercomSyncMarker = (fingerprint: string): string => `<!-- hr-intelligence-sync:${fingerprint.slice(0, 12)} -->`;
 
 export const buildIntercomWritebackTags = (snapshot: IntelligenceSnapshot): string[] => {
   const tags: string[] = [INTERCOM_WRITEBACK_TAGS.PROCESSED];
+  if (snapshot.employeeMatches.length > 0 && !snapshot.requiresManualReview) {
+    tags.push(INTERCOM_WRITEBACK_TAGS.EMPLOYEE_MATCHED);
+  }
+  if (snapshot.relatedCases.length > 0 || (snapshot.fuzzyRelatedCases?.length ?? 0) > 0) {
+    tags.push(INTERCOM_WRITEBACK_TAGS.RELATED_CASES_FOUND);
+  }
   if (snapshot.requiresManualReview) {
     tags.push(INTERCOM_WRITEBACK_TAGS.MANUAL_REVIEW);
   }
@@ -43,9 +57,9 @@ const formatNoteEmployeeBlock = (
     (mentionStatus !== 'resolved' && Boolean(snapshot.unresolvedEmployeeMention))
   ) {
     return {
-      employeeLine: `Employee mentioned: ${snapshot.unresolvedEmployeeMention ?? 'Unknown'}`,
+      employeeLine: `Employee: ${snapshot.unresolvedEmployeeMention ?? 'Unknown'}`,
       confidenceLine: 'Confidence: —',
-      extraLines: ['Status: Not matched to directory']
+      extraLines: ['Status: Mentioned, not matched to directory']
     };
   }
 
@@ -97,15 +111,26 @@ export const buildIntercomIntelligenceNote = (
   const marker = intercomSyncMarker(fingerprint);
 
   const body = [
-    `<p><strong>HR Intelligence</strong><br/>${marker}</p>`,
-    `<p>${employeeBlock.employeeLine}<br/>`,
-    employeeBlock.confidenceLine,
-    employeeBlock.extraLines.length > 0 ? `<br/>${employeeBlock.extraLines.join('<br/>')}` : '',
-    `<br/>Store: ${conversation.reporterStoreNumber ?? '—'}<br/>`,
-    `Category: ${snapshot.caseType ? formatCaseTypeLabel(snapshot.caseType) : '—'}<br/>`,
+    '<p><strong>HR Intelligence Summary</strong></p>',
+    '<p>',
+    `${escapeHtml(employeeBlock.employeeLine)}<br/>`,
+    `${escapeHtml(employeeBlock.confidenceLine)}<br/>`,
+    `Company: ${escapeHtml(conversation.companyName ?? '—')}<br/>`,
+    `Store: ${escapeHtml(conversation.reporterStoreNumber ?? '—')}<br/>`,
+    `Category: ${escapeHtml(snapshot.caseType ? formatCaseTypeLabel(snapshot.caseType) : '—')}<br/>`,
     `Related cases: ${relatedCaseCount}<br/>`,
-    `Stakeholders: ${stakeholders.length > 0 ? stakeholders.join(', ') : '—'}<br/>`,
-    `Review: ${snapshot.requiresManualReview ? 'Required' : 'Not required'}</p>`
+    `Stakeholder: ${escapeHtml(stakeholders.length > 0 ? stakeholders.join(', ') : '—')}<br/>`,
+    `Review required: ${snapshot.requiresManualReview ? 'Yes' : 'No'}`,
+    employeeBlock.extraLines.length > 0 ? `<br/>${employeeBlock.extraLines.map(escapeHtml).join('<br/>')}` : '',
+    '</p>',
+    `<p><strong>Why:</strong> ${escapeHtml(
+      employee
+        ? `Identity resolved with ${employee.matchMethod} directory evidence at ${employee.confidenceScore}% confidence.`
+        : 'No confirmed employee identity was available.'
+    )} ${relatedCaseCount > 0 ? 'Related history was found within the configured lookback.' : 'No related case was found.'} ${
+      stakeholders.length > 0 ? 'Stakeholder suggestions came from store/company directory mapping.' : 'No stakeholder match was available.'
+    } AI assists; humans decide.</p>`,
+    marker
   ].join('');
 
   return { body, fingerprint, marker, tags };

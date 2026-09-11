@@ -2,6 +2,17 @@ export const CANVAS_COPY = {
   APP_TITLE: 'HR Intelligence',
   APP_CONNECTED: 'App is active and connected to your workspace.',
   APP_CONNECTED_DETAIL: 'Conversations are synced automatically. Intelligence appears when ready.',
+  CASE_SUMMARY_HEADER: 'CASE SUMMARY',
+  SYSTEM_STATE_HEADER: 'SYSTEM STATE',
+  PROCESSING_READY: 'Ready',
+  PROCESSING_QUEUED: 'Queued',
+  PROCESSING_ACTIVE: 'Processing',
+  PROCESSING_FAILED: 'Failed',
+  WRITEBACK_NOT_REPORTED: 'Not reported',
+  WRITEBACK_PENDING: 'Pending',
+  WRITEBACK_SYNCED: 'Synced',
+  WRITEBACK_FAILED: 'Needs retry',
+  WRITEBACK_SKIPPED: 'Not enabled',
   CASE_CATEGORY_PREFIX: 'Case category',
   MENTIONED_IN_REPORT_PREFIX: 'Employees mentioned in report',
   EMPLOYEE_MATCH_HEADER: 'Employee Match',
@@ -30,7 +41,7 @@ export const CANVAS_COPY = {
   NOT_SYNCED: 'This conversation is still loading.',
   PROCESSING: 'Analyzing this case…',
   PROCESSING_DETAIL:
-    'We are still reviewing this conversation. Click Refresh results in a few seconds. If nothing changes, close this conversation and open it again.',
+    'Intelligence is still processing. Refresh shortly to see the completed case review.',
   PROCESSING_REPORTER_PREFIX: 'Reporter',
   REFRESH_RESULTS: 'Refresh results',
   REANALYZE_CASE: 'Re-analyze case',
@@ -46,7 +57,7 @@ export const CANVAS_COPY = {
   RESULTS_UPDATED: 'Results are up to date.',
   UPDATING_INTELLIGENCE: 'Updating this case…',
   REFRESH_STILL_UPDATING_HINT:
-    'Click Refresh results in a few seconds. If nothing changes, close this conversation and open it again.',
+    'A newer conversation revision is being processed. Your previous result remains visible until the new result is ready.',
   PROCESSING_BACKGROUND:
     'Still working in the background. Click Refresh results in a few seconds. If nothing changes, close this conversation and open it again.',
   DOMAIN_SEARCH_BACKGROUND:
@@ -66,14 +77,14 @@ export const CANVAS_COPY = {
     'The results below may update when this search finishes. Click Refresh results in a few seconds.',
   FAILED: 'We could not finish analyzing this case.',
   FAILED_DETAIL:
-    'Click Refresh results. If this happens again, close this conversation and open it again.',
+    'The case remains available for manual review. Refresh results to try again.',
   FAILED_BUSY:
     'Analysis is busy right now. Wait a minute, then click Refresh results. If nothing changes, close this conversation and open it again.',
   INTERCOM_DISABLED:
     'This Intercom sidebar is turned off in this environment. Use the operations dashboard instead.',
   INTERCOM_SYNC_FAILED:
-    'Results are ready here, but saving back to Intercom failed. Click Refresh results, or close this conversation and open it again.',
-  MANUAL_REVIEW: 'Please double-check this employee match before using it.',
+    'Results are ready here, but the Intercom note could not be saved. Retry from the dashboard or review the case manually.',
+  MANUAL_REVIEW: 'Manual review recommended — AI assists; humans decide.',
   PROCESSING_VERSION_PREFIX: 'Processing version',
   LAST_UPDATED_PREFIX: 'Last updated',
   IDENTITY_EVIDENCE_PREFIX: 'Identity evidence',
@@ -87,8 +98,8 @@ export const CANVAS_COPY = {
   DOMAIN_EMPLOYEE_MATCHES_DETAIL:
     'Similar employees found across the company domain — review HR records to confirm if they are the same person.',
   STORE_SEARCH_USE_DOMAIN_HINT: 'No employee match for this store yet.',
-  CC_RECIPIENTS_HEADER: 'CC recipients',
-  CC_RECIPIENTS_DETAIL: 'Suggested people to keep in the loop for this store (display only).',
+  CC_RECIPIENTS_HEADER: 'ROUTING',
+  CC_RECIPIENTS_DETAIL: 'Store-aware stakeholder suggestions from the directory (display only).',
   /** No store on the ticket yet */
   CC_NO_STORE: 'No store number — enter a store number to load CC recipients.',
   CC_STORE_INPUT_LABEL: 'Store number',

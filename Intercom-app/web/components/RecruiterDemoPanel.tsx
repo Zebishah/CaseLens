@@ -46,7 +46,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
               Explore the complete workflow without shared-account security shortcuts.
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
-              The dashboard explains system behavior and operational evidence. Intercom is the real operator
+              The workspace explains system behavior and operational evidence. Intercom is the real operator
               workspace where synthetic conversations arrive and HR intelligence appears beside each ticket.
             </p>
           </div>
@@ -62,7 +62,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
           <div className="mt-4 space-y-3">
             <WorkspaceCard
               number="01"
-              title="Portfolio dashboard"
+              title="HR Intelligence workspace"
               copy="Read-only case intelligence, directory evidence, reliability status, and verified architecture. The demo session is issued by the server and expires automatically."
             />
             <WorkspaceCard
@@ -130,7 +130,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-primary">Product screenshots</h3>
-            <p className="mt-1 text-sm text-muted">A visual tour using the same sanitized portfolio environment.</p>
+            <p className="mt-1 text-sm text-muted">A visual tour using the same sanitized reviewer environment.</p>
           </div>
           <Link href="/access" className="text-sm font-semibold text-primary hover:text-primary-hover">Request personal access →</Link>
         </div>

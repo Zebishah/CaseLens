@@ -40,6 +40,20 @@ export const userRepository = {
     return user;
   },
 
+  async updatePasswordHash(id: number, password: string) {
+    const [user] = await db
+      .update(users)
+      .set({ password, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role
+      });
+    return user;
+  },
+
   async deleteById(id: number) {
     const [user] = await db.delete(users).where(eq(users.id, id)).returning(publicUserColumns);
     return user;

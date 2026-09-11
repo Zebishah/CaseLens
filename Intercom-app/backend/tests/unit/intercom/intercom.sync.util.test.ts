@@ -33,7 +33,12 @@ describe('intercom.sync.util', () => {
     expect(first.body).toContain('Jordan Hale');
     expect(first.body).toContain('Related cases: 1');
     expect(first.body).toContain('Sam Patel');
-    expect(first.tags).toEqual(['hr-intelligence-processed', 'category-attendance']);
+    expect(first.tags).toEqual([
+      'hr-intelligence-processed',
+      'employee-matched',
+      'related-cases-found',
+      'category-attendance'
+    ]);
     expect(first.fingerprint).toBe(second.fingerprint);
     expect(first.marker).toContain('sync:');
   });
@@ -57,8 +62,9 @@ describe('intercom.sync.util', () => {
     expect(note.body).toContain('Store: —');
     expect(note.body).toContain('Category: General');
     expect(note.body).toContain('Related cases: 0');
-    expect(note.body).toContain('Stakeholders: —');
-    expect(note.body).toContain('Review: Not required');
+    expect(note.body).toContain('Stakeholder: —');
+    expect(note.body).toContain('Review required: No');
+    expect(note.body).toContain('AI assists; humans decide.');
     expect(note.body).not.toContain('First Intercom');
     expect(note.body).not.toContain('Employee mentioned: Si');
     expect(note.body).not.toContain('100%');
@@ -94,7 +100,7 @@ describe('intercom.sync.util', () => {
       })
     );
 
-    expect(note.body).toContain('Employee mentioned: Braden');
+    expect(note.body).toContain('Employee: Braden');
     expect(note.body).toContain('Related cases: 1');
   });
 
@@ -105,5 +111,26 @@ describe('intercom.sync.util', () => {
       snapshot({ employeeMatches: [] })
     );
     expect(first.fingerprint).not.toBe(second.fingerprint);
+  });
+
+  it('escapes operator-visible values in the Intercom note', () => {
+    const note = buildIntercomIntelligenceNote(
+      { reporterStoreNumber: '<1042>', companyName: 'Northwind' },
+      snapshot({
+        employeeMatches: [{ employeeIdentityId: 1, canonicalName: '<Jordan>', confidenceScore: 92, matchMethod: 'exact' }],
+        ccRecipients: {
+          status: 'ok',
+          storeNumber: '1042',
+          companyName: 'Northwind',
+          recipients: [{ name: '<Sam>', email: 'sam@example.com', role: 'DM', source: 'store' }],
+          message: null
+        }
+      })
+    );
+
+    expect(note.body).toContain('&lt;Jordan&gt;');
+    expect(note.body).toContain('&lt;1042&gt;');
+    expect(note.body).not.toContain('<Jordan>');
+    expect(note.body).not.toContain('<Sam>');
   });
 });

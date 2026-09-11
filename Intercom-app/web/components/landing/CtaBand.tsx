@@ -18,12 +18,12 @@ export function CtaBand() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Guided product review</p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">See the workflow end to end.</h2>
           <p className="mt-5 max-w-xl text-white/80">
-            Start in the read-only dashboard, inspect sanitized case intelligence, then follow an invited
+            Start in the read-only workspace, inspect sanitized case intelligence, then follow an invited
             case into Intercom to see the real operator experience and write-back.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/login" className="rounded-full bg-secondary px-5 py-2.5 text-sm font-medium text-white hover:bg-[#459d8b]">
-              Open recruiter dashboard
+              Open reviewer workspace
             </Link>
             {intercomUrl ? (
               <a href={intercomUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/30 px-5 py-2.5 text-sm text-white hover:bg-white/10">

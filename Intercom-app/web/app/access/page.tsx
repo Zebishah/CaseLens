@@ -34,7 +34,7 @@ export default function AccessRequestPage() {
   }, []);
 
   if (authenticated) {
-    return <AppShell title="Request Intercom access" description="Request a personal invitation to the synthetic Intercom workspace. Your existing reviewer session remains visible in the workspace shell."><AccessRequestForm embedded /></AppShell>;
+    return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized HR Intelligence workspace. Intercom access is approved separately."><AccessRequestForm embedded /></AppShell>;
   }
 
   return <AccessRequestForm />;
@@ -76,7 +76,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-primary">HI</span>
             <span>
               <span className="block text-sm font-semibold text-primary">HR Intelligence</span>
-              <span className="block text-[11px] text-muted">Recruiter access</span>
+              <span className="block text-[11px] text-muted">Organization access</span>
             </span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -97,18 +97,18 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
         <section className="lg:py-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Controlled workspace access</p>
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">
-            Request a personal invitation to the Intercom demo.
+            Request a personal reviewer account.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted">
-            Intercom protects new-device sign-ins with email verification, so shared credentials are neither reliable
-            nor secure. Approved reviewers are invited using their own email address.
+            Access is invite-only because the workspace contains sensitive case context. Approved reviewers use their
+            own email to create a password and receive read-only workspace access.
           </p>
 
           <div className="mt-8 rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
             <h2 className="text-base font-semibold text-primary">What you can review immediately</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
               <li>• The public product story, architecture, screenshots, and subtitled walkthrough.</li>
-              <li>• The protected read-only dashboard through a short-lived, server-issued demo session.</li>
+              <li>• The protected read-only workspace through a short-lived, server-issued demo session.</li>
               <li>• Sanitized case intelligence, directory matching, and system-design evidence.</li>
             </ul>
           </div>
@@ -117,10 +117,10 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
             <h2 className="text-base font-semibold text-primary">After approval</h2>
             <ol className="mt-4 space-y-4">
               {[
-                'You receive an official Intercom invitation at the email submitted here.',
-                'Accept the invitation and complete Intercom’s own identity verification.',
-                'Select Nagumo Workspace [DEV], then open Inbox → All or Unassigned.',
-                'Open a synthetic ticket and inspect the HR Intelligence panel on the right.'
+                'If approved, Brevo sends a secure password setup link to the email submitted here.',
+                'Create your password through the one-time link; your dashboard role is read-only.',
+                'Sign in to inspect sanitized cases, directory context, architecture, and reliability evidence.',
+                'Intercom workspace invitations remain separate and are sent only when explicitly approved.'
               ].map((step, index) => (
                 <li key={step} className="flex gap-3 text-sm leading-6 text-muted">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
@@ -139,12 +139,12 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
               <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-xl text-success">✓</span>
               <h2 className="mt-5 text-2xl font-semibold text-primary">Request received</h2>
               <p className="mt-3 text-sm leading-6 text-muted">
-                Your request is awaiting manual review. If approved, an official Intercom invitation will be sent to
-                the email you provided. Submitting this form does not create an Intercom account automatically.
+                Your request is awaiting manual review. If approved, Brevo will send a secure password setup link to
+                the email you provided. Submitting this form does not create an account automatically.
               </p>
               <div className="mt-6 rounded-xl bg-paper p-4 text-sm leading-6 text-muted">
                 While you wait, use the public walkthrough and screenshots. They demonstrate the same synthetic Inbox,
-                Canvas intelligence, and operations dashboard without requiring third-party access.
+                Canvas intelligence, and operational health views without requiring third-party access.
               </div>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/overview" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">
@@ -154,7 +154,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                   Watch the walkthrough
                 </Link>
                 <Link href="/" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">
-                  Return to showcase
+                  Return to product walkthrough
                 </Link>
               </div>
             </div>
@@ -163,7 +163,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Invitation request</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-primary">Tell us who is reviewing</h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Access is manually approved and limited to a synthetic portfolio workspace.
+                Access is manually approved and limited to a synthetic, read-only HR Intelligence workspace.
               </p>
 
               {error ? (
@@ -176,7 +176,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                 <Field label="Full name" required>
                   <input required minLength={2} maxLength={120} autoComplete="name" className="dash-field mt-2" value={form.fullName} onChange={(event) => update('fullName', event.target.value)} />
                 </Field>
-                <Field label="Work email" required hint="The Intercom invitation will be sent to this exact address.">
+                <Field label="Work email" required hint="Your secure password setup link will be sent to this exact address if approved.">
                   <input required type="email" maxLength={255} autoComplete="email" className="dash-field mt-2" value={form.workEmail} onChange={(event) => update('workEmail', event.target.value)} />
                 </Field>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -184,7 +184,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                     <input maxLength={160} autoComplete="organization" className="dash-field mt-2" value={form.organization} onChange={(event) => update('organization', event.target.value)} />
                   </Field>
                   <Field label="Role">
-                    <input maxLength={120} autoComplete="organization-title" className="dash-field mt-2" placeholder="Recruiter, Engineer…" value={form.role} onChange={(event) => update('role', event.target.value)} />
+                    <input maxLength={120} autoComplete="organization-title" className="dash-field mt-2" placeholder="HR reviewer, operator…" value={form.role} onChange={(event) => update('role', event.target.value)} />
                   </Field>
                 </div>
                 <Field label="Reason for access" required hint="Minimum 20 characters. Do not include confidential information.">
@@ -204,7 +204,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                 </div>
 
                 <button type="submit" disabled={state === 'submitting'} className="btn-primary w-full rounded-lg px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60">
-                  {state === 'submitting' ? 'Submitting securely…' : 'Request Intercom invitation'}
+                  {state === 'submitting' ? 'Submitting securely…' : 'Request reviewer access'}
                 </button>
               </form>
 

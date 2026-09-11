@@ -6,23 +6,27 @@ const GEMINI_TIMEOUT_MS = 12_000;
 const MAX_ANSWER_LENGTH = 1_600;
 
 const PRODUCT_CONTEXT = `
-HR Intelligence is an AI-assisted HR case operations platform for clients that already work in Intercom.
+HR Intelligence is an AI-Powered B2B HR Intelligence Platform for organizations that work across Intercom and email.
+Its specialized capability is AI-assisted HR case intelligence for employee identity, related history, stakeholder
+context, routing, explainability, and human-reviewed workflows.
 It receives Intercom conversations, inbound email, and demo intake; normalizes them into durable case records;
 classifies HR topics; resolves employee identity using exact, alias, token, fuzzy, store, and sender-domain evidence;
 surfaces related case history; recommends store/company/stakeholder context; and keeps an auditable processing snapshot.
 Intercom remains the operator inbox. PostgreSQL is the durable source of truth. BullMQ and Redis support distributed
 processing when enabled. A transactional outbox makes delivery recoverable. Uncertain identity or routing results can
-go to human review. The recruiter demo uses synthetic or sanitized records, read-only access, and no shared password.
+go to human review. The reviewer walkthrough uses synthetic or sanitized records, read-only access, and no shared password.
 The assistant must never invent customer outcomes, live metrics, employees, permissions, or actions. It cannot approve
 access, modify cases, write Intercom messages, run SQL or shell commands, browse arbitrary URLs, or reveal secrets.
 The public site includes the problem story, solution workflow, AI intelligence, impact, architecture, FAQ, screenshots,
-and a guided demo. The protected app includes Overview, Case Explorer, People & Stores, Architecture, Operations, AI
-Quality, and controlled Intercom access. Overview shows case volume, matching, related history, manual review, and
-processing evidence. Case Explorer explains classification, identity evidence, related cases, routing, and processing.
-People & Stores explains employees, aliases, stores, companies, and stakeholders. Operations explains ingestion,
+and a guided product walkthrough. The protected app includes Organization Overview, Case Operations, Directory
+Intelligence, Architecture, Operational Health, AI Quality, and controlled reviewer access. Organization Overview shows
+case volume, matching, related history, manual review, and processing evidence. Case Operations explains classification,
+identity evidence, related cases, routing, and processing. Directory Intelligence explains employees, aliases, stores,
+companies, and stakeholders. Operational Health explains ingestion,
 outbox, queues, retries, failures, and write-back. AI Quality shows reproducible fixture evaluation, not fake business
-outcomes. Clients can use the product to reduce context switching, speed investigation, improve consistency, and keep
-human review and traceability in control.
+outcomes. Organizations can use the platform to centralize case intelligence, reduce repetitive lookup work, improve
+consistency, route stakeholder context clearly, and keep human review and traceability in control. AI assists
+interpretation; deterministic systems verify and resolve; humans remain authoritative.
 `;
 
 type GeminiResponse = {

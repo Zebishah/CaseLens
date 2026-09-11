@@ -6,6 +6,7 @@ import {
   type SubmitAccessRequest
 } from './access-request.service.js';
 import type { AccessRequestStatus } from './access-request.repository.js';
+import { authService } from '../auth/auth.service.js';
 
 export const accessRequestController = {
   async submit(req: Request, res: Response): Promise<void> {
@@ -23,9 +24,16 @@ export const accessRequestController = {
       status: AccessRequestStatus;
       reviewNote?: string;
     };
-    sendSuccess(
-      res,
-      await accessRequestService.review(Number(req.params.id), status, reviewNote)
-    );
+    const reviewed = await accessRequestService.review(Number(req.params.id), status, reviewNote);
+    if (status === 'approved') {
+      const invitation = await authService.issueWorkspaceInvite({
+        accessRequestId: reviewed.id,
+        email: reviewed.workEmail,
+        name: reviewed.fullName
+      });
+      sendSuccess(res, { ...reviewed, invitation });
+      return;
+    }
+    sendSuccess(res, reviewed);
   }
 };

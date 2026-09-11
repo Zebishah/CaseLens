@@ -65,24 +65,24 @@ export default function OperationsPage() {
   const runtimeLabel =
     data?.jobProcessingMode === 'bullmq'
       ? 'Distributed queue workers'
-      : 'Portfolio-safe inline processing';
+      : 'Workspace-safe inline processing';
 
   return (
-    <AppShell title="Operations" description="Monitor the risks that can interrupt case work: ingestion, durable delivery, queue processing, retries, outbox recovery, and Intercom synchronization.">
+    <AppShell title="Operational health" description="Monitor the risks that can interrupt organizational case work: ingestion, durable delivery, queue processing, retries, outbox recovery, and Intercom synchronization.">
       {error ? <AlertBanner tone="danger" title="Operation could not be completed" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {message ? <AlertBanner tone="success" title="Action completed">{message}</AlertBanner> : null}
       {loading ? <PageSkeleton variant="overview" /> : null}
 
       {!loading && data ? (
         <div className="space-y-5">
-          <section className="dash-panel">
+          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex items-start gap-3">
-                <span className={`mt-1 h-2.5 w-2.5 rounded-full ${data.intercom?.enabled && data.intercom?.connected ? 'bg-success' : 'bg-warning'}`} />
+                <span className={`mt-1 h-2.5 w-2.5 rounded-full ${data.intercom?.enabled && data.intercom?.connected ? 'bg-emerald-300' : 'bg-amber-300'}`} />
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">Intercom integration</p>
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">{data.intercom?.enabled && data.intercom?.connected ? 'Connected and receiving events' : data.intercom?.enabled ? 'Enabled — connection needs attention' : 'Integration disabled'}</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="dashboard-section-label text-emerald-300">System health</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">{data.intercom?.enabled && data.intercom?.connected ? 'Connected and receiving events' : data.intercom?.enabled ? 'Enabled — connection needs attention' : 'Integration disabled'}</h2>
+                  <p className="mt-1 text-sm text-slate-400">
                     Workspace: {workspaceName}
                     {data.intercom?.lastWebhookTopic
                       ? ` · Latest event: ${formatWebhookTopic(data.intercom.lastWebhookTopic)}`
@@ -90,9 +90,9 @@ export default function OperationsPage() {
                   </p>
                 </div>
               </div>
-              <button type="button" onClick={() => void load()} className="rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">Refresh status</button>
+              <button type="button" onClick={() => void load()} className="rounded-lg border border-white/15 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white hover:bg-white/15">Refresh status</button>
             </div>
-            <dl className="mt-6 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-2 xl:grid-cols-4">
+            <dl className="mt-6 grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2 xl:grid-cols-4">
               <OperationalFact label="Last webhook" value={data.intercom?.lastWebhookAt ? new Date(data.intercom.lastWebhookAt).toLocaleString() : 'No event received'} />
               <OperationalFact label="Last write-back" value={data.intercom?.lastSuccessfulWritebackAt ? new Date(data.intercom.lastSuccessfulWritebackAt).toLocaleString() : 'No successful sync'} />
               <OperationalFact label="Write-back failures" value={String(data.intercom?.writebackFailures ?? 0)} />
@@ -101,10 +101,10 @@ export default function OperationsPage() {
           </section>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {queueEntries.map(([name, value]) => <MetricCard key={name} label={name.replace(/([A-Z])/g, ' $1')} value={value} hint="Current intelligence queue" />)}
-            <MetricCard label="Duplicates blocked" value={data.duplicateEventsPrevented ?? 0} hint="Repeated inbound events rejected" />
-            <MetricCard label="Pending outbox" value={data.pendingOutbox ?? 0} hint="Durable jobs awaiting dispatch" />
-            <MetricCard label="Write-backs synced" value={data.intercom?.writebacksSynced ?? 0} hint="Intercom updates completed" />
+            {queueEntries.map(([name, value]) => <MetricCard key={name} label={name.replace(/([A-Z])/g, ' $1')} value={value} hint="Current intelligence queue" icon="activity" tone={name === 'failed' && value > 0 ? 'warning' : 'default'} />)}
+            <MetricCard label="Duplicates blocked" value={data.duplicateEventsPrevented ?? 0} hint="Repeated inbound events rejected" icon="shield" tone="success" />
+            <MetricCard label="Pending outbox" value={data.pendingOutbox ?? 0} hint="Durable jobs awaiting dispatch" icon="cases" tone={(data.pendingOutbox ?? 0) > 0 ? 'warning' : 'default'} />
+            <MetricCard label="Write-backs synced" value={data.intercom?.writebacksSynced ?? 0} hint="Intercom updates completed" icon="link" tone="success" />
           </div>
 
           <section className="dash-panel overflow-hidden !p-0">

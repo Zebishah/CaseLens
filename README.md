@@ -1,18 +1,18 @@
-# HR Intelligence
+# HR Intelligence — AI-Powered B2B HR Intelligence Platform
 
-HR Intelligence turns employee-related Intercom conversations into structured, reviewable HR case intelligence. It classifies the reported concern, resolves employee identity against a directory, suggests store-aware recipients, and surfaces related case history with transparent matching evidence.
+HR Intelligence is an AI-Powered B2B HR Intelligence Platform for organizations using Intercom and email. It turns fragmented HR conversations into structured, explainable case intelligence: classification, employee identity resolution, related history, stakeholder context, routing, and auditable human-reviewed outcomes.
 
 ## Problem → solution → impact
 
-Before this layer, HR operators could spend repetitive effort reading long conversations, identifying an employee from inconsistent names, searching related history, looking up store and stakeholder context, and carrying findings between systems. HR Intelligence normalizes Intercom, inbound email, and demo intake, structures the case, preserves deterministic identity evidence, surfaces related history and routing context, and keeps the operator in Intercom.
+Before this layer, HR operations teams could spend repetitive effort reading long conversations, identifying an employee from inconsistent names, searching related history, looking up store and stakeholder context, and carrying findings between systems. HR Intelligence normalizes Intercom, inbound email, and reviewer sample intake, structures the case, preserves deterministic identity evidence, surfaces related history and routing context, and keeps the operator in Intercom.
 
-The defensible outcome is reduced manual lookup work, safer handling of uncertain identity matches, less duplicate logical processing, better traceability, and recoverable asynchronous work. This portfolio does not claim unmeasured savings, production volume, or customer outcomes.
+The defensible organizational value is centralized case intelligence, reduced repetitive lookup work, safer handling of uncertain identity matches, consistent team workflows, better traceability, and recoverable asynchronous work. This environment does not claim unmeasured savings, production volume, or customer outcomes.
 
-[View the live recruiter showcase](https://nagumo-hr-intelligence.vercel.app)
+[View the HR Intelligence product walkthrough](https://nagumo-hr-intelligence.vercel.app)
 
 ![HR Intelligence resolving an employee identity and related cases inside Intercom](Intercom-app/web/public/product-screenshots/sarah-identity-resolution.webp)
 
-## What this project demonstrates
+## Platform capabilities
 
 - Signed Intercom webhook ingestion and embedded Canvas Kit workflows
 - LLM-assisted extraction with deterministic fixture mode and confidence-based review
@@ -23,7 +23,7 @@ The defensible outcome is reduced manual lookup work, safer handling of uncertai
 - Role-based dashboard access for administrators and read-only reviewers
 - Public synthetic demo sessions with request limits and data retention controls
 - A site-wide read-only “Ask HR Intelligence” assistant with public product help and role-gated case, operations, directory, and fixture-evaluation context
-- Invite-controlled authentication: no public signup, no exposed reviewer password, and a short-lived server-issued recruiter demo
+- Invite-controlled authentication: no public signup, no exposed reviewer password, and a short-lived server-issued reviewer walkthrough
 
 ## Architecture
 
@@ -56,7 +56,7 @@ Intercom-app/
 │   └── tests/            Unit, integration, contract and end-to-end tests
 └── web/
     ├── app/              Next.js App Router pages and route-level error/loading UI
-    ├── components/       Dashboard, landing-page and recruiter-demo components
+    ├── components/       Workspace, landing-page and product-walkthrough components
     ├── lib/              Typed API, authentication and display utilities
     └── public/           Sanitized product evidence
 ```
@@ -80,7 +80,7 @@ Intercom-app/
 - Passwords are bcrypt-hashed and are excluded from API projections.
 - Production configuration validates required secrets and provider dependencies at startup.
 - Rate limits protect authentication, public demos, webhooks and invitation requests.
-- Synthetic portfolio records are isolated from real customer and employee data.
+- Synthetic reviewer records are isolated from real customer and employee data.
 - The assistant uses bounded Zod-validated inputs, existing auth/RBAC boundaries, deterministic read-only tools, and never receives raw provider payloads, secrets, SQL, shell access, or mutation capabilities.
 
 See [the product audit](docs/PRODUCT_AUDIT.md) for the problem/value matrix and recruiter-facing presentation decisions. See [recruiter evidence](docs/RECRUITER_EVIDENCE.md) for the evidence boundary and claims that should not be made.
@@ -124,6 +124,6 @@ npm run typecheck
 npm run build
 ```
 
-The recruiter account is intentionally read-only. Intercom access is separately approved because Intercom performs identity verification for new teammates.
+The reviewer account is intentionally read-only. Intercom access is separately approved because Intercom performs identity verification for new teammates.
 
-> This repository and its hosted showcase use synthetic portfolio data only. Provider secrets and production credentials are never committed.
+> This repository and its hosted product walkthrough use synthetic data only. Provider secrets and production credentials are never committed.

@@ -70,12 +70,39 @@ body {
 .theme-light.landing-canvas,
 .theme-light .landing-canvas { background-color: #f5f7f9; background-image: none; }
 
-.dash-canvas { background: #f5f7f9; }
+.dash-canvas {
+  background: #f5f7f9;
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.72), transparent 18rem);
+}
+.dashboard-hero {
+  position: relative;
+  isolation: isolate;
+  background-color: #0c3034;
+  background-image:
+    linear-gradient(120deg, rgb(7 27 32 / 0.98), rgb(18 73 78 / 0.86)),
+    radial-gradient(circle at 12% 12%, rgb(45 170 145 / 0.45), transparent 33%),
+    radial-gradient(circle at 88% 10%, rgb(104 145 190 / 0.32), transparent 36%),
+    linear-gradient(rgb(255 255 255 / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.055) 1px, transparent 1px);
+  background-size: auto, auto, auto, 42px 42px, 42px 42px;
+}
+.dashboard-hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: '';
+  background: linear-gradient(105deg, transparent 0 42%, rgb(255 255 255 / 0.06) 42.2%, transparent 42.5% 100%);
+  opacity: 0.8;
+}
+.dashboard-hero-icon { box-shadow: 0 12px 30px rgb(0 0 0 / 0.16); }
+.dashboard-hero-orbit { position: absolute; z-index: -1; border: 1px solid rgb(167 243 208 / 0.2); border-radius: 999px; }
+.dashboard-hero-orbit-one { width: 22rem; height: 22rem; right: -7rem; top: -11rem; }
+.dashboard-hero-orbit-two { width: 14rem; height: 14rem; right: 12%; bottom: -10rem; border-color: rgb(147 197 253 / 0.16); }
 .dash-sidebar {
   background:
-    radial-gradient(circle at 18% 0%, rgb(69 205 170 / 0.2), transparent 34%),
-    linear-gradient(180deg, #07594b 0%, #06463d 48%, #04352f 100%);
-  box-shadow: 0 16px 38px rgb(4 53 47 / 0.16);
+    radial-gradient(circle at 18% 0%, rgb(45 170 145 / 0.16), transparent 32%),
+    linear-gradient(180deg, #102c2e 0%, #0b2225 54%, #08191d 100%);
+  box-shadow: 0 16px 38px rgb(8 25 29 / 0.2);
 }
 
 .dash-panel {
@@ -83,8 +110,32 @@ body {
   border-radius: 0.8rem;
   background: #ffffff;
   padding: 1.25rem 1.35rem;
-  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 10px 26px rgb(30 78 92 / 0.025);
 }
+
+.dash-panel-soft {
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.8rem;
+  background: rgb(248 250 252 / 0.76);
+}
+
+.metric-card { transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+.metric-card:hover { transform: translateY(-2px); border-color: rgb(45 170 145 / 0.35); box-shadow: 0 14px 30px rgb(30 78 92 / 0.09); }
+.metric-icon { display: inline-flex; height: 2rem; width: 2rem; align-items: center; justify-content: center; border-radius: 0.65rem; color: rgb(var(--secondary)); background: rgb(var(--secondary) / 0.12); }
+.metric-warning { border-color: rgb(var(--highlight) / 0.32); }
+.metric-warning .metric-icon { color: rgb(var(--warning)); background: rgb(var(--warning) / 0.13); }
+.metric-success .metric-icon { color: rgb(var(--success)); background: rgb(var(--success) / 0.13); }
+
+.dash-sidebar a { transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
+.dash-sidebar a:hover { transform: translateX(1px); }
+.dash-sidebar a[aria-current='page'] { box-shadow: inset 3px 0 0 rgb(var(--secondary)); }
+
+.dashboard-section-label { color: rgb(var(--secondary)); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.attention-item { border-left: 3px solid rgb(var(--warning)); background: rgb(255 251 235 / 0.72); }
+.attention-item.is-clear { border-left-color: rgb(var(--success)); background: rgb(240 253 250 / 0.72); }
+.chart-track { height: 0.55rem; overflow: hidden; border-radius: 999px; background: rgb(226 232 240); }
+.chart-fill { height: 100%; border-radius: inherit; transition: width 500ms ease; }
+.empty-state { min-height: 9rem; }
 
 .dash-field {
   width: 100%;
@@ -101,6 +152,8 @@ body {
   box-shadow: 0 0 0 3px rgb(var(--primary) / 0.1);
 }
 
+.dash-field::placeholder { color: rgb(100 116 139 / 0.72); }
+
 .dash-table th {
   border-bottom: 1px solid rgb(226 232 240);
   background: rgb(248 250 252);
@@ -113,6 +166,8 @@ body {
 
 .dash-row { transition: background 150ms ease; }
 .dash-row:hover { background: rgb(248 250 252); }
+
+.dash-table tbody tr:focus-within { background: rgb(240 253 250); }
 
 .skeleton {
   position: relative;
@@ -216,4 +271,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal, .animate-pulse, .float-slow, .float-slower, .step-pulse, .scene-swap { animation: none !important; }
+  .metric-card, .dash-sidebar a, .chart-fill { transition: none !important; }
 }

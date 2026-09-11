@@ -25,6 +25,27 @@ const recruiterAccessSchemaSql = `
 
   CREATE INDEX IF NOT EXISTS recruiter_access_requests_email_idx
     ON recruiter_access_requests (work_email);
+
+  CREATE TABLE IF NOT EXISTS workspace_invites (
+    id SERIAL PRIMARY KEY,
+    access_request_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+  CREATE INDEX IF NOT EXISTS workspace_invites_request_idx
+    ON workspace_invites (access_request_id);
+
+  CREATE INDEX IF NOT EXISTS workspace_invites_email_idx
+    ON workspace_invites (email);
+
+  CREATE INDEX IF NOT EXISTS workspace_invites_active_idx
+    ON workspace_invites (expires_at, used_at);
 `;
 
 /**

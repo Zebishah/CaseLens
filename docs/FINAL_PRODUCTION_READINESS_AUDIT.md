@@ -64,7 +64,7 @@ The migration scripts must be run in each deployed database. An index existing i
 
 ## Recruiter experience
 
-The landing page and dashboard Overview include an environment-driven recruiter walkthrough:
+The landing page and dedicated dashboard **Demo & access** tab include an environment-driven recruiter walkthrough:
 
 1. Enter the short-lived read-only dashboard demo from `/login`.
 2. Open the configured Intercom workspace/inbox URL only when separately invited.
@@ -72,7 +72,7 @@ The landing page and dashboard Overview include an environment-driven recruiter 
 4. Select existing synthetic tickets and inspect the HR Intelligence panel.
 5. Return to the dashboard for operational and architectural evidence.
 
-Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled guided video. The dashboard demo is server-issued and short-lived; Intercom access is always personal and invitation-based.
+Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled guided video. Overview is reserved for operating stats; the Demo & access tab contains the video, review paths, and workspace guide. The dashboard demo is server-issued and short-lived; Intercom access is always personal and invitation-based.
 
 ## Remaining limitations
 

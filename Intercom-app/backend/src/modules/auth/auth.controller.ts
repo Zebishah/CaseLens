@@ -29,6 +29,14 @@ export const authController = {
     sendSuccess(res, await authService.enterDemo());
   },
 
+  async inspectInvite(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.inspectWorkspaceInvite(req.query.token as string));
+  },
+
+  async acceptInvite(req: Request, res: Response): Promise<void> {
+    sendSession(res, await authService.acceptWorkspaceInvite(req.body.token, req.body.password));
+  },
+
   async refreshToken(req: Request, res: Response): Promise<void> {
     const refreshToken = readRefreshCookie(req);
     if (!refreshToken) {

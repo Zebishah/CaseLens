@@ -315,6 +315,8 @@ const buildCanvasFromStoredSnapshot = async (
       scopeSearch,
       ccRecipients,
       intercomSyncFailed: conversation.intercomSyncStatus === 'failed',
+      intercomSyncStatus: conversation.intercomSyncStatus,
+      caseId: conversation.id,
       ...editorOptions
     });
   }
@@ -347,6 +349,8 @@ const buildCanvasFromStoredSnapshot = async (
     scopeSearch,
     ccRecipients,
     intercomSyncFailed: conversation.intercomSyncStatus === 'failed',
+    intercomSyncStatus: conversation.intercomSyncStatus,
+    caseId: conversation.id,
     ...editorOptions
   });
 };
@@ -362,7 +366,8 @@ const buildPendingPreviewFromConversation = async (
       subject: resolveConversationSubject(conversation),
       rawPayload: conversation.rawPayload
     },
-    ccRecipients
+    ccRecipients,
+    { caseId: conversation.id }
   );
 };
 
@@ -411,7 +416,9 @@ const buildCanvasFromConversation = async (
     response: canvasBuilder.buildIntelligenceSnapshot(snapshot, {
       banner,
       scopeSearch: resolveScopeSearchContext(conversation),
-      ccRecipients
+      ccRecipients,
+      intercomSyncStatus: conversation.intercomSyncStatus,
+      caseId: conversation.id
     }),
     relatedCaseCount: snapshot.relatedCases.length
   };
@@ -728,7 +735,7 @@ const buildCanvasWithStoreEditor = async (
       rawPayload: conversation.rawPayload
     },
     ccRecipients,
-    editorOptions
+    { ...editorOptions, caseId: conversation.id }
   );
 };
 

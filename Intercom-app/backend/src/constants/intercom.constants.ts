@@ -173,7 +173,9 @@ export type IntercomSyncStatus = (typeof INTERCOM_SYNC_STATUS)[keyof typeof INTE
 
 export const INTERCOM_WRITEBACK_TAGS = {
   PROCESSED: 'hr-intelligence-processed',
-  MANUAL_REVIEW: 'manual-review'
+  MANUAL_REVIEW: 'manual-review',
+  EMPLOYEE_MATCHED: 'employee-matched',
+  RELATED_CASES_FOUND: 'related-cases-found'
 } as const;
 
 export const INTERCOM_HEADERS = {

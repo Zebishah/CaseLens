@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, EmptyState, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { AlertBanner, EmptyState, MetricCard, PageSkeleton, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
 
@@ -19,6 +19,7 @@ type CaseRow = {
   confidence: number | null;
   receivedAt: string;
   mentionStatus?: string | null;
+  requiresManualReview?: boolean;
   openInIntercomUrl?: string | null;
 };
 
@@ -27,18 +28,21 @@ export default function CasesPage() {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
-  const [applied, setApplied] = useState({ q: '', status: '', source: '' });
+  const [category, setCategory] = useState('');
+  const [applied, setApplied] = useState({ q: '', status: '', source: '', category: '' });
+  const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (filters: { q: string; status: string; source: string }) => {
+  const load = useCallback(async (filters: { q: string; status: string; source: string; category: string }) => {
     setLoading(true);
     setError(null);
     try {
-      const result = await api.get<{ items: CaseRow[] }>(
-        `/api/cases?q=${encodeURIComponent(filters.q)}&status=${encodeURIComponent(filters.status)}&source=${encodeURIComponent(filters.source)}`
+      const result = await api.get<{ items: CaseRow[]; total: number }>(
+        `/api/cases?q=${encodeURIComponent(filters.q)}&status=${encodeURIComponent(filters.status)}&source=${encodeURIComponent(filters.source)}&category=${encodeURIComponent(filters.category)}`
       );
       setItems(result.items);
+      setTotal(result.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load cases');
     } finally {
@@ -47,33 +51,34 @@ export default function CasesPage() {
   }, []);
 
   useEffect(() => {
-    void load({ q: '', status: '', source: '' });
+    void load({ q: '', status: '', source: '', category: '' });
   }, [load]);
 
   const activeFilterCount = useMemo(
-    () => [applied.q, applied.status, applied.source].filter(Boolean).length,
+    () => [applied.q, applied.status, applied.source, applied.category].filter(Boolean).length,
     [applied]
   );
 
   const applyFilters = () => {
-    const next = { q: q.trim(), status, source };
+    const next = { q: q.trim(), status, source, category };
     setApplied(next);
     void load(next);
   };
 
   const clearFilters = () => {
-    const next = { q: '', status: '', source: '' };
+    const next = { q: '', status: '', source: '', category: '' };
     setQ('');
     setStatus('');
     setSource('');
+    setCategory('');
     setApplied(next);
     void load(next);
   };
 
   return (
-    <AppShell title="Case explorer" description="Centralize processed conversations and inspect the identity, classification, related history, and routing context that reduces repetitive operator lookup.">
+    <AppShell title="Case operations" description="Centralize processed conversations and inspect the identity, classification, related history, and routing context that reduces repetitive organizational lookup.">
       <section className="dash-panel mb-4">
-        <form className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_12rem_12rem_auto]" onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
+        <form className="grid gap-3 lg:grid-cols-[minmax(18rem,1fr)_11rem_11rem_11rem_auto]" onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
           <label className="relative">
             <span className="sr-only">Search cases</span>
             <svg aria-hidden="true" viewBox="0 0 24 24" className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="7" /><path d="m16 16 4 4" /></svg>
@@ -84,6 +89,9 @@ export default function CasesPage() {
           </select>
           <select aria-label="Source filter" className="dash-field h-11" value={source} onChange={(event) => setSource(event.target.value)}>
             <option value="">All sources</option><option value="demo">Demo</option><option value="email">Email</option><option value="intercom">Intercom</option>
+          </select>
+          <select aria-label="Category filter" className="dash-field h-11" value={category} onChange={(event) => setCategory(event.target.value)}>
+            <option value="">All categories</option><option value="attendance">Attendance</option><option value="conduct">Conduct</option><option value="compensation">Compensation</option><option value="leave">Leave</option><option value="benefits">Benefits</option>
           </select>
           <button type="submit" className="btn-primary h-11 rounded-lg px-5 text-sm font-semibold">Apply filters</button>
         </form>
@@ -99,7 +107,14 @@ export default function CasesPage() {
       {loading ? <PageSkeleton variant="table" /> : null}
 
       {!loading && !error ? (
-        <section className="dash-panel overflow-hidden !p-0">
+        <div className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Total in view" value={total} hint="Persisted conversations matching the filters" icon="cases" />
+            <MetricCard label="Matched employees" value={items.filter((item) => item.employee).length} hint="Visible rows with a directory identity" icon="users" />
+            <MetricCard label="Needs review" value={items.filter((item) => item.requiresManualReview).length} hint="Visible rows routed for human review" icon="review" tone={items.some((item) => item.requiresManualReview) ? 'warning' : 'default'} />
+            <MetricCard label="Related history" value={items.filter((item) => item.relatedCaseCount > 0).length} hint="Visible rows with linked conversations" icon="link" />
+          </div>
+          <section className="dash-panel overflow-hidden !p-0">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">Case results</h2>
@@ -133,7 +148,8 @@ export default function CasesPage() {
               </table>
             </div>
           )}
-        </section>
+          </section>
+        </div>
       ) : null}
     </AppShell>
   );

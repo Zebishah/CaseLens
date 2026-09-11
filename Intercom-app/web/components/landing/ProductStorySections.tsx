@@ -15,7 +15,7 @@ const faqs = [
   ['How does it reduce manual operator work?', 'It automates repetitive case-analysis steps and centralizes identity, related cases, and routing context. Human review remains available when evidence is uncertain.'],
   ['How does the system prevent duplicate processing?', 'Inbound event identifiers, idempotency controls, and deterministic jobs prevent repeated provider deliveries from becoming duplicate logical work.'],
   ['What happens if queue dispatch or AI fails?', 'The transactional outbox makes pending delivery recoverable, while retries, recorded processing states, and deterministic fallbacks keep failures visible and isolated from intake.'],
-  ['Is the recruiter demo real employee data?', 'No. The portfolio workspace uses synthetic or sanitized records. Intercom access is invitation-based and separately controlled.'],
+  ['Does the product walkthrough use real employee data?', 'No. The reviewer workspace uses synthetic or sanitized records. Intercom access is invitation-based and separately controlled.'],
   ['What does the evaluation dashboard measure?', 'It reports versioned fixture evaluation for extraction, classification, identity resolution, related-case behavior, and safe review decisions. It is clearly separate from live production quality.'],
   ['How is sensitive HR data protected?', 'Access is role-gated, assistant tools are read-only and bounded, and raw provider payloads, tokens, SQL, shell commands, and arbitrary browsing are not exposed to the assistant.']
 ] as const;
@@ -68,7 +68,7 @@ export function ProductStorySections() {
 
       <section id="impact" className="bg-white">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 md:px-6 md:py-28 lg:grid-cols-[0.9fr_1.1fr]">
-          <div><p className="text-sm font-medium tracking-[0.18em] text-secondary">Client / operational impact</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">Less searching, safer review, better traceability.</h2><p className="mt-5 leading-7 text-muted">The project does not invent savings or production volumes. Its defensible value is visible in the workflow: fragmented context is centralized, repetitive analysis is automated, uncertainty is surfaced, and reliability controls are inspectable.</p><Link href="/login" className="btn-primary mt-7 inline-flex rounded-full px-5 py-2.5 text-sm font-medium">Inspect the evidence</Link></div>
+          <div><p className="text-sm font-medium tracking-[0.18em] text-secondary">Organization / operational impact</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">Less searching, safer review, better traceability.</h2><p className="mt-5 leading-7 text-muted">The platform does not invent savings or production volumes. Its defensible value is visible in the workflow: fragmented context is centralized, repetitive analysis is automated, uncertainty is surfaced, and reliability controls are inspectable.</p><Link href="/login" className="btn-primary mt-7 inline-flex rounded-full px-5 py-2.5 text-sm font-medium">Inspect the evidence</Link></div>
           <div className="grid gap-4 sm:grid-cols-2">
             {impactItems.map((item, index) => (
               <article

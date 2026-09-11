@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import { createHash, randomBytes } from 'node:crypto';
 import { createAccessToken, createRefreshToken, createShortLivedAccessToken } from '../../utils/token.util.js';
 import { AppError } from '../../utils/error.util.js';
 import { verifyRefreshToken } from '../../services/jwt.service.js';
@@ -6,6 +7,11 @@ import { userService } from '../user/user.service.js';
 import { authRepository } from './auth.repository.js';
 import { demoSessionService } from '../demo/demo-session.service.js';
 import { env } from '../../config/env.config.js';
+import { AUTH_CONSTANTS } from './auth.constants.js';
+import { workspaceInviteRepository } from './workspace-invite.repository.js';
+import { sendWorkspaceInviteEmail } from './invite-email.service.js';
+import { userRepository } from '../user/user.repository.js';
+import { accessRequestRepository } from '../access-request/access-request.repository.js';
 
 type AuthUser = {
   id: number;
@@ -20,6 +26,8 @@ const publicUser = (user: AuthUser) => ({
   name: user.name,
   role: user.role
 });
+
+const hashInviteToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
 const createSession = (user: AuthUser) => {
   const payload = { sub: user.id, email: user.email, role: user.role };
@@ -84,6 +92,82 @@ export const authService = {
       throw AppError.unauthorized('Session expired');
     }
 
+    return createSession(user);
+  },
+
+  async issueWorkspaceInvite(input: { accessRequestId: number; email: string; name: string }) {
+    const email = input.email.trim().toLowerCase();
+    const existing = await authRepository.findUserByEmail(email);
+    if (existing?.role === 'admin') {
+      throw AppError.conflict('An administrator already uses this email address');
+    }
+
+    let user: AuthUser;
+    if (!existing) {
+      user = await userService.createUser({
+        email,
+        name: input.name.trim(),
+        password: randomBytes(32).toString('hex'),
+        role: 'viewer'
+      });
+    } else if (existing.role !== 'viewer') {
+      user = (await userRepository.updateById(existing.id, { role: 'viewer' })) ?? {
+        id: existing.id,
+        email: existing.email,
+        name: existing.name,
+        role: 'viewer'
+      };
+    } else {
+      user = {
+        id: existing.id,
+        email: existing.email,
+        name: existing.name,
+        role: existing.role
+      };
+    }
+
+    await workspaceInviteRepository.revokeActiveForRequest(input.accessRequestId);
+    const token = randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + env.INVITE_TTL_HOURS * 60 * 60 * 1000);
+    await workspaceInviteRepository.create({
+      accessRequestId: input.accessRequestId,
+      userId: user.id,
+      email,
+      name: input.name.trim(),
+      tokenHash: hashInviteToken(token),
+      expiresAt
+    });
+
+    const setupUrl = `${env.PUBLIC_APP_URL.replace(/\/$/, '')}/set-password?token=${encodeURIComponent(token)}`;
+    const delivery = await sendWorkspaceInviteEmail({ email, name: input.name.trim(), setupUrl, expiresAt });
+    return { sent: delivery.sent, expiresAt: expiresAt.toISOString() };
+  },
+
+  async inspectWorkspaceInvite(token: string) {
+    const invite = await workspaceInviteRepository.findUsableByHash(hashInviteToken(token));
+    if (!invite) {
+      throw AppError.badRequest('This setup link is invalid or has expired');
+    }
+    return { email: invite.email, name: invite.name, expiresAt: invite.expiresAt.toISOString() };
+  },
+
+  async acceptWorkspaceInvite(token: string, password: string) {
+    const invite = await workspaceInviteRepository.findUsableByHash(hashInviteToken(token));
+    if (!invite) {
+      throw AppError.badRequest('This setup link is invalid or has expired');
+    }
+
+    const consumed = await workspaceInviteRepository.consume(invite.id);
+    if (!consumed) {
+      throw AppError.badRequest('This setup link is invalid or has already been used');
+    }
+
+    const passwordHash = await bcrypt.hash(password, AUTH_CONSTANTS.SALT_ROUNDS);
+    const user = await userRepository.updatePasswordHash(invite.userId, passwordHash);
+    if (!user) {
+      throw AppError.badRequest('The invited account is no longer available');
+    }
+    await accessRequestRepository.updateStatus(invite.accessRequestId, 'invited');
     return createSession(user);
   }
 };

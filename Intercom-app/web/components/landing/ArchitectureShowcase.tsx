@@ -6,8 +6,8 @@ import { StepArrow } from './StepArrow';
 
 const modes = {
   portfolio: {
-    label: 'Portfolio deployment',
-    caption: 'Recruiter demo cases finish inline in the API request. Intercom webhooks still persist first, then process.',
+    label: 'Inline workspace processing',
+    caption: 'Reviewer sample cases finish inline in the API request. Intercom webhooks still persist first, then process.',
     nodes: [
       { title: 'Case submitted', detail: 'Demo, email, or Intercom become one case event' },
       { title: 'Processed inline', detail: 'Shared intelligence runs without a worker' },
@@ -55,8 +55,8 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
   const active = modes[mode];
 
   return (
-    <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      <div>
+    <div className="grid items-stretch gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="flex flex-col">
         <p className="text-sm font-medium tracking-[0.18em] text-secondary">Architecture</p>
         <h2 className="mt-4 max-w-xl text-3xl font-bold tracking-tight text-primary md:text-5xl">
           Intercom is the inbox. This is the intelligence layer.
@@ -81,7 +81,7 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
               }`}
               onClick={() => setMode(key)}
             >
-              <span className="sm:hidden">{key === 'portfolio' ? 'Portfolio' : 'Production'}</span>
+              <span className="sm:hidden">{key === 'portfolio' ? 'Inline' : 'Distributed'}</span>
               <span className="hidden sm:inline">{modes[key].label}</span>
             </button>
           ))}
@@ -95,6 +95,23 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
             Read the system notes
           </Link>
         ) : null}
+        <div className="mt-8 flex-1 rounded-[1.6rem] border border-primary/10 bg-white/60 p-5 shadow-sm md:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.16em] text-secondary">Shared path</p>
+              <h3 className="mt-2 text-base font-semibold text-primary">One durable route for every source</h3>
+            </div>
+            <span className="rounded-full bg-mist px-2.5 py-1 text-[11px] font-medium text-primary">09 steps</span>
+          </div>
+          <ol className="mt-5 grid gap-x-5 gap-y-3 sm:grid-cols-2">
+            {pipeline.map((step, index) => (
+              <li key={step} className="flex gap-2.5 text-sm leading-5 text-primary">
+                <span className="shrink-0 font-mono text-[11px] text-secondary">{String(index + 1).padStart(2, '0')}</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
 
       <div className="relative overflow-hidden rounded-[2.2rem] bg-white p-5 shadow-float md:p-7">
@@ -127,19 +144,7 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
           </ol>
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] bg-paper p-4">
-          <p className="text-[11px] font-medium tracking-[0.16em] text-secondary">Shared path</p>
-          <ol className="mt-3 space-y-2">
-            {pipeline.map((step, index) => (
-              <li key={step} className="flex gap-3 text-sm text-primary">
-                <span className="font-mono text-xs text-secondary">{String(index + 1).padStart(2, '0')}</span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <article className="rounded-[1.5rem] bg-mist/50 p-4">
             <p className="text-xs text-muted">Intelligence</p>
             <p className="mt-2 text-sm font-semibold text-primary">Identity · related cases · stakeholders</p>

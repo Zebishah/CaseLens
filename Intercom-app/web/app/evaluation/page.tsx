@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { AlertBanner, PageSkeleton } from '../../components/dashboard/ui';
+import { AlertBanner, MetricCard, PageSkeleton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
 import { formatCategoryLabel } from '../../lib/case-display';
 
@@ -79,7 +79,7 @@ export default function EvaluationPage() {
       {!data && !error ? <PageSkeleton variant="overview" /> : null}
       {data ? (
         <div className="space-y-6">
-          <AlertBanner tone="info" title="Deterministic safety baseline">
+          <AlertBanner tone="info" title="Deterministic safety baseline" action={<button type="button" className="rounded-lg border border-sky-200 bg-white/70 px-3 py-2 text-xs font-semibold text-sky-900 hover:bg-white" onClick={() => window.dispatchEvent(new CustomEvent('hr-assistant:open'))}>Explain evaluation</button>}>
             These reproducible checks run against {data.datasetSize}{' '}
             versioned anonymized cases ({data.datasetVersion}) using baseline {data.modelVersion}. Production tickets
             use Gemini with prompt {data.promptVersion}; offline results are intentionally reported separately.{' '}
@@ -90,25 +90,30 @@ export default function EvaluationPage() {
           </AlertBanner>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <ScoreCard
+            <MetricCard
               label="Validation cases"
               value={String(data.datasetSize)}
               hint={`${data.datasetVersion} · versioned anonymized regression set`}
+              icon="cases"
             />
-            <ScoreCard
+            <MetricCard
               label="Name extraction"
               value={pct(data.employeeMatchRecall)}
               hint={`${data.employeeTruePositives} exact matches · ${data.employeeFalsePositives} wrong · ${data.employeeFalseNegatives} missed`}
+              icon="users"
             />
-            <ScoreCard
+            <MetricCard
               label="Category classification"
               value={pct(data.classificationAccuracy)}
               hint={`${data.classificationHits} of ${data.datasetSize} cases matched the labeled category`}
+              icon="cases"
             />
-            <ScoreCard
+            <MetricCard
               label="Safety escalations"
               value={`${reviewCount}/${total}`}
               hint="Conservative review for incomplete identity or store evidence"
+              icon="shield"
+              tone={reviewCount > 0 ? 'warning' : 'success'}
             />
           </div>
 
@@ -208,16 +213,6 @@ export default function EvaluationPage() {
         </div>
       ) : null}
     </AppShell>
-  );
-}
-
-function ScoreCard({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <div className="dash-panel">
-      <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted">{label}</p>
-      <p className="mt-3 text-4xl font-semibold tabular-nums tracking-tight text-primary">{value}</p>
-      <p className="mt-2 text-sm leading-5 text-muted">{hint}</p>
-    </div>
   );
 }
 
