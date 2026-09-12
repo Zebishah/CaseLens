@@ -39,7 +39,7 @@ export const sendWorkspaceInviteEmail = async (input: {
       to: [{ email: input.email, name: input.name }],
       subject: 'Your HR Intelligence workspace access',
       textContent: `Hi ${input.name},\n\nYour HR Intelligence workspace request was approved. Set your password here: ${input.setupUrl}\n\nThis one-time link expires ${expires} UTC. Your account has read-only reviewer access; administrator tools are not included.\n`,
-      htmlContent: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:560px"><p>Hi ${safeName},</p><p>Your HR Intelligence workspace request was approved.</p><p><a href="${safeUrl}" style="display:inline-block;background:#1e4e5c;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:600">Set your password</a></p><p style="color:#64748b;font-size:14px">This one-time link expires ${expires} UTC. Your account has read-only reviewer access; administrator tools are not included.</p></div>`
+      htmlContent: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#172033;max-width:560px"><p>Hi ${safeName},</p><p>Your HR Intelligence workspace request was approved.</p><p><a href="${safeUrl}" style="display:inline-block;background:#1e4e5c;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:600">Set your password</a></p><p style="color:#64748b;font-size:14px">If the button does not open, copy and paste this URL into your browser:</p><p style="color:#64748b;font-size:12px;word-break:break-all">${safeUrl}</p><p style="color:#64748b;font-size:14px">This one-time link expires ${expires} UTC. Your account has read-only reviewer access; administrator tools are not included.</p></div>`
     })
   });
 

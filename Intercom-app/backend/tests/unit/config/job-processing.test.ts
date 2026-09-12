@@ -32,6 +32,36 @@ describe('JOB_PROCESSING_MODE', () => {
     ).toThrow(/REDIS_URL/);
   });
 
+  test('production Brevo invites require a public HTTPS app URL', () => {
+    expect(() =>
+      parseAppEnv({
+        ...base,
+        NODE_ENV: 'production',
+        JWT_SECRET: 'a'.repeat(32),
+        JWT_REFRESH_SECRET: 'b'.repeat(32),
+        BREVO_ENABLED: 'true',
+        BREVO_API_KEY: 'test-brevo-key',
+        BREVO_SENDER_EMAIL: 'access@example.com',
+        PUBLIC_APP_URL: 'http://localhost:3001'
+      })
+    ).toThrow(/PUBLIC_APP_URL/);
+  });
+
+  test('accepts a deployed HTTPS app URL for Brevo invites', () => {
+    const parsed = parseAppEnv({
+      ...base,
+      NODE_ENV: 'production',
+      JWT_SECRET: 'a'.repeat(32),
+      JWT_REFRESH_SECRET: 'b'.repeat(32),
+      BREVO_ENABLED: 'true',
+      BREVO_API_KEY: 'test-brevo-key',
+      BREVO_SENDER_EMAIL: 'access@example.com',
+      PUBLIC_APP_URL: 'https://nagumo-hr-intelligence.vercel.app'
+    });
+
+    expect(parsed.PUBLIC_APP_URL).toBe('https://nagumo-hr-intelligence.vercel.app');
+  });
+
   test('does not start BullMQ workers in inline mode', () => {
     expect(shouldStartQueueWorkers('inline', true, 'production')).toBe(false);
     expect(shouldStartQueueWorkers('bullmq', true, 'production')).toBe(true);

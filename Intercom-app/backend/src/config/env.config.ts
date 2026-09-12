@@ -46,6 +46,12 @@ const optionalSecret = z
   .optional()
   .transform((value) => value?.trim() || undefined);
 
+const isLocalAppHost = (hostname: string): boolean =>
+  hostname === 'localhost' ||
+  hostname === '127.0.0.1' ||
+  hostname === '::1' ||
+  hostname === '[::1]';
+
 const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -224,6 +230,27 @@ const envSchema = z
             code: z.ZodIssueCode.custom,
             path: [key],
             message: `${key} is required when BREVO_ENABLED=true`
+          });
+        }
+      }
+
+      if (value.NODE_ENV === 'production') {
+        let publicAppUrl: URL | undefined;
+        try {
+          publicAppUrl = new URL(value.PUBLIC_APP_URL);
+        } catch {
+          // PUBLIC_APP_URL is validated as a URL above; keep this guard defensive.
+        }
+
+        if (
+          !publicAppUrl ||
+          publicAppUrl.protocol !== 'https:' ||
+          isLocalAppHost(publicAppUrl.hostname)
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['PUBLIC_APP_URL'],
+            message: 'PUBLIC_APP_URL must be a public HTTPS URL when BREVO_ENABLED=true in production'
           });
         }
       }
