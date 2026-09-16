@@ -104,9 +104,19 @@ export const enqueueIntercomIntelligence = async (
   data: IntercomIntelligenceJobData,
   options?: { jobId?: string }
 ): Promise<void> => {
+  if (env.JOB_PROCESSING_MODE === 'apify') {
+    const { dispatchApifyIntelligenceJob } = await import('../integrations/apify/apify-dispatch.service.js');
+    await dispatchApifyIntelligenceJob(data);
+    return;
+  }
+
   if (!shouldDispatchQueueJobs()) {
-    logger.debug('[queue] Skipping enqueue — inline processing or test environment', data);
-    if (env.NODE_ENV !== 'test') {
+    logger.debug('[queue] Skipping BullMQ enqueue — inline processing or test environment', {
+      conversationId: data.conversationId,
+      intercomId: data.intercomId,
+      sourceRevision: data.sourceRevision
+    });
+    if (env.JOB_PROCESSING_MODE === 'inline' && env.NODE_ENV !== 'test') {
       void startInlineIntelligenceJob(data).catch((error: unknown) => {
         logger.error('[queue] Inline intelligence processing failed', {
           conversationId: data.conversationId,

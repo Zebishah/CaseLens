@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+node_modules
+dist
+coverage
+logs
+tests
+scripts
+drizzle
+benchmarks
+eval
+docs
+.git
+.actor

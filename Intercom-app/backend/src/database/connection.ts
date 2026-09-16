@@ -2,6 +2,7 @@ import dns from 'node:dns';
 import net from 'node:net';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
+import { env } from '../config/env.config.js';
 import { dbConfig } from '../config/db.config.js';
 import { logger } from '../config/logger.config.js';
 import * as schema from './schema/index.js';
@@ -15,7 +16,7 @@ const pool = new pg.Pool({
   connectionString: dbConfig.databaseUrl,
   connectionTimeoutMillis: 30_000,
   idleTimeoutMillis: 20_000,
-  max: 10,
+  max: env.DATABASE_POOL_MAX,
   ssl: isLocalPostgres ? undefined : { rejectUnauthorized: false }
 });
 

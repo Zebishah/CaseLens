@@ -32,6 +32,18 @@ describe('JOB_PROCESSING_MODE', () => {
     ).toThrow(/REDIS_URL/);
   });
 
+  test('apify mode requires Apify credentials but never Redis', () => {
+    const noApify = { ...base, JOB_PROCESSING_MODE: 'apify' } as NodeJS.ProcessEnv;
+    expect(() => parseAppEnv(noApify)).toThrow(/APIFY_API_TOKEN/);
+    const parsed = parseAppEnv({
+      ...noApify,
+      APIFY_API_TOKEN: 'scoped-hr-token',
+      APIFY_ACTOR_ID: 'owner~hr-intelligence-worker'
+    });
+    expect(parsed.JOB_PROCESSING_MODE).toBe('apify');
+    expect(parsed.REDIS_URL).toBeUndefined();
+  });
+
   test('production Brevo invites require a public HTTPS app URL', () => {
     expect(() =>
       parseAppEnv({
@@ -66,11 +78,13 @@ describe('JOB_PROCESSING_MODE', () => {
     expect(shouldStartQueueWorkers('inline', true, 'production')).toBe(false);
     expect(shouldStartQueueWorkers('bullmq', true, 'production')).toBe(true);
     expect(shouldStartQueueWorkers('bullmq', true, 'test')).toBe(false);
+    expect(shouldStartQueueWorkers('apify', true, 'production')).toBe(false);
   });
 
   test('does not dispatch queue jobs in inline mode', () => {
     expect(shouldDispatchQueueJobs('inline', 'production')).toBe(false);
     expect(shouldDispatchQueueJobs('bullmq', 'production')).toBe(true);
+    expect(shouldDispatchQueueJobs('apify', 'production')).toBe(false);
     expect(shouldDispatchQueueJobs('bullmq', 'test')).toBe(false);
   });
 });

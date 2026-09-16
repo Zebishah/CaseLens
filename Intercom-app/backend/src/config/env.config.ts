@@ -61,6 +61,7 @@ const envSchema = z
       .default('info'),
 
     DATABASE_URL: z.string().min(1),
+    DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
     REDIS_URL: z.preprocess(
       (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
       z.string().url().optional()
@@ -81,7 +82,15 @@ const envSchema = z
 
     RUN_API: booleanFlag(true),
     RUN_WORKERS: booleanFlag(true),
-    JOB_PROCESSING_MODE: z.enum(['inline', 'bullmq']).default('inline'),
+    JOB_PROCESSING_MODE: z.enum(['inline', 'bullmq', 'apify']).default('inline'),
+
+    APIFY_API_TOKEN: optionalSecret,
+    APIFY_ACTOR_ID: z.string().trim().min(1).optional(),
+    APIFY_API_BASE_URL: z.string().url().default('https://api.apify.com/v2'),
+    APIFY_DEFAULT_MEMORY_MBYTES: z.coerce.number().int().min(128).max(32768).default(512),
+    APIFY_RUN_TIMEOUT_SECONDS: z.coerce.number().int().positive().max(86400).default(180),
+    APIFY_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().max(120000).default(10000),
+    APIFY_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(5).default(3),
 
     REDIS_ENQUEUE_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
     INTELLIGENCE_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(3),
@@ -286,6 +295,18 @@ const envSchema = z
         path: ['REDIS_URL'],
         message: 'REDIS_URL is required when JOB_PROCESSING_MODE=bullmq'
       });
+    }
+
+    if (value.JOB_PROCESSING_MODE === 'apify') {
+      for (const key of ['APIFY_API_TOKEN', 'APIFY_ACTOR_ID'] as const) {
+        if (!value[key]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `${key} is required when JOB_PROCESSING_MODE=apify`
+          });
+        }
+      }
     }
   });
 

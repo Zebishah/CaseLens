@@ -11,6 +11,7 @@ export * from './store_directory.js';
 export * from './store_directory_sync_runs.js';
 export * from './inbound_events.js';
 export * from './outbox_events.js';
+export * from './intelligence_actor_runs.js';
 export * from './demo_sessions.js';
 export * from './case_review.js';
 export * from './relations.js';

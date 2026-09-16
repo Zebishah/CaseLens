@@ -32,6 +32,9 @@ const mockRecordIntercomNotification = jest.fn<
   }>
 >();
 const mockMarkInboundQueued = jest.fn<() => Promise<void>>();
+const mockFindOutbox = jest.fn<() => Promise<unknown>>();
+const mockInsertOutbox = jest.fn<() => Promise<{ id: number; status: string }>>();
+const mockMarkOutboxDispatched = jest.fn<() => Promise<void>>();
 const mockFindById = jest.fn<
   () => Promise<
     | {
@@ -72,7 +75,10 @@ await jest.unstable_mockModule('../../../src/modules/ingestion/intercom.webhook.
 
 await jest.unstable_mockModule('../../../src/modules/ingestion/ingestion.repository.js', () => ({
   ingestionRepository: {
-    markQueued: mockMarkInboundQueued
+    markQueued: mockMarkInboundQueued,
+    findOutboxForEvent: mockFindOutbox,
+    insertOutbox: mockInsertOutbox,
+    markDispatched: mockMarkOutboxDispatched
   }
 }));
 
@@ -86,8 +92,19 @@ describe('Intercom webhook integration', () => {
     mockEnqueueIntercomIntelligence.mockReset();
     mockRecordIntercomNotification.mockReset();
     mockMarkInboundQueued.mockReset();
+    mockFindOutbox.mockReset();
+    mockInsertOutbox.mockReset();
+    mockMarkOutboxDispatched.mockReset();
     mockMarkInboundQueued.mockResolvedValue(undefined);
-    mockRecordIntercomNotification.mockResolvedValue({ duplicate: false, externalEventId: 'notif-1' });
+    mockFindOutbox.mockResolvedValue(undefined);
+    mockInsertOutbox.mockResolvedValue({ id: 90, status: 'pending' });
+    mockMarkOutboxDispatched.mockResolvedValue(undefined);
+    mockRecordIntercomNotification.mockResolvedValue({
+      duplicate: false,
+      externalEventId: 'notif-1',
+      inboundEventId: 90,
+      status: 'received'
+    });
     mockSyncFromWebhook.mockResolvedValue({
       id: 1,
       intercomId: '123456789',
@@ -161,6 +178,12 @@ describe('Intercom webhook integration', () => {
         jobId: expect.stringMatching(/^intelligence-1-r/)
       })
     );
+    expect(mockInsertOutbox).toHaveBeenCalledWith(expect.objectContaining({
+      inboundEventId: expect.any(Number),
+      jobName: 'process-intelligence',
+      status: 'pending'
+    }));
+    expect(mockMarkOutboxDispatched).toHaveBeenCalledWith(90);
   });
 
   test('POST /webhooks/intercom - resumes a recorded event that was never queued', async () => {

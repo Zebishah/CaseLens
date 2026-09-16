@@ -19,9 +19,12 @@ The API listens on `http://localhost:3002` by default. Interactive API documenta
 ## Processing modes
 
 - `JOB_PROCESSING_MODE=inline`: processes work in the API process and does not require Redis. This is the recommended low-cost demo configuration.
-- `JOB_PROCESSING_MODE=bullmq`: dispatches durable jobs to BullMQ. It requires `REDIS_URL` and allows separate workers and configurable concurrency.
+- `JOB_PROCESSING_MODE=bullmq`: dispatches jobs to the retained BullMQ implementation. It requires `REDIS_URL`; workers start only when `RUN_WORKERS=true`.
+- `JOB_PROCESSING_MODE=apify`: persists revision-aware Actor dispatch records and starts the private HR Actor asynchronously. It requires `APIFY_API_TOKEN` and `APIFY_ACTOR_ID`, but does not connect to Redis or start BullMQ workers.
 
-`RUN_API` and `RUN_WORKERS` control which process roles start. Environment validation rejects incomplete production, provider, and queue configuration.
+`RUN_API` and `RUN_WORKERS` control which process roles start. The intended Render configuration is `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`. Apply `npm run db:migrate-apify-actor-runs` before switching the backend. Follow [Apify deployment and smoke testing](../../docs/APIFY_DEPLOYMENT.md) before changing production settings.
+
+The BullMQ worker architecture remains available and tested as an alternative deployment. Inline mode remains the local/fallback path.
 
 ## Main modules
 

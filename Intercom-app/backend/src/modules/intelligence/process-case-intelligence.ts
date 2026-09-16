@@ -2,6 +2,8 @@ import { env } from '../../config/env.config.js';
 import { logger } from '../../config/logger.config.js';
 import { conversationRepository } from '../conversation/conversation.repository.js';
 import { runIntelligenceOnce } from './intelligence-processing.lock.js';
+import { ADVISORY_LOCK_NAMESPACE, withPostgresAdvisoryLock } from '../../database/postgres-advisory-lock.js';
+import { isApifyJobProcessing } from '../../config/job-processing.js';
 
 export const processCaseIntelligence = async (input: {
   conversationId: number;
@@ -27,7 +29,7 @@ export const processCaseIntelligence = async (input: {
     processingMode: conversation.processingMode
   });
 
-  await runIntelligenceOnce({
+  const process = () => runIntelligenceOnce({
     conversationId: conversation.id,
     intercomId: conversation.intercomId,
     skipSync,
@@ -35,4 +37,14 @@ export const processCaseIntelligence = async (input: {
     skipPeerRefresh,
     source: input.source === 'canvas' ? 'canvas' : 'worker'
   });
+
+  if (isApifyJobProcessing()) {
+    await withPostgresAdvisoryLock(
+      ADVISORY_LOCK_NAMESPACE.intelligenceConversation,
+      conversation.id,
+      process
+    );
+    return;
+  }
+  await process();
 };

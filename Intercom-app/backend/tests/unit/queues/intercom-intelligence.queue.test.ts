@@ -7,11 +7,15 @@ const Queue = jest.fn().mockImplementation(() => ({
 }));
 const mockDispatch = jest.fn(() => false);
 const mockProcessCaseIntelligence = jest.fn(async () => undefined);
+const mockApifyDispatch = jest.fn(async () => ({ runId: 'actor-run-1', duplicate: false }));
 
 await jest.unstable_mockModule('bullmq', () => ({ Queue }));
 
 await jest.unstable_mockModule('../../../src/config/job-processing.js', () => ({
   shouldDispatchQueueJobs: mockDispatch
+}));
+await jest.unstable_mockModule('../../../src/integrations/apify/apify-dispatch.service.js', () => ({
+  dispatchApifyIntelligenceJob: mockApifyDispatch
 }));
 
 await jest.unstable_mockModule(
@@ -28,6 +32,9 @@ await jest.unstable_mockModule('../../../src/config/redis.connection.js', () => 
 const { enqueueIntercomIntelligence, startInlineIntelligenceJob } = await import(
   '../../../src/queues/intercom-intelligence.queue.js'
 );
+const { env } = await import('../../../src/config/env.config.js');
+const initialMode = env.JOB_PROCESSING_MODE;
+const initialNodeEnv = env.NODE_ENV;
 
 describe('enqueueIntercomIntelligence', () => {
   beforeEach(() => {
@@ -35,6 +42,9 @@ describe('enqueueIntercomIntelligence', () => {
     Queue.mockClear();
     mockDispatch.mockReset();
     mockProcessCaseIntelligence.mockClear();
+    mockApifyDispatch.mockClear();
+    env.JOB_PROCESSING_MODE = initialMode;
+    env.NODE_ENV = initialNodeEnv;
   });
 
   test('does not instantiate a BullMQ Queue when dispatch is disabled', async () => {
@@ -63,6 +73,20 @@ describe('enqueueIntercomIntelligence', () => {
     });
   });
 
+  test('inline mode starts the existing inline processor without Apify or Redis', async () => {
+    env.JOB_PROCESSING_MODE = 'inline';
+    env.NODE_ENV = 'production';
+    mockDispatch.mockReturnValue(false);
+    await enqueueIntercomIntelligence({ conversationId: 10, intercomId: 'ic-10' });
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(mockProcessCaseIntelligence).toHaveBeenCalledWith(expect.objectContaining({
+      conversationId: 10,
+      source: 'inline'
+    }));
+    expect(mockApifyDispatch).not.toHaveBeenCalled();
+    expect(Queue).not.toHaveBeenCalled();
+  });
+
   test('BullMQ mode enqueues through the shared intelligence queue', async () => {
     mockDispatch.mockReturnValue(true);
 
@@ -80,5 +104,16 @@ describe('enqueueIntercomIntelligence', () => {
       expect.objectContaining({ conversationId: 9, intercomId: 'abc' }),
       expect.objectContaining({ jobId: 'intelligence-9', attempts: 5 })
     );
+    expect(mockApifyDispatch).not.toHaveBeenCalled();
+  });
+
+  test('Apify mode dispatches asynchronously without initializing BullMQ or running the handler locally', async () => {
+    env.JOB_PROCESSING_MODE = 'apify';
+    mockDispatch.mockReturnValue(false);
+    await enqueueIntercomIntelligence({ conversationId: 11, intercomId: 'ic-11' });
+    expect(mockApifyDispatch).toHaveBeenCalledWith(expect.objectContaining({ conversationId: 11 }));
+    expect(Queue).not.toHaveBeenCalled();
+    expect(add).not.toHaveBeenCalled();
+    expect(mockProcessCaseIntelligence).not.toHaveBeenCalled();
   });
 });

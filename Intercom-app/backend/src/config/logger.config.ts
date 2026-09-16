@@ -3,6 +3,7 @@ import path from 'node:path';
 import winston from 'winston';
 import { env } from './env.config.js';
 import { PostgresLogTransport } from './postgres-log.transport.js';
+import { redactApifyLogMetadata } from './apify-log-redaction.util.js';
 
 const logsDirectory = path.resolve('logs');
 const persistLocalLogFiles = env.NODE_ENV !== 'production' && env.NODE_ENV !== 'test';
@@ -33,6 +34,13 @@ export const logger = winston.createLogger({
     silly: 6
   },
   format: winston.format.combine(
+    ...(env.JOB_PROCESSING_MODE === 'apify'
+      ? [
+          winston.format((info) =>
+            redactApifyLogMetadata(info as Record<string, unknown>) as typeof info
+          )()
+        ]
+      : []),
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
     winston.format.json()

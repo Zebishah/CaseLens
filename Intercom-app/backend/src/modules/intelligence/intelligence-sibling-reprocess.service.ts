@@ -9,6 +9,8 @@ import { enqueueIntelligenceForConversation } from '../../queues/intercom-intell
 import type { IntelligenceSnapshot } from '../../types/intelligence.types.js';
 import { intelligenceService } from './intelligence.service.js';
 import { elapsedMs } from '../../utils/timing.util.js';
+import { ADVISORY_LOCK_NAMESPACE, withPostgresAdvisoryLock } from '../../database/postgres-advisory-lock.js';
+import { isApifyJobProcessing } from '../../config/job-processing.js';
 
 const SIBLING_REPROCESS_LIMIT = 20;
 
@@ -114,48 +116,59 @@ export const refreshPeerRelatedCaseSnapshots = async (input: {
     const stored = peer.intelligenceSnapshot as IntelligenceSnapshot;
 
     try {
-      const mentionedInReport =
-        (peer.extractedNames as string[] | null)?.filter((name) => name.trim().length > 0) ??
-        stored.mentionedInReport ??
-        [];
+      const refreshPeer = async (): Promise<void> => {
+        const mentionedInReport =
+          (peer.extractedNames as string[] | null)?.filter((name) => name.trim().length > 0) ??
+          stored.mentionedInReport ??
+          [];
 
-      const refreshed = await intelligenceService.buildSnapshot({
-        conversationId: peer.id,
-        employeeMatches: stored.employeeMatches,
-        searchTerms: mentionedInReport,
-        mentionedInReport,
-        caseTypeFilter: resolveCaseType({
-          subject: resolveConversationSubject(peer),
-          rawPayload: peer.rawPayload ?? null,
-          storedCaseType: peer.caseType ?? stored.caseType
-        }),
-        relatedCaseSearchScope: null,
-        dismissedRelatedCaseIntercomIds: stored.dismissedRelatedCaseIntercomIds,
-        dismissedCategoryCaseIntercomIds: stored.dismissedCategoryCaseIntercomIds,
-        priorRelatedCases: stored.relatedCases,
-        processedSubject: resolveConversationSubject(peer),
-        extractionSource: stored.extractionSource,
-        employeeSearchPath: stored.employeeSearchPath,
-        employeeSearchNotices: stored.employeeSearchNotices,
-        awaitingCompanyDomainSearch: false,
-        companyDomainSearchAttempted: false,
-        messageCount: stored.messageCount
-      });
+        const refreshed = await intelligenceService.buildSnapshot({
+          conversationId: peer.id,
+          employeeMatches: stored.employeeMatches,
+          searchTerms: mentionedInReport,
+          mentionedInReport,
+          caseTypeFilter: resolveCaseType({
+            subject: resolveConversationSubject(peer),
+            rawPayload: peer.rawPayload ?? null,
+            storedCaseType: peer.caseType ?? stored.caseType
+          }),
+          relatedCaseSearchScope: null,
+          dismissedRelatedCaseIntercomIds: stored.dismissedRelatedCaseIntercomIds,
+          dismissedCategoryCaseIntercomIds: stored.dismissedCategoryCaseIntercomIds,
+          priorRelatedCases: stored.relatedCases,
+          processedSubject: resolveConversationSubject(peer),
+          extractionSource: stored.extractionSource,
+          employeeSearchPath: stored.employeeSearchPath,
+          employeeSearchNotices: stored.employeeSearchNotices,
+          awaitingCompanyDomainSearch: false,
+          companyDomainSearchAttempted: false,
+          messageCount: stored.messageCount
+        });
 
-      await conversationRepository.updateIntelligence(peer.id, {
-        status: INTELLIGENCE_STATUS.READY,
-        snapshot: {
-          ...refreshed,
-          // Keep display-only fields from the existing cache (not rebuilt here).
-          possibleSamePerson: stored.possibleSamePerson,
-          domainEmployeeMatches: stored.domainEmployeeMatches,
-          ccRecipients: stored.ccRecipients,
-          processingDurationMs: stored.processingDurationMs,
-          processingTimingsMs: stored.processingTimingsMs
-        },
-        error: null,
-        extractedNames: peer.extractedNames
-      });
+        await conversationRepository.updateIntelligence(peer.id, {
+          status: INTELLIGENCE_STATUS.READY,
+          snapshot: {
+            ...refreshed,
+            // Keep display-only fields from the existing cache (not rebuilt here).
+            possibleSamePerson: stored.possibleSamePerson,
+            domainEmployeeMatches: stored.domainEmployeeMatches,
+            ccRecipients: stored.ccRecipients,
+            processingDurationMs: stored.processingDurationMs,
+            processingTimingsMs: stored.processingTimingsMs
+          },
+          error: null,
+          extractedNames: peer.extractedNames
+        });
+      };
+      if (isApifyJobProcessing()) {
+        await withPostgresAdvisoryLock(
+          ADVISORY_LOCK_NAMESPACE.intelligenceConversation,
+          peer.id,
+          refreshPeer
+        );
+      } else {
+        await refreshPeer();
+      }
     } catch (error) {
       logger.error('[intelligence] Failed to refresh peer related-case snapshot', {
         sourceConversationId: input.conversationId,

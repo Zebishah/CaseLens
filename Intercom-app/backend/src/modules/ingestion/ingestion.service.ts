@@ -12,6 +12,9 @@ import {
 } from './ingestion.normalize.js';
 import { ingestionRepository } from './ingestion.repository.js';
 import type { CaseIngestionEvent } from './ingestion.types.js';
+import { env } from '../../config/env.config.js';
+import { ADVISORY_LOCK_NAMESPACE, withPostgresAdvisoryLock } from '../../database/postgres-advisory-lock.js';
+import { revisionKeyFromSource } from '../intelligence/intelligence-revision.util.js';
 
 export type IngestResult = {
   duplicate: boolean;
@@ -118,15 +121,38 @@ export const ingestionService = {
 
     if (existing && !existing.conversationId) {
       const conversation = await persistConversation(event);
+      const sourceRevision = revisionKeyFromSource(
+        event.plainTextContent ? 1 : 0,
+        conversation.intercomSourceUpdatedAt
+      );
       const jobId = event.externalEventId.replace(/[^a-zA-Z0-9:_-]/g, '-').slice(0, 120);
+      const outbox = await ingestionRepository.findOutboxForEvent(existing.id, 'process-intelligence') ??
+        await ingestionRepository.insertOutbox({
+          inboundEventId: existing.id,
+          jobName: 'process-intelligence',
+          jobId,
+          payload: {
+            conversationId: conversation.id,
+            intercomId: conversation.intercomId,
+            skipSync: event.source !== 'intercom',
+            sourceRevision,
+            processingMode: event.processingMode,
+            correlationId: event.correlationId,
+            inboundEventId: existing.id
+          },
+          status: 'pending',
+          correlationId: event.correlationId
+        });
       await enqueueIntercomIntelligence(
         {
           conversationId: conversation.id,
           intercomId: conversation.intercomId,
-          skipSync: event.source !== 'intercom'
+          skipSync: event.source !== 'intercom',
+          sourceRevision
         },
         { jobId }
       );
+      await ingestionRepository.markDispatched(outbox.id);
       await ingestionRepository.markCompleted(existing.id, conversation.id);
       return {
         duplicate: false,
@@ -163,6 +189,10 @@ export const ingestionService = {
 
         const conversation = await persistConversation(event, tx);
         const jobId = event.externalEventId.replace(/[^a-zA-Z0-9:_-]/g, '-').slice(0, 120);
+        const sourceRevision = revisionKeyFromSource(
+          event.plainTextContent ? 1 : 0,
+          conversation.intercomSourceUpdatedAt
+        );
 
         const outbox = await ingestionRepository.insertOutbox(
           {
@@ -173,6 +203,7 @@ export const ingestionService = {
               conversationId: conversation.id,
               intercomId: conversation.intercomId,
               skipSync: event.source !== 'intercom',
+              sourceRevision,
               processingMode: event.processingMode,
               correlationId: event.correlationId,
               inboundEventId: inbound.id
@@ -193,7 +224,11 @@ export const ingestionService = {
           {
             conversationId: result.conversation.id,
             intercomId: result.conversation.intercomId,
-            skipSync: event.source !== 'intercom'
+            skipSync: event.source !== 'intercom',
+            sourceRevision: revisionKeyFromSource(
+              event.plainTextContent ? 1 : 0,
+              result.conversation.intercomSourceUpdatedAt
+            )
           },
           { jobId: result.outbox.jobId }
         );
@@ -237,54 +272,87 @@ export const ingestionService = {
     }
   },
 
-  async recoverPendingOutbox(): Promise<number> {
-    const pending = await ingestionRepository.listPendingOutbox();
-    let dispatched = 0;
+  async recoverPendingOutbox(limit?: number): Promise<number> {
+    const isApifyMode = env.JOB_PROCESSING_MODE === 'apify';
+    const batchLimit = limit ?? (isApifyMode ? 20 : 50);
+    const boundedLimit = isApifyMode
+      ? Math.min(Math.max(Math.trunc(batchLimit), 1), 20)
+      : Math.min(Math.max(Math.trunc(batchLimit), 1), 100);
+    const recover = async (): Promise<number> => {
+      const pending = await ingestionRepository.listPendingOutbox(boundedLimit);
+      let dispatched = 0;
+      let failed = 0;
+      let nextIndex = 0;
 
-    for (const row of pending) {
-      const payload = row.payload as {
-        conversationId?: number;
-        intercomId?: string;
-        emailId?: string;
-        inboundEventId?: number;
-        correlationId?: string;
-        webhookId?: string;
-        skipSync?: boolean;
+      const dispatchRow = async (row: (typeof pending)[number]): Promise<void> => {
+        const payload = row.payload as {
+          conversationId?: number;
+          intercomId?: string;
+          emailId?: string;
+          inboundEventId?: number;
+          correlationId?: string;
+          webhookId?: string;
+          skipSync?: boolean;
+          sourceRevision?: string;
+          forceReprocess?: boolean;
+        };
+        try {
+          if (row.jobName === 'fetch-resend-email' && payload.emailId && payload.inboundEventId) {
+            if (env.JOB_PROCESSING_MODE !== 'bullmq') return;
+            const { enqueueResendEmailFetch } = await import('../resend/resend.queue.js');
+            await enqueueResendEmailFetch({
+              emailId: payload.emailId,
+              inboundEventId: payload.inboundEventId,
+              correlationId: payload.correlationId ?? row.correlationId,
+              webhookId: payload.webhookId ?? row.jobId
+            });
+          } else if (row.jobName === 'process-intelligence') {
+            if (!payload.conversationId || !payload.intercomId) return;
+            await enqueueIntercomIntelligence(
+              {
+                conversationId: payload.conversationId,
+                intercomId: payload.intercomId,
+                skipSync: payload.skipSync ?? true,
+                sourceRevision: payload.sourceRevision,
+                forceReprocess: payload.forceReprocess
+              },
+              { jobId: row.jobId }
+            );
+          } else {
+            return;
+          }
+          await ingestionRepository.markDispatched(row.id);
+          dispatched += 1;
+        } catch (error) {
+          failed += 1;
+          logger.error('[ingestion] Outbox recovery dispatch failed', {
+            outboxId: row.id,
+            jobName: row.jobName,
+            code: classifyProcessingError(error).code
+          });
+        }
       };
 
-      try {
-        if (row.jobName === 'fetch-resend-email' && payload.emailId && payload.inboundEventId) {
-          const { enqueueResendEmailFetch } = await import('../resend/resend.queue.js');
-          await enqueueResendEmailFetch({
-            emailId: payload.emailId,
-            inboundEventId: payload.inboundEventId,
-            correlationId: payload.correlationId ?? row.correlationId,
-            webhookId: payload.webhookId ?? row.jobId
-          });
-        } else {
-          if (!payload.conversationId || !payload.intercomId) {
-            continue;
-          }
-          await enqueueIntercomIntelligence(
-            {
-              conversationId: payload.conversationId,
-              intercomId: payload.intercomId,
-              skipSync: payload.skipSync ?? true
-            },
-            { jobId: row.jobId }
-          );
+      const worker = async (): Promise<void> => {
+        while (nextIndex < pending.length) {
+          const row = pending[nextIndex++];
+          if (row) await dispatchRow(row);
         }
-        await ingestionRepository.markDispatched(row.id);
-        dispatched += 1;
-      } catch (error) {
-        logger.error('[ingestion] Outbox recovery dispatch failed', {
-          outboxId: row.id,
-          jobName: row.jobName,
-          message: error instanceof Error ? error.message : String(error)
-        });
-      }
-    }
+      };
+      await Promise.all(
+        Array.from({ length: Math.min(isApifyMode ? 5 : 1, pending.length) }, () => worker())
+      );
+      logger.info('[ingestion] Outbox recovery batch finished', {
+        pendingCount: pending.length,
+        dispatchedCount: dispatched,
+        failedCount: failed
+      });
+      return dispatched;
+    };
 
-    return dispatched;
+    if (isApifyMode) {
+      return withPostgresAdvisoryLock(ADVISORY_LOCK_NAMESPACE.outboxRecovery, 1, recover);
+    }
+    return recover();
   }
 };

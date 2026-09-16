@@ -2,6 +2,7 @@ import { Queue } from 'bullmq';
 import { getBullMqConnection } from '../../config/redis.connection.js';
 import { logger } from '../../config/logger.config.js';
 import { shouldDispatchQueueJobs } from '../../config/job-processing.js';
+import { env } from '../../config/env.config.js';
 
 export type ResendEmailFetchJob = {
   emailId: string;
@@ -20,6 +21,9 @@ const getQueue = () => {
 };
 
 export const enqueueResendEmailFetch = async (data: ResendEmailFetchJob): Promise<void> => {
+  if (env.JOB_PROCESSING_MODE === 'apify') {
+    throw new Error('Resend email fetching is available only in BullMQ mode.');
+  }
   if (!shouldDispatchQueueJobs()) {
     return;
   }

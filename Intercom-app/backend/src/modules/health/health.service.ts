@@ -1,5 +1,5 @@
 import { env } from '../../config/env.config.js';
-import { isBullmqJobProcessing } from '../../config/job-processing.js';
+import { isBullmqJobProcessing, isApifyJobProcessing, shouldStartQueueWorkers } from '../../config/job-processing.js';
 import { getSharedRedis } from '../../config/redis.config.js';
 
 export const healthService = {
@@ -37,7 +37,11 @@ export const healthService = {
       }
     }
 
-    const ready = postgres === 'up' && (redisStatus === 'up' || redisStatus === 'disabled');
+    const apifyConfigured = Boolean(env.APIFY_API_TOKEN && env.APIFY_ACTOR_ID);
+    const ready =
+      postgres === 'up' &&
+      (redisStatus === 'up' || redisStatus === 'disabled') &&
+      (!isApifyJobProcessing() || apifyConfigured);
     return {
       status: ready ? 'ready' : 'starting',
       postgres,
@@ -49,7 +53,9 @@ export const healthService = {
     return {
       runApi: env.RUN_API,
       runWorkers: env.RUN_WORKERS,
+      workersEnabled: shouldStartQueueWorkers(),
       jobProcessingMode: env.JOB_PROCESSING_MODE,
+      apifyConfigured: Boolean(env.APIFY_API_TOKEN && env.APIFY_ACTOR_ID),
       intercomEnabled: env.INTERCOM_ENABLED,
       boxSyncEnabled: env.BOX_SYNC_ENABLED,
       resendEnabled: env.RESEND_ENABLED,

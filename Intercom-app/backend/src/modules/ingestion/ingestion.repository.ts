@@ -48,6 +48,19 @@ export const ingestionRepository = {
     return row;
   },
 
+  async findOutboxForEvent(
+    inboundEventId: number,
+    jobName: string,
+    executor: Executor = db
+  ): Promise<OutboxEventRow | undefined> {
+    const [row] = await executor
+      .select()
+      .from(outboxEvents)
+      .where(and(eq(outboxEvents.inboundEventId, inboundEventId), eq(outboxEvents.jobName, jobName)))
+      .limit(1);
+    return row;
+  },
+
   async markQueued(id: number, conversationId?: number): Promise<void> {
     await db
       .update(inboundEvents)

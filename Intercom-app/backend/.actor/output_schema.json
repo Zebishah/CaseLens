@@ -1,0 +1,12 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Safe HR job metadata",
+  "description": "Links to the Actor's safe OUTPUT metadata record. No case content is stored in datasets.",
+  "properties": {
+    "runMetadata": {
+      "type": "string",
+      "title": "Safe run metadata",
+      "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/OUTPUT"
+    }
+  }
+}

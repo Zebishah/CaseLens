@@ -30,14 +30,26 @@ The defensible organizational value is centralized case intelligence, reduced re
 ```mermaid
 flowchart LR
   A[Intercom or inbound email] --> B[Signed ingestion API]
-  B --> C[(PostgreSQL and outbox)]
-  C --> D[Inline or BullMQ processor]
-  D --> E[Gemini and matching engine]
-  E --> C
-  C --> F[Intercom Canvas and dashboard]
+  B --> C[(PostgreSQL and durable outbox)]
+  C --> D{Execution mode}
+  D -->|inline fallback| E[API process]
+  D -->|BullMQ optional| F[Redis queue and worker]
+  D -->|Apify production target| G[On-demand private HR Actor]
+  E --> H[Shared intelligence handlers]
+  F --> H
+  G --> H
+  H --> I[Gemini, matching and related cases]
+  I --> C
+  C --> J[Intercom Canvas and dashboard]
 ```
 
-The same application service processes work inline for a low-cost demo deployment or through BullMQ workers for an asynchronous production topology. PostgreSQL remains the source of truth in both modes.
+The production target runs the API on Render and starts private Apify Actor runs for background jobs. The webhook persists the conversation and outbox before dispatch, then returns without waiting for AI processing. Actors load case content from PostgreSQL and call the same intelligence handlers as the optional BullMQ worker. PostgreSQL remains the source of truth.
+
+The repository supports three modes: `inline` for local/fallback execution, `bullmq` for the retained Redis worker architecture, and `apify` for on-demand execution. BullMQ still has its queue, worker, retries, exponential backoff, revision-aware IDs, worker tests, store-directory schedule, and optional Resend worker. It is an alternative deployment path; do not describe it as the live production path when Apify is selected.
+
+The Apify migration removes idle worker cost and the always-running Redis consumer requirement while retaining asynchronous execution, durable ingestion, revision deduplication, and isolation of long AI work from the webhook API. A local implementation does not mean the Render environment has already been switched: production activation follows the manual Actor smoke-test sequence in [Apify deployment](docs/APIFY_DEPLOYMENT.md).
+
+Architecture history: implemented a Redis/BullMQ distributed processing pipeline with retries, revision-aware deduplication, and worker concurrency; later prepared the production background path to migrate to on-demand Apify Actors while retaining the BullMQ implementation. No traffic, latency, or cost metrics are claimed.
 
 ## Repository layout
 
@@ -68,7 +80,7 @@ Intercom-app/
 | Frontend         | Next.js, React, TypeScript, Tailwind CSS               |
 | API              | Node.js, Express, TypeScript, Zod                      |
 | Data             | PostgreSQL, Drizzle ORM, pgvector, trigram search      |
-| Async processing | BullMQ and Redis, with an inline deployment mode       |
+| Async processing | On-demand Apify Actors, optional BullMQ/Redis, inline fallback |
 | Integrations     | Intercom, Gemini, Box and optional inbound email       |
 | Quality          | Jest, Supertest, ESLint, TypeScript and GitHub Actions |
 

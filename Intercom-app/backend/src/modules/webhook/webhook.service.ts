@@ -22,7 +22,8 @@ import {
 const enqueueIntelligenceIfNeeded = async (
   conversationId: number,
   intercomId: string,
-  messageCount: number
+  messageCount: number,
+  inboundEventId?: number | null
 ): Promise<boolean> => {
   const conversation = await conversationRepository.findById(conversationId);
   if (!conversation || !shouldReprocessIntelligence(conversation, messageCount)) {
@@ -43,15 +44,34 @@ const enqueueIntelligenceIfNeeded = async (
       messageCount,
       conversation.intercomSourceUpdatedAt
     );
-    await enqueueIntercomIntelligence(
-      {
+    const jobId = buildIntelligenceJobId(conversationId, sourceRevision);
+    let outboxId: number | undefined;
+    if (inboundEventId) {
+      const existingOutbox = await ingestionRepository.findOutboxForEvent(
+        inboundEventId,
+        'process-intelligence'
+      );
+      const outbox = existingOutbox ?? await ingestionRepository.insertOutbox({
+        inboundEventId,
+        jobName: 'process-intelligence',
+        jobId,
+        payload: { conversationId, intercomId, skipSync: true, sourceRevision },
+        status: 'pending',
+        correlationId: conversation.correlationId ?? `intercom-${inboundEventId}`
+      });
+      outboxId = outbox.id;
+      if (outbox.status === 'dispatched') return true;
+    }
+
+    await enqueueIntercomIntelligence({
         conversationId,
         intercomId,
         skipSync: true,
         sourceRevision
       },
-      { jobId: buildIntelligenceJobId(conversationId, sourceRevision) }
+      { jobId }
     );
+    if (outboxId) await ingestionRepository.markDispatched(outboxId);
 
     logger.info('[webhook] Intelligence job enqueued', {
       conversationId,
@@ -71,7 +91,7 @@ const enqueueIntelligenceIfNeeded = async (
 };
 
 export const webhookService = {
-  async handleConversationCreated(envelope: IntercomWebhookEnvelope): Promise<{
+  async handleConversationCreated(envelope: IntercomWebhookEnvelope, inboundEventId?: number | null): Promise<{
     conversationId: number;
     intercomId: string;
     queued: boolean;
@@ -94,7 +114,8 @@ export const webhookService = {
     const queued = await enqueueIntelligenceIfNeeded(
       conversation.id,
       conversation.intercomId,
-      messageCount
+      messageCount,
+      inboundEventId
     );
 
     return {
@@ -104,7 +125,7 @@ export const webhookService = {
     };
   },
 
-  async handleConversationReply(envelope: IntercomWebhookEnvelope): Promise<{
+  async handleConversationReply(envelope: IntercomWebhookEnvelope, inboundEventId?: number | null): Promise<{
     conversationId: number;
     intercomId: string;
     queued: boolean;
@@ -124,7 +145,8 @@ export const webhookService = {
     const queued = await enqueueIntelligenceIfNeeded(
       conversation.id,
       conversation.intercomId,
-      messageCount
+      messageCount,
+      inboundEventId
     );
 
     return {
@@ -165,7 +187,7 @@ export const webhookService = {
     }
 
     if (isConversationCreatedTopic(envelope.topic)) {
-      const result = await this.handleConversationCreated(envelope);
+      const result = await this.handleConversationCreated(envelope, recorded.inboundEventId);
       if (recorded.inboundEventId && result.queued) {
         await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
       }
@@ -173,7 +195,7 @@ export const webhookService = {
     }
 
     if (isConversationReplyTopic(envelope.topic)) {
-      const result = await this.handleConversationReply(envelope);
+      const result = await this.handleConversationReply(envelope, recorded.inboundEventId);
       if (recorded.inboundEventId && result.queued) {
         await ingestionRepository.markQueued(recorded.inboundEventId, result.conversationId);
       }
