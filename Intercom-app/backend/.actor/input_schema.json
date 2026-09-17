@@ -2,7 +2,6 @@
   "title": "HR Intelligence Worker input",
   "description": "Select one bounded job type. Production jobs are dispatched by the HR backend.",
   "type": "object",
-  "editor": "schema",
   "schemaVersion": 1,
   "properties": {
     "type": {
@@ -23,17 +22,19 @@
     "intercomId": {
       "title": "Intercom conversation ID",
       "type": "string",
+      "editor": "textfield",
       "description": "Required for intelligence and peer refresh jobs."
     },
-    "sourceRevision": { "title": "Source revision", "type": "string", "description": "Optional revision key used for durable deduplication." },
+    "sourceRevision": { "title": "Source revision", "type": "string", "editor": "textfield", "description": "Optional revision key used for durable deduplication." },
     "skipSync": { "title": "Skip Intercom sync", "type": "boolean", "description": "Use the stored conversation state.", "default": false },
     "forceReprocess": { "title": "Force reprocess", "type": "boolean", "description": "Create a new explicit processing attempt.", "default": false },
     "skipPeerRefresh": { "title": "Skip peer refresh", "type": "boolean", "description": "Skip deferred peer refresh for this intelligence job.", "default": false },
-    "caseType": { "title": "Case type", "type": "string", "description": "Required for peer refresh.", "maxLength": 100 },
+    "caseType": { "title": "Case type", "type": "string", "editor": "textfield", "description": "Required for peer refresh.", "maxLength": 100 },
     "employeeIdentityIds": {
       "title": "Employee identity IDs",
       "type": "array",
       "description": "Bounded stored identity IDs for peer refresh.",
+      "editor": "json",
       "items": { "type": "integer", "minimum": 1 },
       "maxItems": 100
     },
@@ -44,16 +45,34 @@
       "nullable": true,
       "editor": "json",
       "properties": {
-        "mode": { "title": "Mode", "type": "string", "enum": ["store", "domain", "store-and-domain", "none"] },
-        "storeNumber": { "title": "Store number", "type": "string", "nullable": true },
-        "domain": { "title": "Company domain", "type": "string", "nullable": true }
+        "mode": {
+          "title": "Mode",
+          "description": "Scope used to search for related cases.",
+          "type": "string",
+          "editor": "select",
+          "enum": ["store", "domain", "store-and-domain", "none"]
+        },
+        "storeNumber": {
+          "title": "Store number",
+          "description": "Optional store number for the related-case scope.",
+          "type": "string",
+          "editor": "textfield",
+          "nullable": true
+        },
+        "domain": {
+          "title": "Company domain",
+          "description": "Optional company domain for the related-case scope.",
+          "type": "string",
+          "editor": "textfield",
+          "nullable": true
+        }
       },
       "required": ["mode", "storeNumber", "domain"],
       "additionalProperties": false
     },
     "enqueueSiblingReprocess": { "title": "Enqueue sibling processing", "type": "boolean", "description": "Keep sibling fan-out bounded to the existing maximum of 20.", "default": false },
     "limit": { "title": "Recovery batch size", "type": "integer", "description": "Maximum number of outbox rows to dispatch in one recovery run.", "minimum": 1, "maximum": 20, "default": 20 },
-    "source": { "title": "Sync source", "type": "string", "description": "Only used for the scheduled store directory sync.", "enum": ["apify-schedule"], "default": "apify-schedule" },
+    "source": { "title": "Sync source", "type": "string", "editor": "select", "description": "Only used for the scheduled store directory sync.", "enum": ["apify-schedule"], "default": "apify-schedule" },
     "executionId": { "title": "Internal execution ID", "type": "integer", "description": "Internal run tracking. Set by the backend dispatcher.", "minimum": 1, "editor": "hidden" },
     "attempt": { "title": "Internal attempt number", "type": "integer", "description": "Internal retry counter.", "minimum": 1, "maximum": 5, "editor": "hidden" }
   },
