@@ -93,12 +93,16 @@ export default function AccessRequestsPage() {
       title="Access management"
       description="Review requests for personal, read-only organization workspace accounts. Approval creates a viewer account and sends a one-time password setup link through Brevo; Intercom access remains separate."
     >
-      {error ? (
-        <AlertBanner tone="danger" title="Access queue unavailable" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>
-          {error}
-        </AlertBanner>
+      {error || notice ? (
+        <div className="mb-4 space-y-4">
+          {error ? (
+            <AlertBanner tone="danger" title="Access queue unavailable" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>
+              {error}
+            </AlertBanner>
+          ) : null}
+          {notice ? <AlertBanner tone="success" title="Access workflow updated">{notice}</AlertBanner> : null}
+        </div>
       ) : null}
-      {notice ? <AlertBanner tone="success" title="Access workflow updated">{notice}</AlertBanner> : null}
 
       <section className="dash-panel mb-5">
         <div className="flex flex-wrap items-end justify-between gap-4">

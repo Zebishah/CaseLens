@@ -10,6 +10,15 @@ type ActorPlatformEnvironment = NodeJS.ProcessEnv & {
   ACTOR_RUN_ID?: string;
 };
 
+let failureStage = 'bootstrap';
+
+const logSafeActorFailure = (error: unknown): void => {
+  const errorType = error instanceof Error ? error.name : 'UnknownError';
+  const rawCode = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  const errorCode = typeof rawCode === 'string' && /^[A-Z0-9_-]{2,32}$/.test(rawCode) ? rawCode : undefined;
+  console.error('[actor] Execution failed', JSON.stringify({ stage: failureStage, errorType, ...(errorCode ? { errorCode } : {}) }));
+};
+
 const apiBase = (): string => (process.env.APIFY_API_BASE_URL ?? 'https://api.apify.com/v2').replace(/\/$/, '');
 
 const readInput = async (): Promise<unknown> => {
@@ -59,6 +68,7 @@ const writeOutput = async (output: unknown): Promise<void> => {
 };
 
 const run = async (): Promise<void> => {
+  failureStage = 'configure';
   if (process.env.APIFY_TOKEN && !process.env.APIFY_API_TOKEN) {
     process.env.APIFY_API_TOKEN = process.env.APIFY_TOKEN;
   }
@@ -79,13 +89,16 @@ const run = async (): Promise<void> => {
   let actorOutput: unknown;
   let failed = false;
   let safeFailure: { code: string; message: string; retryable: boolean } | undefined;
+  failureStage = 'read_input';
   const rawInput = await readInput();
+  failureStage = 'validate_input';
   const input = actorInputSchema.parse(rawInput);
   const executionId: number | undefined = 'executionId' in input ? input.executionId : undefined;
   const startedAt = Date.now();
 
   let database: typeof import('../database/connection.js') | undefined;
   try {
+    failureStage = 'initialize_runtime';
     database = await import('../database/connection.js');
     const [handler, ingestion, ingestionRepo, actorRuns, storeDirectory, loggerModule] = await Promise.all([
       import('../jobs/intelligence-job.handler.js'),
@@ -133,6 +146,7 @@ const run = async (): Promise<void> => {
     };
 
     try {
+      failureStage = 'execute_job';
       actorOutput = await runtime();
     } catch (error) {
       const { classifyProcessingError } = await import('../modules/ingestion/error-classification.js');
@@ -170,7 +184,8 @@ const run = async (): Promise<void> => {
         retryable: safeFailure.retryable
       });
     }
-  } catch {
+  } catch (error) {
+    logSafeActorFailure(error);
     failed = true;
     safeFailure ??= { code: 'ACTOR_RUNTIME_ERROR', message: 'The Actor could not execute this job.', retryable: false };
     actorOutput = {
@@ -195,19 +210,24 @@ const run = async (): Promise<void> => {
       }
     }
   } finally {
-    if (database) await database.pool.end();
+    if (database) {
+      failureStage = 'close_database';
+      await database.pool.end();
+    }
   }
 
+  failureStage = 'write_output';
   try {
     await writeOutput(actorOutput);
-  } catch {
+  } catch (error) {
+    logSafeActorFailure(error);
     failed = true;
   }
   if (failed) process.exitCode = 1;
 };
 
 void run().catch((error: unknown) => {
-  // Keep provider and HR payload details out of Actor logs and output.
-  void error;
+  // Log only safe execution metadata, never input or provider error messages.
+  logSafeActorFailure(error);
   process.exitCode = 1;
 });
