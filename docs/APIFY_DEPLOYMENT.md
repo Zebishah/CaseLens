@@ -26,7 +26,7 @@ JOB_PROCESSING_MODE=apify
 RUN_API=true
 RUN_WORKERS=false
 APIFY_API_TOKEN=<scoped token allowed to run the HR Intelligence Actor>
-APIFY_ACTOR_ID=<owner~hr-intelligence-worker Actor ID>
+APIFY_ACTOR_ID=kTSaFi1vV3eHoeZft
 APIFY_API_BASE_URL=https://api.apify.com/v2
 DATABASE_URL=<production PostgreSQL URL>
 ```
