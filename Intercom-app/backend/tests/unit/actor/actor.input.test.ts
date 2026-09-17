@@ -45,6 +45,26 @@ describe('Actor input loading', () => {
     expect(actorGetInput).toHaveBeenCalledTimes(1);
   });
 
+  test('removes only Apify job defaults from intelligence input', async () => {
+    actorGetInput.mockResolvedValue({
+      type: 'intelligence',
+      conversationId: 115,
+      intercomId: '215475977947017',
+      enqueueSiblingReprocess: false,
+      limit: 20,
+      source: 'apify-schedule',
+    } as never);
+
+    await expect(loadActorInput()).resolves.toEqual({
+      type: 'intelligence',
+      conversationId: 115,
+      intercomId: '215475977947017',
+      skipSync: false,
+      forceReprocess: false,
+      skipPeerRefresh: false,
+    });
+  });
+
   test('rejects missing input with a safe error', async () => {
     actorGetInput.mockResolvedValue(null as never);
 
@@ -73,5 +93,48 @@ describe('Actor input loading', () => {
       limit: 20,
     });
     expect(actorGetInput).toHaveBeenCalledTimes(1);
+  });
+
+  test('preserves valid peer-refresh fields', async () => {
+    const input = {
+      type: 'peer-refresh',
+      conversationId: 12,
+      intercomId: 'ic-123',
+      caseType: 'Attendance',
+      employeeIdentityIds: [4, 8],
+      relatedCaseSearchScope: {
+        mode: 'none',
+        storeNumber: null,
+        domain: null,
+      },
+      enqueueSiblingReprocess: true,
+    };
+    actorGetInput.mockResolvedValue(input as never);
+
+    await expect(loadActorInput()).resolves.toEqual(input);
+  });
+
+  test('preserves the recovery limit', async () => {
+    actorGetInput.mockResolvedValue({
+      type: 'recover-pending-outbox',
+      limit: 7,
+    } as never);
+
+    await expect(loadActorInput()).resolves.toEqual({
+      type: 'recover-pending-outbox',
+      limit: 7,
+    });
+  });
+
+  test('preserves the store-directory-sync source', async () => {
+    actorGetInput.mockResolvedValue({
+      type: 'store-directory-sync',
+      source: 'apify-schedule',
+    } as never);
+
+    await expect(loadActorInput()).resolves.toEqual({
+      type: 'store-directory-sync',
+      source: 'apify-schedule',
+    });
   });
 });

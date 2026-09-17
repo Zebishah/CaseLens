@@ -70,9 +70,9 @@
       "required": ["mode", "storeNumber", "domain"],
       "additionalProperties": false
     },
-    "enqueueSiblingReprocess": { "title": "Enqueue sibling processing", "type": "boolean", "description": "Keep sibling fan-out bounded to the existing maximum of 20.", "default": false },
-    "limit": { "title": "Recovery batch size", "type": "integer", "description": "Maximum number of outbox rows to dispatch in one recovery run.", "minimum": 1, "maximum": 20, "default": 20 },
-    "source": { "title": "Sync source", "type": "string", "editor": "select", "description": "Only used for the scheduled store directory sync.", "enum": ["apify-schedule"], "default": "apify-schedule" },
+    "enqueueSiblingReprocess": { "title": "Enqueue sibling processing", "type": "boolean", "description": "Keep sibling fan-out bounded to the existing maximum of 20." },
+    "limit": { "title": "Recovery batch size", "type": "integer", "description": "Maximum number of outbox rows to dispatch in one recovery run.", "minimum": 1, "maximum": 20 },
+    "source": { "title": "Sync source", "type": "string", "editor": "select", "description": "Only used for the scheduled store directory sync.", "enum": ["apify-schedule"] },
     "executionId": { "title": "Internal execution ID", "type": "integer", "description": "Internal run tracking. Set by the backend dispatcher.", "minimum": 1, "editor": "hidden" },
     "attempt": { "title": "Internal attempt number", "type": "integer", "description": "Internal retry counter.", "minimum": 1, "maximum": 5, "editor": "hidden" }
   },
