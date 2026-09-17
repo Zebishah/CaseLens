@@ -9,6 +9,22 @@ afterEach(() => {
 });
 
 describe('Actor input loading', () => {
+  test('loads the exact intelligence input supplied by the API', async () => {
+    const input = {
+      type: 'intelligence',
+      conversationId: 115,
+      intercomId: '215475977947017',
+      sourceRevision: 'smoke-test-2026-09-17-03',
+      skipSync: true,
+      forceReprocess: true,
+      skipPeerRefresh: true,
+    };
+    actorGetInput.mockResolvedValue(input as never);
+
+    await expect(loadActorInput()).resolves.toEqual(input);
+    expect(actorGetInput).toHaveBeenCalledTimes(1);
+  });
+
   test('loads and validates a valid intelligence input', async () => {
     actorGetInput.mockResolvedValue({
       type: 'intelligence',

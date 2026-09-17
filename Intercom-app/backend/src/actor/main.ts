@@ -2,6 +2,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Actor } from 'apify';
 import { loadActorInput } from './actor.input.js';
+import { safeActorErrorDetails } from './safe-actor-error.js';
 import { executeActorInput } from './actor.runtime.js';
 
 type ActorPlatformEnvironment = NodeJS.ProcessEnv & {
@@ -11,21 +12,11 @@ type ActorPlatformEnvironment = NodeJS.ProcessEnv & {
 let failureStage = 'bootstrap';
 
 const logSafeActorFailure = (error: unknown): void => {
-  const errorType = error instanceof Error ? error.name : 'UnknownError';
-  const rawCode =
-    error && typeof error === 'object' && 'code' in error
-      ? error.code
-      : undefined;
-  const errorCode =
-    typeof rawCode === 'string' && /^[A-Z0-9_-]{2,32}$/.test(rawCode)
-      ? rawCode
-      : undefined;
   console.error(
     '[actor] Execution failed',
     JSON.stringify({
       stage: failureStage,
-      errorType,
-      ...(errorCode ? { errorCode } : {}),
+      ...safeActorErrorDetails(error),
     }),
   );
 };
