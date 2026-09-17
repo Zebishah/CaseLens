@@ -63,4 +63,28 @@ describe('processCaseIntelligence', () => {
       })
     );
   });
+
+  test('preserves an explicit skipSync request for an Intercom-originated case', async () => {
+    mockFindById.mockResolvedValue({
+      id: 13,
+      intercomId: '654321',
+      source: 'intercom',
+      processingMode: 'live'
+    });
+
+    await processCaseIntelligence({
+      conversationId: 13,
+      source: 'worker',
+      skipSync: true
+    });
+
+    expect(mockRunOnce).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 13,
+        intercomId: '654321',
+        skipSync: true,
+        source: 'worker'
+      })
+    );
+  });
 });

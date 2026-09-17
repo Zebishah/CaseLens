@@ -1,13 +1,9 @@
-import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { Actor } from 'apify';
 import { loadActorInput } from './actor.input.js';
+import { writeActorOutput } from './actor.output.js';
 import { safeActorErrorDetails } from './safe-actor-error.js';
 import { executeActorInput } from './actor.runtime.js';
-
-type ActorPlatformEnvironment = NodeJS.ProcessEnv & {
-  ACTOR_DEFAULT_KEY_VALUE_STORE_ID?: string;
-};
 
 let failureStage = 'bootstrap';
 
@@ -19,48 +15,6 @@ const logSafeActorFailure = (error: unknown): void => {
       ...safeActorErrorDetails(error),
     }),
   );
-};
-
-const apiBase = (): string =>
-  (process.env.APIFY_API_BASE_URL ?? 'https://api.apify.com/v2').replace(
-    /\/$/,
-    '',
-  );
-
-const writeOutput = async (output: unknown): Promise<void> => {
-  const actorEnv = process.env as ActorPlatformEnvironment;
-  const storeId =
-    actorEnv.ACTOR_DEFAULT_KEY_VALUE_STORE_ID ??
-    process.env.APIFY_DEFAULT_KEY_VALUE_STORE_ID;
-  const token = process.env.APIFY_TOKEN;
-  if (storeId && token) {
-    const response = await fetch(
-      `${apiBase()}/key-value-stores/${encodeURIComponent(storeId)}/records/OUTPUT`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json; charset=utf-8',
-        },
-        body: JSON.stringify(output),
-      },
-    );
-    if (!response.ok) throw new Error('Actor output could not be stored.');
-    return;
-  }
-
-  const storageRoot =
-    process.env.APIFY_LOCAL_STORAGE_DIR ??
-    path.resolve(process.cwd(), 'storage');
-  const outputPath = path.join(
-    storageRoot,
-    'key_value_stores',
-    'default',
-    'OUTPUT.json',
-  );
-  const { mkdir, writeFile } = await import('node:fs/promises');
-  await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, JSON.stringify(output), 'utf8');
 };
 
 const run = async (): Promise<void> => {
@@ -247,10 +201,9 @@ const run = async (): Promise<void> => {
 
     failureStage = 'write_output';
     try {
-      await writeOutput(actorOutput);
+      await writeActorOutput(actorOutput);
     } catch (error) {
       logSafeActorFailure(error);
-      failed = true;
     }
     if (failed) process.exitCode = 1;
   } catch (error) {

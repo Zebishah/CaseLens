@@ -34,9 +34,23 @@ export const safeActorErrorDetails = (
     typeof rawCode === 'string' && /^[A-Z0-9_-]{2,32}$/.test(rawCode)
       ? rawCode
       : undefined;
+  const statusCode =
+    error && typeof error === 'object' && 'statusCode' in error
+      ? error.statusCode
+      : undefined;
+  const safeStatusCode =
+    errorCode === undefined &&
+    typeof statusCode === 'number' &&
+    Number.isInteger(statusCode) &&
+    statusCode >= 400 &&
+    statusCode <= 599
+      ? `HTTP_${statusCode}`
+      : undefined;
 
   return {
     errorType,
-    ...(errorCode ? { errorCode } : {}),
+    ...((errorCode ?? safeStatusCode)
+      ? { errorCode: errorCode ?? safeStatusCode }
+      : {}),
   };
 };

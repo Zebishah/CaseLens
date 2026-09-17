@@ -8,6 +8,7 @@ import { isApifyJobProcessing } from '../../config/job-processing.js';
 export const processCaseIntelligence = async (input: {
   conversationId: number;
   forceReprocess?: boolean;
+  skipSync?: boolean;
   skipPeerRefresh?: boolean;
   source?: 'worker' | 'canvas' | 'inline';
 }): Promise<void> => {
@@ -16,7 +17,10 @@ export const processCaseIntelligence = async (input: {
     throw new Error(`Case not found for intelligence processing: ${input.conversationId}`);
   }
 
-  const skipSync = conversation.source !== 'intercom' || !env.INTERCOM_ENABLED;
+  const skipSync =
+    input.skipSync === true ||
+    conversation.source !== 'intercom' ||
+    !env.INTERCOM_ENABLED;
   const skipPeerRefresh =
     input.skipPeerRefresh === true || conversation.source !== 'intercom' || env.JOB_PROCESSING_MODE === 'inline';
 

@@ -34,6 +34,7 @@ export const handleIntelligenceJob = async (data: IntercomIntelligenceJobData): 
   await processCaseIntelligence({
     conversationId: data.conversationId,
     forceReprocess: data.forceReprocess,
+    skipSync: data.skipSync,
     skipPeerRefresh: data.skipPeerRefresh,
     source: 'worker'
   });

@@ -38,12 +38,14 @@ describe('handleIntelligenceJob', () => {
       conversationId: 3,
       intercomId: 'abc',
       forceReprocess: true,
+      skipSync: true,
       skipPeerRefresh: false
     });
 
     expect(mockProcess).toHaveBeenCalledWith({
       conversationId: 3,
       forceReprocess: true,
+      skipSync: true,
       skipPeerRefresh: false,
       source: 'worker'
     });

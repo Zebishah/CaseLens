@@ -11,7 +11,7 @@ const dependencies = () => ({
 });
 
 describe('HR Actor runtime', () => {
-  test('validates intelligence input and calls the shared handler with metadata only', async () => {
+  test('passes skipSync=true from validated intelligence input to the handler', async () => {
     const deps = dependencies();
     const result = await executeActorInput({
       type: 'intelligence',
