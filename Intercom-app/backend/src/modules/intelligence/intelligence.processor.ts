@@ -567,15 +567,25 @@ export const processIntelligenceForConversation = async (
     if (shouldUpdatePeers) {
       // Defer heavy peer rebuild so this conversation's job finishes in ~Gemini+match+related time.
       // Same logic as before — just runs on a follow-up `peer-refresh-*` queue job.
-      await enqueuePeerSnapshotRefreshJob({
-        sourceConversationId: conversation.id,
-        sourceIntercomId: conversation.intercomId,
-        caseType,
-        employeeIdentityIds: newEmployeeIdentityIds,
-        relatedCaseSearchScope,
-        enqueueSiblingReprocess: true
-      });
-      peerRefreshDeferred = true;
+      try {
+        await enqueuePeerSnapshotRefreshJob({
+          sourceConversationId: conversation.id,
+          sourceIntercomId: conversation.intercomId,
+          caseType,
+          employeeIdentityIds: newEmployeeIdentityIds,
+          relatedCaseSearchScope,
+          enqueueSiblingReprocess: true
+        });
+        peerRefreshDeferred = true;
+      } catch {
+        logger.warn(
+          `${logTag} Deferred peer snapshot refresh dispatch failed; primary intelligence result retained`,
+          {
+            conversationId: conversation.id,
+            peerCount: newEmployeeIdentityIds.length
+          }
+        );
+      }
     } else if (
       allowPeerCascade &&
       (subjectChangedSinceProcessing || employeeMatchChanged)

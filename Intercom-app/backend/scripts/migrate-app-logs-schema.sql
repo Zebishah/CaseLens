@@ -9,5 +9,11 @@ CREATE TABLE IF NOT EXISTS app_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE app_logs
+  ADD COLUMN IF NOT EXISTS conversation_id VARCHAR(64);
+
+ALTER TABLE app_logs
+  ADD COLUMN IF NOT EXISTS intercom_id VARCHAR(64);
+
 CREATE INDEX IF NOT EXISTS app_logs_created_at_idx ON app_logs (created_at);
 CREATE INDEX IF NOT EXISTS app_logs_level_idx ON app_logs (level);
