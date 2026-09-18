@@ -77,7 +77,7 @@ export function AlertBanner({
   };
 
   return (
-    <div className={`rounded-xl border px-5 py-4 ${tones[tone]}`}>
+    <div role={tone === 'danger' ? 'alert' : undefined} className={`rounded-xl border px-5 py-4 ${tones[tone]}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="font-semibold">{title}</p>

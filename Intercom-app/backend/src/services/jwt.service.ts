@@ -1,4 +1,5 @@
 import jwt, { type SignOptions, type VerifyOptions } from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.config.js';
 
 export type AppJwtPayload = {
@@ -13,13 +14,15 @@ const sign = (
   payload: AppJwtPayload,
   tokenType: TokenType,
   secret: string,
-  expiresIn: string
+  expiresIn: string,
+  jwtId?: string
 ): string => {
   const options: SignOptions = {
     algorithm: 'HS256',
     audience: env.JWT_AUDIENCE,
     issuer: env.JWT_ISSUER,
-    expiresIn: expiresIn as SignOptions['expiresIn']
+    expiresIn: expiresIn as SignOptions['expiresIn'],
+    ...(jwtId ? { jwtid: jwtId } : {})
   };
   return jwt.sign({ ...payload, tokenType }, secret, options);
 };
@@ -55,7 +58,7 @@ export const generateTokenWithExpiry = (payload: AppJwtPayload, expiresIn: strin
   sign(payload, 'access', env.JWT_SECRET, expiresIn);
 
 export const generateRefreshToken = (payload: AppJwtPayload): string =>
-  sign(payload, 'refresh', env.JWT_REFRESH_SECRET, env.JWT_REFRESH_EXPIRES_IN);
+  sign(payload, 'refresh', env.JWT_REFRESH_SECRET, env.JWT_REFRESH_EXPIRES_IN, randomUUID());
 
 export const verifyToken = (token: string): AppJwtPayload =>
   verify(token, 'access', env.JWT_SECRET);

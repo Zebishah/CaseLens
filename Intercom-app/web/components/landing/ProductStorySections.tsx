@@ -35,7 +35,7 @@ export function ProductStorySections() {
   return (
     <>
       <section id="problem" className="bg-paper">
-        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
           <div className="max-w-3xl">
             <p className="text-sm font-medium tracking-[0.18em] text-secondary">The problem</p>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">HR teams do not need another inbox. They need context.</h2>
@@ -50,7 +50,7 @@ export function ProductStorySections() {
       </section>
 
       <section id="solution" className="bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
           <div className="max-w-3xl"><p className="text-sm font-medium tracking-[0.18em] text-secondary">What we changed</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">One explainable intelligence layer around the operator’s existing workflow.</h2><p className="mt-5 text-muted">Intercom, inbound email, and demo intake normalize through the same processing model. The result is stored as an auditable snapshot and remains available beside the case.</p></div>
           <div className="mt-10 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {['Conversation arrives', 'Identity is resolved', 'History and routing appear', 'Operator reviews in Intercom'].map((step, index) => <div key={step} className="relative rounded-2xl border border-primary/10 bg-mist p-5"><span className="text-xs font-semibold text-secondary">STEP {index + 1}</span><h3 className="mt-3 text-base font-semibold text-primary">{step}</h3><p className="mt-2 text-sm leading-6 text-muted">{['A signed or validated event enters the shared ingestion path.', 'Evidence is preserved instead of silently forcing uncertain matches.', 'Related cases and stakeholder context become easier to find.', 'The human remains in control, with intelligence next to the conversation.'][index]}</p></div>)}
@@ -60,14 +60,14 @@ export function ProductStorySections() {
       </section>
 
       <section id="ai-intelligence" className="bg-mist/60">
-        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
           <p className="text-sm font-medium tracking-[0.18em] text-secondary">AI intelligence</p><h2 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-primary md:text-5xl">Automation that explains its evidence.</h2><p className="mt-5 max-w-2xl text-muted">AI helps structure and explain the case. Deterministic identity, retrieval, authorization, and review rules remain authoritative.</p>
           <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{capabilities.map(([title, what, value]) => <article key={title} className="rounded-2xl border border-primary/10 bg-white p-5 shadow-sm"><h3 className="text-base font-semibold text-primary">{title}</h3><p className="mt-3 text-sm leading-6 text-muted"><span className="font-medium text-primary">What it does:</span> {what}</p><p className="mt-2 text-sm leading-6 text-muted"><span className="font-medium text-primary">Operator value:</span> {value}</p></article>)}</div>
         </div>
       </section>
 
       <section id="impact" className="bg-white">
-        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 md:px-6 md:py-28 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:px-6 md:py-24 lg:grid-cols-[0.9fr_1.1fr]">
           <div><p className="text-sm font-medium tracking-[0.18em] text-secondary">Organization / operational impact</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">Less searching, safer review, better traceability.</h2><p className="mt-5 leading-7 text-muted">The platform does not invent savings or production volumes. Its defensible value is visible in the workflow: fragmented context is centralized, repetitive analysis is automated, uncertainty is surfaced, and reliability controls are inspectable.</p><Link href="/login" className="btn-primary mt-7 inline-flex rounded-full px-5 py-2.5 text-sm font-medium">Inspect the evidence</Link></div>
           <div className="grid gap-4 sm:grid-cols-2">
             {impactItems.map((item, index) => (
@@ -75,7 +75,6 @@ export function ProductStorySections() {
                 key={item.label}
                 className="group relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-white via-white to-mist/70 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-secondary/35 hover:shadow-lift"
               >
-                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-secondary/10 transition duration-500 group-hover:scale-150" aria-hidden="true" />
                 <div className="relative flex items-center gap-4">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-secondary shadow-sm transition duration-300 group-hover:scale-110 group-hover:rotate-3" aria-hidden="true">
                     <ImpactIcon name={item.icon} />
@@ -92,7 +91,7 @@ export function ProductStorySections() {
       </section>
 
       <section id="engineering-proof" className="bg-mist/60">
-        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
+        <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
           <p className="text-sm font-medium tracking-[0.18em] text-secondary">Engineering proof</p>
           <h2 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-primary md:text-5xl">The quality story is inspectable.</h2>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -107,7 +106,7 @@ export function ProductStorySections() {
       </section>
 
       <section id="faq" className="bg-paper">
-        <div className="mx-auto max-w-4xl px-4 py-20 md:px-6 md:py-28"><p className="text-sm font-medium tracking-[0.18em] text-secondary">FAQ</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">Product value and engineering detail, in plain language.</h2><div className="mt-8 space-y-3">{faqs.map(([question, answer]) => <details key={question} className="group rounded-2xl border border-primary/10 bg-white px-5 py-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-primary"><span>{question}</span><span className="text-xl font-normal text-secondary transition group-open:rotate-45">+</span></summary><p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{answer}</p></details>)}</div></div>
+        <div className="mx-auto max-w-4xl px-4 py-16 md:px-6 md:py-24"><p className="text-sm font-medium tracking-[0.18em] text-secondary">FAQ</p><h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">Product value and engineering detail, in plain language.</h2><div className="mt-8 space-y-3">{faqs.map(([question, answer]) => <details key={question} className="group rounded-2xl border border-primary/10 bg-white px-5 py-4"><summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-sm font-semibold text-primary"><span>{question}</span><span className="text-xl font-normal text-secondary transition group-open:rotate-45">+</span></summary><p className="mt-3 max-w-3xl text-sm leading-6 text-muted">{answer}</p></details>)}</div></div>
       </section>
     </>
   );

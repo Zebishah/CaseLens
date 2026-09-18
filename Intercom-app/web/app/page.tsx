@@ -18,15 +18,11 @@ export default function LandingPage() {
       <main>
         <section className="relative overflow-hidden bg-mist">
           <div
-            className="pointer-events-none absolute -left-32 top-[-8rem] hidden h-[34rem] w-[34rem] rounded-full bg-white lg:block"
+            className="hero-glow pointer-events-none absolute -left-40 -top-40 hidden h-[36rem] w-[36rem] lg:block"
             aria-hidden="true"
           />
           <div
-            className="pointer-events-none absolute -right-16 top-8 h-36 w-36 rounded-full bg-primary/15 md:-right-24 md:top-24 md:h-72 md:w-72"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute right-6 top-4 h-24 w-24 rounded-full bg-secondary/25 md:right-24 md:top-12 md:h-40 md:w-40"
+            className="landing-grid pointer-events-none absolute inset-0 hidden opacity-40 md:block"
             aria-hidden="true"
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-10 md:px-6 md:pb-4 md:pt-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
@@ -49,7 +45,7 @@ export default function LandingPage() {
                 <Link href="/login?mode=demo" className="btn-secondary inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium transition hover:-translate-y-0.5 sm:w-auto">
                   Explore reviewer walkthrough
                 </Link>
-                <Link href="/access" className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-primary/20 bg-white/75 px-5 py-2.5 text-sm font-semibold text-primary shadow-sm transition hover:-translate-y-0.5 hover:border-primary/35 hover:bg-white sm:w-auto">
+                <Link href="/access" className="inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-white/50 hover:text-primary-hover sm:w-auto">
                   Request reviewer access <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -72,21 +68,13 @@ export default function LandingPage() {
         <FeatureGallery />
 
         <section id="architecture" className="relative overflow-hidden bg-mist/50">
-          <div
-            className="pointer-events-none absolute -right-16 top-10 h-48 w-48 rounded-full bg-white/80"
-            aria-hidden="true"
-          />
-          <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <div className="relative mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
             <ArchitectureShowcase />
           </div>
         </section>
 
         <section id="use-cases" className="relative overflow-hidden bg-paper">
-          <div
-            className="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-white/80"
-            aria-hidden="true"
-          />
-          <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <div className="relative mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
             <p className="text-sm font-medium tracking-[0.18em] text-secondary">Use cases</p>
             <h2 className="mt-4 max-w-3xl text-3xl font-bold tracking-tight text-primary md:text-5xl">
               The same case looks different once it is intelligence.
@@ -107,7 +95,7 @@ export default function LandingPage() {
         </section>
 
         <section id="live-demo" className="bg-white">
-          <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+          <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
             <div className="max-w-3xl">
               <p className="text-sm font-medium tracking-[0.18em] text-secondary">Live product proof</p>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">

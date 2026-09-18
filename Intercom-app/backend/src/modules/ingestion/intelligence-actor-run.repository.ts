@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { db } from '../../database/connection.js';
 import {
   intelligenceActorRuns,
@@ -129,5 +129,55 @@ export const intelligenceActorRunRepository = {
         )
       )
       .limit(limit);
+  },
+
+  async operationalSummary(maxAttempts = 3) {
+    const grouped = await db
+      .select({ status: intelligenceActorRuns.status, total: count() })
+      .from(intelligenceActorRuns)
+      .groupBy(intelligenceActorRuns.status);
+    const retryable = await db
+      .select({ total: count() })
+      .from(intelligenceActorRuns)
+      .where(
+        and(
+          eq(intelligenceActorRuns.status, 'failed'),
+          eq(intelligenceActorRuns.retryable, true),
+          lt(intelligenceActorRuns.attemptCount, maxAttempts)
+        )
+      );
+    const [latestFailure] = await db
+      .select({ safeErrorCode: intelligenceActorRuns.safeErrorCode })
+      .from(intelligenceActorRuns)
+      .where(eq(intelligenceActorRuns.status, 'failed'))
+      .orderBy(desc(intelligenceActorRuns.updatedAt))
+      .limit(1);
+    const [recentCompleted] = await db
+      .select({
+        durationMs: sql<number>`GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (${intelligenceActorRuns.finishedAt} - ${intelligenceActorRuns.startedAt})) * 1000))`
+      })
+      .from(intelligenceActorRuns)
+      .where(
+        and(
+          eq(intelligenceActorRuns.status, 'completed'),
+          sql`${intelligenceActorRuns.startedAt} IS NOT NULL`,
+          sql`${intelligenceActorRuns.finishedAt} IS NOT NULL`
+        )
+      )
+      .orderBy(desc(intelligenceActorRuns.finishedAt))
+      .limit(1);
+
+    const byStatus = Object.fromEntries(grouped.map(({ status, total }) => [status, Number(total)]));
+    const code = latestFailure?.safeErrorCode;
+    return {
+      queued: byStatus.queued ?? 0,
+      running: byStatus.running ?? 0,
+      completed: byStatus.completed ?? 0,
+      failed: byStatus.failed ?? 0,
+      retryableFailures: Number(retryable[0]?.total ?? 0),
+      latestFailureCode: code && /^[A-Z0-9_]{1,64}$/.test(code) ? code : null,
+      recentRunDurationMs:
+        recentCompleted?.durationMs === undefined ? null : Number(recentCompleted.durationMs)
+    };
   }
 };

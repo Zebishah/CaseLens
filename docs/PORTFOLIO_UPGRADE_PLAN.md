@@ -1,4 +1,6 @@
-# Portfolio Upgrade Plan — HR Case Operations Platform
+# Portfolio Upgrade Plan — HR Case Operations Platform (historical)
+
+> Historical planning snapshot. Its original assessments predate the current production path, durable ingestion, Apify Actors, refresh sessions, and ordered migrations. For the current design, see [Architecture](ARCHITECTURE.md) and [the production readiness audit](FINAL_PRODUCTION_READINESS_AUDIT.md).
 
 > Working branch: `portfolio-hardening`  
 > Audit date: 2026-09-01  

@@ -34,7 +34,7 @@ flowchart LR
   C --> D{Execution mode}
   D -->|inline fallback| E[API process]
   D -->|BullMQ optional| F[Redis queue and worker]
-  D -->|Apify production target| G[On-demand private HR Actor]
+  D -->|Apify production| G[On-demand private HR Actor]
   E --> H[Shared intelligence handlers]
   F --> H
   G --> H
@@ -43,13 +43,13 @@ flowchart LR
   C --> J[Intercom Canvas and dashboard]
 ```
 
-The production target runs the API on Render and starts private Apify Actor runs for background jobs. The webhook persists the conversation and outbox before dispatch, then returns without waiting for AI processing. Actors load case content from PostgreSQL and call the same intelligence handlers as the optional BullMQ worker. PostgreSQL remains the source of truth.
+The production architecture runs the API on Render and starts private Apify Actor runs for background jobs. The webhook persists the conversation and durable dispatch state before returning; AI processing continues in the Actor. Actors load case content from PostgreSQL and call the same intelligence handlers as the optional BullMQ worker. PostgreSQL remains the source of truth.
 
 The repository supports three modes: `inline` for local/fallback execution, `bullmq` for the retained Redis worker architecture, and `apify` for on-demand execution. BullMQ still has its queue, worker, retries, exponential backoff, revision-aware IDs, worker tests, store-directory schedule, and optional Resend worker. It is an alternative deployment path; do not describe it as the live production path when Apify is selected.
 
-The Apify migration removes idle worker cost and the always-running Redis consumer requirement while retaining asynchronous execution, durable ingestion, revision deduplication, and isolation of long AI work from the webhook API. A local implementation does not mean the Render environment has already been switched: production activation follows the manual Actor smoke-test sequence in [Apify deployment](docs/APIFY_DEPLOYMENT.md).
+On-demand Actors keep long AI work outside the webhook request and do not require a continuously running Redis consumer in Apify mode. Durable ingestion and revision-aware dispatch are retained. See [Apify deployment](docs/APIFY_DEPLOYMENT.md) for the Actor contract, database setup, smoke test, and operational recovery procedure.
 
-Architecture history: implemented a Redis/BullMQ distributed processing pipeline with retries, revision-aware deduplication, and worker concurrency; later prepared the production background path to migrate to on-demand Apify Actors while retaining the BullMQ implementation. No traffic, latency, or cost metrics are claimed.
+Architecture history: the system first implemented Redis/BullMQ distributed processing with retries, revision-aware deduplication, and worker concurrency, then added the on-demand Apify production path while retaining BullMQ as an alternative. No traffic, latency, or cost metrics are claimed.
 
 ## Repository layout
 
@@ -82,7 +82,7 @@ Intercom-app/
 | Data             | PostgreSQL, Drizzle ORM, pgvector, trigram search      |
 | Async processing | On-demand Apify Actors, optional BullMQ/Redis, inline fallback |
 | Integrations     | Intercom, Gemini, Box and optional inbound email       |
-| Quality          | Jest, Supertest, ESLint, TypeScript and GitHub Actions |
+| Quality          | Jest, Supertest, Vitest, React Testing Library, ESLint, TypeScript and GitHub Actions |
 
 ## Security and reliability
 
@@ -107,6 +107,7 @@ cp .env.example .env
 docker compose up -d
 npm ci
 npm run db:push
+npm run db:migrate
 npm run dev
 ```
 
@@ -128,11 +129,13 @@ cd Intercom-app/backend
 npm run lint
 npm run typecheck
 npm test
+npm run test:coverage
 npm run build
 
 cd ../web
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 

@@ -1,6 +1,6 @@
 # Engineering readiness audit
 
-Inspection date: 2026-09-02  
+Inspection date: 2026-09-18
 Branch: `portfolio-hardening`
 
 This audit distinguishes repository evidence, synthetic demonstration evidence, and unmeasured production outcomes.
@@ -19,7 +19,7 @@ It is appropriate to claim the concrete patterns listed below. It is not appropr
 | Dashboard | Overview, cases, directory, operations, evaluation, architecture | Recruiter viewer is read-only |
 | Ingestion | Intercom adapter and generic demo/email ingestion | Source-separated, shared intelligence pipeline |
 | Persistence | PostgreSQL/Drizzle with schema migrations and targeted indexes | Implemented |
-| Async execution | BullMQ workers or explicit inline demo mode | Implemented; worker mode is the durable mode |
+| Async execution | Private on-demand Apify Actors in production; BullMQ/Redis alternative; inline local/demo fallback | Implemented; PostgreSQL records durable intake and Actor runs |
 | AI | Gemini structured extraction/classification with fixture evaluation kept separate | Implemented; live quality not benchmarked |
 | Observability | Structured logs, request/correlation IDs, health/readiness, operational counters | Implemented |
 | Delivery | Docker and GitHub Actions lint/typecheck/test/build | Implemented |
@@ -30,19 +30,21 @@ It is appropriate to claim the concrete patterns listed below. It is not appropr
 - Unique `(source, external_event_id)` durable idempotency.
 - Duplicate delivery increments evidence without creating a second logical event.
 - A crash-interrupted Intercom event in `received` or `failed` state can resume; queued/completed duplicates are skipped.
-- Revision-aware BullMQ IDs distinguish later replies from an older active job.
-- Processor exceptions propagate to BullMQ, enabling configured retry/backoff.
+- Revision-aware job keys distinguish later revisions from older active work in BullMQ mode; Apify uses durable revision-aware run records.
+- Processor exceptions propagate to BullMQ in worker mode; Apify failures use persisted safe classifications and bounded recovery.
 - Stale revisions cannot persist over newer snapshots or write back outdated intelligence.
 - Generic ingestion commits event, conversation, messages, and outbox record atomically.
 - Operator-confirmed fields take precedence until explicit re-analysis.
 - Intercom note and tag write-back failures are isolated.
+- Deferred peer refresh is a non-fatal secondary effect after successful primary processing.
 - Public demo limits use atomic SQL increments rather than race-prone read/then-write checks.
 
 ## Security controls verified in code
 
 - Viewer/admin role validation and route authorization.
 - HS256 JWT verification with issuer/audience and distinct production secrets.
-- HttpOnly refresh cookie, production-disabled registration, login throttling, and general endpoint rate limits.
+- HttpOnly refresh cookie backed by hashed, expiring, rotating refresh sessions with replay rejection and logout revocation.
+- Production-disabled registration, login throttling, and general endpoint rate limits.
 - Helmet, CORS allowlist, request-size limits, mutation schemas, generic production errors, and bounded request IDs.
 - Server-only provider/database/secrets; dashboard demos are short-lived server-issued sessions and Intercom access is restricted to personal synthetic-workspace invitations.
 - Payload hashing, secret-safe logging rules, and disabled public attachments.
@@ -60,7 +62,7 @@ Indexes now cover:
 - case-insensitive employee email;
 - trigram employee canonical-name and alias search.
 
-The migration scripts must be run in each deployed database. An index existing in source is not proof that production has applied it.
+The ordered migration scripts must be run in each deployed database. An index or refresh-session table in source is not proof that production has applied it. Use `npm run db:migrate` after reviewing the selected migration database URL.
 
 ## Recruiter experience
 
@@ -77,17 +79,16 @@ Both surfaces include an optional YouTube/Vimeo/Loom embed URL for a subtitled g
 ## Remaining limitations
 
 - Single-tenant, environment-scoped workspace design.
-- No refresh-token rotation/revocation store.
-- Access token in session storage; CSP/XSS defense remains important.
+- Access token remains in session storage; CSP/XSS defense remains important. Moving it to an HttpOnly access cookie would require a broader frontend/auth and CSRF review.
 - CSRF helper is not universal; Bearer access tokens are the primary mutation authorization.
 - The Intercom ingestion path uses durable event state and deterministic jobs, while generic ingestion uses the explicit transactional outbox.
-- Inline mode is convenient for demonstrations but is not equivalent to worker-mode crash recovery.
+- Inline mode is convenient for demonstrations but is not equivalent to Apify/BullMQ crash recovery.
 - Known `xlsx` advisories remain; prefer CSV and trusted admin-only imports.
 - Related-case and live Gemini quality require a larger labelled evaluation before publishing accuracy.
 - No measured production throughput, end-to-end latency, time savings, or failure-rate reduction.
 
 ## Final claim decision
 
-Safe: signed webhooks, PostgreSQL idempotency, transactional outbox ingestion, revision-aware BullMQ jobs, retries/backoff, stale-write protection, role-based security, atomic quotas, indexed matching/history lookups, automated CI, and a live synthetic Intercom demonstration.
+Safe: signed webhooks, PostgreSQL idempotency, transactional outbox ingestion, revision-aware Apify runs and BullMQ jobs, retries/recovery, stale-write protection, rotating hashed refresh sessions, role-based security, atomic quotas, indexed matching/history lookups, automated CI, and a synthetic Intercom demonstration.
 
 Unsafe until measured: production accuracy, p95 end-to-end latency, throughput, customer impact, percentage failure reduction, or vulnerability-free status.

@@ -36,6 +36,8 @@
     "db:migrate-intercom-sync": "tsx scripts/apply-intercom-sync-schema-migration.ts",
     "db:migrate-intercom-source-revision": "tsx scripts/apply-intercom-source-revision-schema-migration.ts",
     "db:migrate-apify-actor-runs": "tsx scripts/apply-apify-actor-runs-schema-migration.ts",
+    "db:migrate-refresh-sessions": "tsx scripts/apply-refresh-sessions-schema-migration.ts",
+    "db:migrate": "tsx scripts/run-ordered-migrations.ts",
     "db:migrate-recruiter-access": "tsx scripts/apply-recruiter-access-schema-migration.ts",
     "db:seed-portfolio": "tsx scripts/seed-portfolio.ts",
     "db:seed-admin": "tsx scripts/seed-admin.ts",

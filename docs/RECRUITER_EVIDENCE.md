@@ -23,7 +23,7 @@ The workspace owner has manually exercised the Intercom integration. This is dem
 - Raw-body HMAC verification and workspace validation for Intercom webhook and Canvas traffic.
 - Durable notification idempotency through a PostgreSQL unique key.
 - Recovery of an event recorded before an interrupted enqueue.
-- Revision-aware deterministic BullMQ job IDs so a later reply is not hidden by an active older job.
+- Revision-aware deduplication in the on-demand Apify path and deterministic BullMQ job IDs in the supported alternative, so a later reply is not hidden by older active work.
 - Configurable retries/backoff, failure propagation, and stale-snapshot/write-back protection.
 - Transactional generic ingestion: inbound event, conversation, messages, and outbox event commit together.
 - Identity matching through exact email/name, aliases, first/last/full-name evidence, and bounded fuzzy matching with manual review.
@@ -31,7 +31,7 @@ The workspace owner has manually exercised the Intercom integration. This is dem
 - Human corrections that survive later analysis until an explicit re-analysis.
 - JWT algorithm/issuer/audience checks, viewer/admin authorization, login throttling, CORS/Helmet, input validation, safe request IDs, and atomic demo quotas.
 - Targeted PostgreSQL indexes for message, identity, outbox, event, email, and fuzzy-name access paths.
-- Automated backend unit/integration/E2E tests and frontend lint/typecheck/build in GitHub Actions.
+- Automated backend unit/integration/E2E tests and frontend lint/typecheck/test/build in GitHub Actions. In the 2026-09-18 validation run, 107 backend suites (647 tests) and 7 frontend tests passed. There is no browser-level E2E suite; end-to-end request flows are covered by backend integration tests.
 
 ## Defensible CV bullets
 
@@ -42,7 +42,7 @@ Use these without inventing business numbers:
 - Hardened a role-based TypeScript/Node.js platform with JWT verification, login throttling, schema validation, atomic demo quotas, structured request tracing, and optimized PostgreSQL lookup indexes.
 - Delivered a recruiter-ready Next.js operations dashboard and synthetic Intercom walkthrough with restricted viewer access, explicit loading/error states, case exploration, directory views, and measured test/evaluation evidence.
 
-Only add exact test counts, accuracy, latency, or throughput after copying the latest successful command output and labeling its environment.
+The test counts above are a dated validation snapshot. Only add updated exact test counts, accuracy, latency, or throughput after copying the latest successful command output and labeling its environment.
 
 ## Do not claim
 

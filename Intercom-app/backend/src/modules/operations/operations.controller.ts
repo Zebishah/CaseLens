@@ -10,6 +10,7 @@ import { ingestionRepository } from '../ingestion/ingestion.repository.js';
 import { ingestionService } from '../ingestion/ingestion.service.js';
 import { processCaseIntelligence } from '../intelligence/process-case-intelligence.js';
 import { syncIntercomIntelligence } from '../intercom/intercom.sync.service.js';
+import { intelligenceActorRunRepository } from '../ingestion/intelligence-actor-run.repository.js';
 
 const queue = () =>
   new Queue('intercom-intelligence-queue', { connection: getBullMqConnection() });
@@ -30,6 +31,32 @@ const safeJob = (job: {
 });
 
 export const operationsController = {
+  async reviewerSummary(_req: Request, res: Response): Promise<void> {
+    const [pendingOutbox, actorRuns] = await Promise.all([
+      ingestionRepository.countPendingOutbox(),
+      env.JOB_PROCESSING_MODE === 'apify'
+        ? intelligenceActorRunRepository.operationalSummary(env.APIFY_MAX_ATTEMPTS)
+        : Promise.resolve(null)
+    ]);
+
+    sendSuccess(res, {
+      jobProcessingMode: env.JOB_PROCESSING_MODE,
+      actorRuns: actorRuns
+        ? {
+            queued: actorRuns.queued,
+            running: actorRuns.running,
+            completed: actorRuns.completed,
+            failed: actorRuns.failed,
+            retryableFailures: actorRuns.retryableFailures,
+            latestFailureCode: actorRuns.latestFailureCode,
+            recentRunDurationMs: actorRuns.recentRunDurationMs
+          }
+        : null,
+      pendingOutbox,
+      recoveryStatus: pendingOutbox === 0 ? 'clear' : 'pending'
+    });
+  },
+
   async summary(_req: Request, res: Response): Promise<void> {
     const [duplicateEventsPrevented, pendingOutbox, lastIntercomEvent, intercomSync] = await Promise.all([
       ingestionRepository.countDuplicatesPrevented(),

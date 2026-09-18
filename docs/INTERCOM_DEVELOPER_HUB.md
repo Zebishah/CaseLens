@@ -19,15 +19,16 @@ Optional aliases (existing deployments): `INTERCOM_WEBHOOK_SECRET` → client se
 
 Never put these in `NEXT_PUBLIC_*`, frontend `.env`, or health responses.
 
-## Web service vs worker (Render)
+## Render API and background processing
 
-Web service (`RUN_API=true`):
+Render API (`RUN_API=true`):
 
 - `INTERCOM_ENABLED`, token, client secret, workspace id, admin id
-- `JOB_PROCESSING_MODE=inline` is allowed for portfolio; Intercom webhooks still persist first and process asynchronously
-- For production Intercom load: `JOB_PROCESSING_MODE=bullmq`, `REDIS_URL`, and a worker with `RUN_WORKERS=true`
+- Production background work uses `JOB_PROCESSING_MODE=apify`, `RUN_WORKERS=false`, and a private on-demand HR Actor. The API persists intake and dispatch metadata in PostgreSQL before acknowledging the webhook.
+- `JOB_PROCESSING_MODE=bullmq` with `REDIS_URL` and `RUN_WORKERS=true` remains a supported alternative deployment.
+- `JOB_PROCESSING_MODE=inline` is for local, fallback and demo execution.
 
-Worker service:
+Optional BullMQ worker service:
 
 - Same `DATABASE_URL`, `REDIS_URL`, Intercom token/admin id (write-back), `GEMINI_API_KEY` if `LLM_MODE=live`
 - Does not need the webhook secret unless it also serves the API
@@ -120,7 +121,7 @@ Commands (do not run with production customer data):
 1. `cd Intercom-app/backend && npm run db:migrate-intercom-sync && npm run db:migrate-intercom-source-revision` (or `npm run db:push` on a fresh database)
 2. PostgreSQL via `docker compose up -d` in `Intercom-app/backend`; Redis only if `JOB_PROCESSING_MODE=bullmq`
 3. `npm run dev` (API, default `http://localhost:3002`)
-4. Worker: same repo with `RUN_WORKERS=true` when using BullMQ (or a second process)
+4. BullMQ alternative only: same repo with `RUN_WORKERS=true` (or a second process). Production Apify mode dispatches private Actors on demand.
 5. `cd Intercom-app/web && npm run dev` (`http://localhost:3001`)
 6. `cd Intercom-app/backend && npm run intercom:smoke`
 7. HTTPS tunnel to port 3002 (tool of your choice)
@@ -139,4 +140,3 @@ Commands (do not run with production customer data):
 20. Same local case, new `intelligenceVersion`; Canvas shows latest
 
 If step 11’s Hub page is blank, stop and record an external blocker. Do not mark live Canvas verified.
-

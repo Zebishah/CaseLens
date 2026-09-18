@@ -39,6 +39,21 @@ type Overview = {
   recentCases?: RecentCase[];
 };
 
+type ReviewerOperations = {
+  jobProcessingMode: string;
+  actorRuns: {
+    queued: number;
+    running: number;
+    completed: number;
+    failed: number;
+    retryableFailures: number;
+    latestFailureCode: string | null;
+    recentRunDurationMs: number | null;
+  } | null;
+  pendingOutbox: number;
+  recoveryStatus: 'clear' | 'pending';
+};
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const percent = (part: number, total: number): string => {
@@ -58,6 +73,7 @@ const mentionBars: Array<{ key: string; label: string; color: string }> = [
 
 export default function OverviewPage() {
   const [data, setData] = useState<Overview | null>(null);
+  const [operations, setOperations] = useState<ReviewerOperations | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sleeping, setSleeping] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -75,7 +91,12 @@ export default function OverviewPage() {
         }
 
         setSleeping(false);
-        setData(await api.get<Overview>('/api/cases/overview'));
+        const [overview, operationalSummary] = await Promise.all([
+          api.get<Overview>('/api/cases/overview'),
+          api.get<ReviewerOperations>('/api/operations/reviewer-summary')
+        ]);
+        setData(overview);
+        setOperations(operationalSummary);
         break;
       } catch (err) {
         if (err instanceof ApiError && err.sleeping) {
@@ -139,6 +160,28 @@ export default function OverviewPage() {
 
       {data ? (
         <div className="space-y-6">
+          {operations ? (
+            <section className="dash-panel" aria-labelledby="runtime-summary-title">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="dashboard-section-label">Read-only runtime evidence</p>
+                  <h2 id="runtime-summary-title" className="mt-1 text-lg font-semibold text-primary">Background processing summary</h2>
+                  <p className="mt-1 text-sm text-muted">Aggregate Actor run and recovery state from PostgreSQL. No provider payloads or identifiers are shown.</p>
+                </div>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900">{operations.jobProcessingMode} mode</span>
+              </div>
+              {operations.actorRuns ? <dl className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <OperationalMetric label="Actor runs queued" value={operations.actorRuns.queued} />
+                <OperationalMetric label="Actor runs running" value={operations.actorRuns.running} />
+                <OperationalMetric label="Actor runs completed" value={operations.actorRuns.completed} />
+                <OperationalMetric label="Actor runs failed" value={operations.actorRuns.failed} />
+                <OperationalMetric label="Retryable failures" value={operations.actorRuns.retryableFailures} />
+                <OperationalMetric label="Latest failure code" value={operations.actorRuns.latestFailureCode ?? 'None'} />
+                <OperationalMetric label="Recent run duration" value={operations.actorRuns.recentRunDurationMs == null ? '—' : `${operations.actorRuns.recentRunDurationMs} ms`} />
+                <OperationalMetric label="Outbox recovery" value={operations.recoveryStatus === 'clear' ? 'Clear' : `${operations.pendingOutbox} pending`} />
+              </dl> : <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-muted">Actor run counts are recorded when Apify mode is active. This deployment is using {operations.jobProcessingMode} mode.</p>}
+            </section>
+          ) : null}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted">
               Last Intercom webhook:{' '}
@@ -352,6 +395,10 @@ export default function OverviewPage() {
       ) : null}
     </AppShell>
   );
+}
+
+function OperationalMetric({ label, value }: { label: string; value: string | number }) {
+  return <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"><dt className="text-xs font-medium text-slate-500">{label}</dt><dd className="mt-1 text-sm font-semibold text-slate-900">{value}</dd></div>;
 }
 
 function AttentionItem({ label, value, copy, tone }: { label: string; value: number; copy: string; tone: 'warning' | 'success' }) {

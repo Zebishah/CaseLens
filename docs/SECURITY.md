@@ -10,7 +10,7 @@
 - Older intelligence revisions cannot overwrite newer snapshots or write stale results back to Intercom.
 - Private API routes require verified JWTs and explicit viewer/admin authorization. JWTs are restricted to HS256 with configured issuer and audience.
 - Production startup requires distinct access/refresh secrets of at least 32 characters.
-- Refresh tokens use an HttpOnly cookie. Login has a separate failure-oriented rate limit.
+- Refresh tokens use an HttpOnly cookie backed by hashed persistent sessions. Refresh atomically rotates the token, rejects replay, and logout revokes the current session. Login has a separate failure-oriented rate limit.
 - Helmet, strict CORS, bounded bodies, schema validation, production-safe errors, and validated request/correlation IDs are enabled.
 - Public demo tokens are stored as hashes, expire, and use atomic database quota increments.
 - Open registration is disabled in production. Attachments are disabled for the public demo.
@@ -27,10 +27,14 @@ Backend credentials—including `INTERCOM_ACCESS_TOKEN`, `INTERCOM_CLIENT_SECRET
 ## Residual risks and honest limitations
 
 - The portfolio deployment is single-tenant. Workspace validation is environment-based, not per-row multi-tenant authorization.
-- Refresh-token rotation/revocation is not implemented. The access token is in session storage, so successful same-origin XSS could read it.
+- Access tokens remain in session storage, so successful same-origin XSS could read them. Moving access tokens to HttpOnly cookies needs a broader CSRF and frontend/auth review.
 - The CSRF helper is not wired to every mutation. Bearer JWT is the dashboard's primary authorization; do not claim comprehensive CSRF-token enforcement.
 - Generic ingestion has a transactional outbox. Intercom uses durable event state plus deterministic revision jobs; do not claim every adapter uses the identical outbox path.
 - Inline demo mode intentionally has weaker crash recovery than PostgreSQL + BullMQ worker mode.
 - `xlsx` has known advisories. CSV is preferred for sanitized imports; imports remain admin-only and size-limited. Do not claim vulnerability-free dependencies.
 - A queued Intercom event proves delivery/enqueue state, not successful live Gemini completion.
 - Synthetic/local evaluation is not production AI accuracy or customer impact.
+
+## Dependency advisories
+
+The backend `npm audit` run on 2026-09-18 reported eight advisories: seven moderate across the Apify/Crawlee/`stream-json` runtime chain and the Drizzle Kit/`esbuild` tooling chain, plus one high advisory for `xlsx`. npm did not report an automatic fix for `xlsx`; its suggested changes for the other advisories involve package/version changes that may be breaking. No blanket `npm audit fix` was applied. The spreadsheet import is restricted to the admin path; prefer CSV for sanitized directory imports. Re-run `npm audit` before releases because advisory status changes over time.

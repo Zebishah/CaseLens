@@ -46,7 +46,8 @@ export const authController = {
     sendSession(res, result);
   },
 
-  async logout(_req: Request, res: Response): Promise<void> {
+  async logout(req: Request, res: Response): Promise<void> {
+    await authService.logout(readRefreshCookie(req));
     clearRefreshCookie(res);
     sendSuccess(res, { signedOut: true });
   }

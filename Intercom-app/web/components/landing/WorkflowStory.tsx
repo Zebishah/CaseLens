@@ -74,7 +74,7 @@ export function WorkflowStory() {
 
   return (
     <section id="product" className="relative bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
         <p className="text-sm font-medium tracking-[0.18em] text-secondary">Product story</p>
         <div className="mt-4 grid items-end gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
           <h2 className="max-w-xl text-3xl font-bold tracking-tight text-primary md:text-5xl md:leading-[1.08]">
@@ -88,11 +88,11 @@ export function WorkflowStory() {
 
         <div className="relative mt-12 overflow-hidden rounded-[2.4rem] bg-mist/60 p-5 shadow-lift md:p-8 lg:p-10">
           <div
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/70"
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/50 blur-3xl"
             aria-hidden="true"
           />
           <div
-            className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-secondary/20"
+            className="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-secondary/15 blur-3xl"
             aria-hidden="true"
           />
 

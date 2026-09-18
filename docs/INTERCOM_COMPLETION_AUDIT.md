@@ -1,4 +1,6 @@
-# Intercom integration completion audit
+# Intercom integration completion audit (historical)
+
+> Historical implementation audit. Queue-oriented notes describe the retained BullMQ implementation and should be read alongside the current [architecture](ARCHITECTURE.md), where BullMQ is the supported alternative to on-demand Apify processing.
 
 Inspection date: 2026-09-01  
 Repository source of truth: current tree under `Intercom-app/` (outer git commit `85f289c`; application code is untracked at the outer repo).  

@@ -6,14 +6,14 @@ export function CtaBand() {
   return (
     <section className="relative overflow-hidden bg-primary text-white">
       <div
-        className="pointer-events-none absolute -left-24 top-[-4rem] h-72 w-72 rounded-full bg-secondary/30"
+        className="pointer-events-none absolute -left-24 top-[-4rem] h-72 w-72 rounded-full bg-secondary/20 blur-3xl"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -right-16 bottom-[-5rem] h-80 w-80 rounded-full bg-mist/30"
+        className="pointer-events-none absolute -right-16 bottom-[-5rem] h-80 w-80 rounded-full bg-mist/20 blur-3xl"
         aria-hidden="true"
       />
-      <div className="relative mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
+      <div className="relative mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Guided product review</p>
           <h2 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">See the workflow end to end.</h2>

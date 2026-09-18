@@ -1,6 +1,6 @@
 # HR Intelligence Apify deployment
 
-This repository contains a private, on-demand Apify Actor runtime that reuses the backend's compiled intelligence handlers. The code is ready for a manually validated rollout; Render production must remain on its current mode until the Actor build and safe-conversation smoke test pass.
+The production background architecture uses private, on-demand Apify Actors dispatched by the Render API. Actors reuse the backend's compiled intelligence handlers; PostgreSQL remains the source of truth. Run the safe-conversation smoke test when changing the Actor build or deployment configuration.
 
 ## Actor location and job contract
 
@@ -68,14 +68,14 @@ No Apify variables or secrets belong in the frontend environment.
 
 ## Database migration
 
-Before enabling Apify mode, apply the repository's idempotent migration to the production database:
+Apply the ordered repository migrations to the production database after reviewing the migration database URL:
 
 ```bash
 cd Intercom-app/backend
-npm run db:migrate-apify-actor-runs
+npm run db:migrate
 ```
 
-The migration creates `intelligence_actor_runs`, which stores the safe Actor input, revision/dedupe key, Apify run ID, attempt count, state, and safe error classification. It does not alter or delete existing business data, queues, outbox records, or worker configuration.
+The ordered migration includes `intelligence_actor_runs` and `refresh_sessions`. Actor run rows contain safe input metadata, revision/dedupe key, Apify run ID, attempt count, status, and safe error classification. Refresh sessions store only SHA-256 refresh-token hashes and support atomic rotation, expiry, and revocation. The migrations do not delete business data, queue records, or worker configuration. For an Apify-only repair, `npm run db:migrate-apify-actor-runs` remains available.
 
 ## Rollout and manual smoke test
 
@@ -84,8 +84,8 @@ The migration creates `intelligence_actor_runs`, which stores the safe Actor inp
 3. Configure the Actor environment and secrets listed above. Do not configure Standby.
 4. Build the Actor and confirm the Docker image completes successfully.
 5. Manually run `{"type":"intelligence","conversationId":<safe test ID>,"intercomId":"<test Intercom ID>","skipSync":true,"forceReprocess":false,"skipPeerRefresh":true}` against an approved test/demo conversation. Confirm the Actor output contains only safe metadata and the conversation reaches `READY` in the HR application.
-6. Create a scoped API token with permission to run the HR Actor. Add it to both Render and the Actor as `APIFY_API_TOKEN`.
-7. Apply `db:migrate-apify-actor-runs` to the Render production database.
+6. Create a scoped API token with permission to run the HR Actor. Configure credentials through the platform's secret settings.
+7. Apply `npm run db:migrate` to the selected production database after reviewing the migration URL.
 8. Configure Render with `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`, plus the Apify values. Keep `REDIS_URL` optional and unused in this mode.
 9. Deploy Render and send a verified Intercom webhook. Confirm it is acknowledged promptly and an HR Actor run is created.
 10. Confirm the Actor reads the stored conversation and the case becomes intelligence `READY`. Confirm duplicate webhook delivery does not create another normal run for the same revision.
@@ -106,4 +106,4 @@ Schedule timezone settings should match the intended timezone for `STORE_DIRECTO
 
 ## Architecture history and claim boundary
 
-The repository contains the implemented Redis/BullMQ worker architecture with retries, revision-aware deduplication, and configurable worker concurrency, and now includes an on-demand Apify execution path. After the manual smoke test and Render mode switch, a truthful history statement is: “Implemented a Redis/BullMQ distributed processing pipeline with retries, revision-aware deduplication and worker concurrency; later migrated live background execution to on-demand Apify Actors while retaining the BullMQ implementation.” Until then, describe Apify as the implemented target architecture rather than as an already switched production service. No traffic, latency, or cost metrics are claimed.
+The implementation history is: “Built a Redis/BullMQ worker architecture with retries, revision-aware deduplication and configurable concurrency, then added private on-demand Apify Actors as the production background path while retaining BullMQ as a supported alternative.” Inline remains the local/fallback/demo path. No traffic, latency, accuracy, cost, or customer-impact metrics are claimed.

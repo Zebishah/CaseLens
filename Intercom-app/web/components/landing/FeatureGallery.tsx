@@ -86,7 +86,7 @@ const features = [
 export function FeatureGallery() {
   return (
     <section className="relative bg-paper">
-      <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-28">
+      <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
         <p className="text-sm font-medium tracking-[0.18em] text-secondary">Capabilities</p>
         <h2 className="mt-4 max-w-2xl text-3xl font-bold tracking-tight text-primary md:text-5xl">
           Capabilities already in the product.

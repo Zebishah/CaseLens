@@ -206,6 +206,18 @@ body {
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 78%);
 }
 
+.hero-glow {
+  background: radial-gradient(
+    circle at center,
+    rgb(255 255 255 / 0.86) 0%,
+    rgb(255 255 255 / 0.5) 34%,
+    rgb(255 255 255 / 0.14) 57%,
+    transparent 76%
+  );
+  filter: blur(1.75rem);
+  opacity: 0.58;
+}
+
 .panel {
   background: rgb(var(--surface));
   border: 1px solid rgb(var(--border) / 0.14);

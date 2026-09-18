@@ -22,7 +22,7 @@ The API listens on `http://localhost:3002` by default. Interactive API documenta
 - `JOB_PROCESSING_MODE=bullmq`: dispatches jobs to the retained BullMQ implementation. It requires `REDIS_URL`; workers start only when `RUN_WORKERS=true`.
 - `JOB_PROCESSING_MODE=apify`: persists revision-aware Actor dispatch records and starts the private HR Actor asynchronously. It requires `APIFY_API_TOKEN` and `APIFY_ACTOR_ID`, but does not connect to Redis or start BullMQ workers.
 
-`RUN_API` and `RUN_WORKERS` control which process roles start. The intended Render configuration is `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`. Apply `npm run db:migrate-apify-actor-runs` before switching the backend. Follow [Apify deployment and smoke testing](../../docs/APIFY_DEPLOYMENT.md) before changing production settings.
+`RUN_API` and `RUN_WORKERS` control which process roles start. The production background path is Render API plus private, on-demand Apify Actors (`JOB_PROCESSING_MODE=apify`, `RUN_API=true`, `RUN_WORKERS=false`). BullMQ/Redis is a supported alternative; inline mode is for local, fallback, and demo execution. Follow [Apify deployment and smoke testing](../../docs/APIFY_DEPLOYMENT.md) for Actor setup.
 
 The BullMQ worker architecture remains available and tested as an alternative deployment. Inline mode remains the local/fallback path.
 
@@ -48,7 +48,7 @@ For local schema development:
 npm run db:push
 ```
 
-Deployment-safe SQL migrations and their TypeScript runners are stored in `scripts/`. Run only the migration needed for the target environment and review the selected `DATABASE_URL` first.
+Deployment-safe SQL migrations and their TypeScript runners are stored in `scripts/`. After creating the base schema with `npm run db:push`, use `npm run db:migrate` to apply and record the ordered application migrations. Existing targeted `db:migrate-*` scripts remain available for controlled repair/debugging. Review the selected `DATABASE_MIGRATION_URL` or `DATABASE_URL` before running a migration. Migrations are never applied at application startup.
 
 ## Useful commands
 

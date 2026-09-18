@@ -1,16 +1,18 @@
-# Deployment (Render-compatible)
+# Deployment (Render)
 
 Do not provision paid services from this document. Use existing external PostgreSQL. Redis is required only for `JOB_PROCESSING_MODE=bullmq`.
 
-## Web service
+## Production API service
 
 - Build: `cd Intercom-app/backend && npm run build:render`
-- Start: `NODE_ENV=production RUN_API=true JOB_PROCESSING_MODE=inline node dist/server.js`
-  - Production queue process: `JOB_PROCESSING_MODE=bullmq RUN_WORKERS=true` plus `REDIS_URL`
+- Start: `NODE_ENV=production RUN_API=true JOB_PROCESSING_MODE=apify RUN_WORKERS=false node dist/server.js`
+- Background work: private on-demand Apify Actor runs dispatched by the Render API
+- Supported alternative: `JOB_PROCESSING_MODE=bullmq RUN_WORKERS=true` plus `REDIS_URL`
+- Local/fallback/demo mode: `JOB_PROCESSING_MODE=inline`
 - Health: `GET /health`
 - Readiness: `GET /ready` (PostgreSQL; Redis only when `JOB_PROCESSING_MODE=bullmq`)
 
-Set `JOB_PROCESSING_MODE=inline` for the public HR Intelligence product walkthrough so no BullMQ workers run and Redis is not required.
+PostgreSQL is the source of truth. Redis is not required for Apify or inline mode and is used by the optional BullMQ worker path.
 
 Set `INTERCOM_ENABLED=false` and `BOX_SYNC_ENABLED=false` unless you are connecting the Developer Workspace. Set `LLM_MODE=fixture` for deterministic samples, or `LLM_MODE=live` plus `GEMINI_API_KEY` for arbitrary custom cases.
 
@@ -45,11 +47,13 @@ Apply schema before serving traffic:
 ```bash
 cd Intercom-app/backend
 npm run db:push
-npm run db:migrate-portfolio
-npm run db:migrate-intercom-sync
-npm run db:migrate-intercom-source-revision
+npm run db:migrate
 npm run db:seed-portfolio
 ```
+
+`db:push` creates the base schema for a fresh environment; `db:migrate` applies the ordered, recorded, transactional application migrations. For an existing deployment, inspect the target database and migration history first. Targeted `db:migrate-*` commands remain available for controlled diagnosis or a single migration. Never run migrations automatically during API startup.
+
+After deploying persistent refresh-session validation, users with refresh cookies issued before this migration may need to sign in once more because those older sessions were not stored in the database. Short-lived recruiter demo sessions are unaffected.
 
 ## Render backend settings
 

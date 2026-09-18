@@ -12,6 +12,7 @@ import { workspaceInviteRepository } from './workspace-invite.repository.js';
 import { sendWorkspaceInviteEmail } from './invite-email.service.js';
 import { userRepository } from '../user/user.repository.js';
 import { accessRequestRepository } from '../access-request/access-request.repository.js';
+import { refreshSessionRepository } from './refresh-session.repository.js';
 
 type AuthUser = {
   id: number;
@@ -29,13 +30,38 @@ const publicUser = (user: AuthUser) => ({
 
 const hashInviteToken = (token: string): string => createHash('sha256').update(token).digest('hex');
 
-const createSession = (user: AuthUser) => {
+export const hashRefreshToken = (token: string): string =>
+  createHash('sha256').update(token).digest('hex');
+
+const refreshDurationMs = (value: string): number => {
+  const match = /^([1-9]\d*)(s|m|h|d)$/i.exec(value.trim());
+  if (!match) return 7 * 24 * 60 * 60 * 1000;
+  const unitMs: Record<string, number> = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000
+  };
+  return Number(match[1]) * unitMs[match[2].toLowerCase()];
+};
+
+const buildSession = (user: AuthUser) => {
   const payload = { sub: user.id, email: user.email, role: user.role };
   return {
     token: createAccessToken(payload),
     refreshToken: createRefreshToken(payload),
     user: publicUser(user)
   };
+};
+
+const createSession = async (user: AuthUser) => {
+  const session = buildSession(user);
+  await refreshSessionRepository.create({
+    userId: user.id,
+    tokenHash: hashRefreshToken(session.refreshToken),
+    expiresAt: new Date(Date.now() + refreshDurationMs(env.JWT_REFRESH_EXPIRES_IN))
+  });
+  return session;
 };
 
 export const authService = {
@@ -92,7 +118,27 @@ export const authService = {
       throw AppError.unauthorized('Session expired');
     }
 
-    return createSession(user);
+    const session = buildSession(user);
+    const rotated = await refreshSessionRepository.rotate({
+      userId: user.id,
+      currentTokenHash: hashRefreshToken(refreshToken),
+      tokenHash: hashRefreshToken(session.refreshToken),
+      expiresAt: new Date(Date.now() + refreshDurationMs(env.JWT_REFRESH_EXPIRES_IN))
+    });
+    if (!rotated) {
+      throw AppError.unauthorized('Session expired');
+    }
+    return session;
+  },
+
+  async logout(refreshToken: string | null): Promise<void> {
+    if (refreshToken?.split('.').length === 3) {
+      await refreshSessionRepository.revoke(hashRefreshToken(refreshToken));
+    }
+  },
+
+  async revokeAllSessions(userId: number): Promise<void> {
+    await refreshSessionRepository.revokeAllForUser(userId);
   },
 
   async issueWorkspaceInvite(input: { accessRequestId: number; email: string; name: string }) {

@@ -9,6 +9,12 @@ import { validate } from '../../middlewares/validate.middleware.js';
 
 export const operationsRoutes = Router();
 
+operationsRoutes.get(
+  '/reviewer-summary',
+  authMiddleware,
+  requireRole(ROLES.VIEWER),
+  asyncHandler(operationsController.reviewerSummary)
+);
 operationsRoutes.use(authMiddleware, requireRole(ROLES.ADMIN));
 const conversationIdSchema = z.object({ body: z.unknown().optional(), params: z.object({ conversationId: z.coerce.number().int().positive() }), query: z.object({}) });
 operationsRoutes.get('/queues', asyncHandler(operationsController.summary));
