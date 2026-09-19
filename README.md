@@ -10,7 +10,7 @@ The defensible organizational value is centralized case intelligence, reduced re
 
 [View the HR Intelligence product walkthrough](https://nagumo-hr-intelligence.vercel.app)
 
-![HR Intelligence resolving an employee identity and related cases inside Intercom](Intercom-app/web/public/product-screenshots/sarah-identity-resolution.webp)
+![HR Intelligence resolving an employee identity and related cases inside Intercom](Intercom-app/frontend/public/product-screenshots/sarah-identity-resolution.webp)
 
 ## Platform capabilities
 
@@ -116,7 +116,7 @@ npm run dev
 In another terminal:
 
 ```bash
-cd Intercom-app/web
+cd Intercom-app/frontend
 cp .env.example .env.local
 npm ci
 npm run dev
@@ -134,7 +134,7 @@ npm test
 npm run test:coverage
 npm run build
 
-cd ../web
+cd ../frontend
 npm run lint
 npm run typecheck
 npm test

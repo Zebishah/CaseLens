@@ -32,7 +32,7 @@ npm run eval:run
 npm run bench:local
 npm run intercom:canvas-smoke
 
-cd ../web
+cd ../frontend
 npm ci
 npm run lint
 npx tsc --noEmit

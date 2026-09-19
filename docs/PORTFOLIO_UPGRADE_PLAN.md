@@ -256,7 +256,7 @@ Vector vs keyword comparison is **out of scope** until a controlled run exists. 
 
 ## Frontend architecture
 
-`Intercom-app/web` — Next.js (App Router) + TypeScript + Tailwind. Talks to the backend via `NEXT_PUBLIC_API_URL` only. Server secrets never in `NEXT_PUBLIC_*`. Pages: overview, cases, case detail, try-demo, directory, operations, evaluation, architecture. Wake Demo polls `/ready` with bounded backoff and copy “Starting demo service” (not an application error).
+`Intercom-app/frontend` — Next.js (App Router) + TypeScript + Tailwind. Talks to the backend via `NEXT_PUBLIC_API_URL` only. Server secrets never in `NEXT_PUBLIC_*`. Pages: overview, cases, case detail, try-demo, directory, operations, evaluation, architecture. Wake Demo polls `/ready` with bounded backoff and copy “Starting demo service” (not an application error).
 
 ---
 

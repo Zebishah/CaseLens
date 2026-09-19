@@ -67,7 +67,7 @@ After deploying persistent refresh-session validation, users with refresh cookie
 
 Use `Intercom-app/backend` as the service **Root Directory**. Use `npm run build:render` as the **Build Command** and `npm start` as the **Start Command**. The Render build script uses `npm install --include=dev` so deployment remains resilient if Render invokes the command from a workspace where npm does not discover the nested lockfile; the tracked lockfile remains available for normal local and CI installs.
 
-Frontend: deploy `Intercom-app/web` with `NEXT_PUBLIC_API_URL` pointing at the API origin. The backend allowlist includes the current portfolio origins (`https://nagumo-hr-intelligence.vercel.app` and `https://hr-intercom.onrender.com`) plus `RENDER_EXTERNAL_URL` for same-service Render deployments. For another frontend domain, add its exact origin to `CORS_ORIGINS` with no trailing slash.
+Frontend: deploy `Intercom-app/frontend` with `NEXT_PUBLIC_API_URL` pointing at the API origin. The backend allowlist includes the current portfolio origins (`https://nagumo-hr-intelligence.vercel.app` and `https://hr-intercom.onrender.com`) plus `RENDER_EXTERNAL_URL` for same-service Render deployments. For another frontend domain, add its exact origin to `CORS_ORIGINS` with no trailing slash.
 
 ## Cold start
 

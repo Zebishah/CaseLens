@@ -8,7 +8,7 @@ updates:
     labels:
       - dependencies
   - package-ecosystem: npm
-    directory: /Intercom-app/web
+    directory: /Intercom-app/frontend
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
