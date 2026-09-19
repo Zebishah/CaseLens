@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, EmptyState, MetricCard, PageSkeleton, TextButton } from '../../components/dashboard/ui';
 import { api } from '../../lib/api';
+import { isDemoRecruiter } from '../../lib/auth-token';
 
 type QueueCounts = Record<string, number>;
 type DeadLetterJob = { id?: string; attempts: number; safeError: string | null; conversationId: number | null; correlationId: string | null };
@@ -17,7 +18,98 @@ type Operations = {
   intercom?: { enabled: boolean; connected: boolean; workspace?: string | null; lastWebhookAt: string | null; lastWebhookTopic: string | null; lastSuccessfulWritebackAt: string | null; writebackFailures: number; writebacksSynced: number };
 };
 
+type ReviewerOperations = {
+  jobProcessingMode: string;
+  actorRuns: {
+    queued: number;
+    running: number;
+    completed: number;
+    failed: number;
+    retryableFailures: number;
+    latestFailureCode: string | null;
+    recentRunDurationMs: number | null;
+  } | null;
+  pendingOutbox: number;
+  recoveryStatus: 'clear' | 'pending';
+};
+
 export default function OperationsPage() {
+  const [mode, setMode] = useState<'checking' | 'demo' | 'standard'>('checking');
+
+  useEffect(() => {
+    setMode(isDemoRecruiter() ? 'demo' : 'standard');
+  }, []);
+
+  if (mode === 'checking') {
+    return <div className="theme-light min-h-screen bg-paper" aria-busy="true" />;
+  }
+
+  return mode === 'demo' ? <RecruiterOperationsPage /> : <AdminOperationsPage />;
+}
+
+function RecruiterOperationsPage() {
+  const [data, setData] = useState<ReviewerOperations | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setError(null);
+    try {
+      setData(await api.get<ReviewerOperations>('/api/operations/reviewer-summary'));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load operational summary');
+    }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const actorRuns = data?.actorRuns;
+  return (
+    <AppShell title="Operational health" description="Review aggregate ingestion and background-processing health from the synthetic workspace. Recovery, replay, and write-back controls are reserved for administrators.">
+      <div className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950" role="status">
+        <span className="h-2 w-2 rounded-full bg-success" aria-hidden="true" />
+        <span><strong className="font-semibold">Recruiter demo · Read-only.</strong> This view shows safe operational summaries without maintenance actions.</span>
+      </div>
+      {error ? <AlertBanner tone="danger" title="Could not load operational health" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
+      {!data && !error ? <PageSkeleton variant="overview" /> : null}
+      {data ? (
+        <div className="space-y-5">
+          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift md:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="dashboard-section-label text-emerald-300">Read-only runtime evidence</p>
+                <h2 className="mt-2 text-xl font-semibold text-white">Background processing summary</h2>
+                <p className="mt-1 text-sm text-slate-400">Aggregate run and recovery state from PostgreSQL. No provider payloads or identifiers are shown.</p>
+              </div>
+              <span className="rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">{data.jobProcessingMode} mode</span>
+            </div>
+          </section>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Actor runs queued" value={actorRuns?.queued ?? 0} hint="Awaiting background execution" icon="activity" />
+            <MetricCard label="Actor runs running" value={actorRuns?.running ?? 0} hint="Currently processing" icon="activity" />
+            <MetricCard label="Actor runs completed" value={actorRuns?.completed ?? 0} hint="Completed safely" icon="review" tone="success" />
+            <MetricCard label="Actor runs failed" value={actorRuns?.failed ?? 0} hint="Visible for operator review" icon="shield" tone={actorRuns?.failed ? 'warning' : 'default'} />
+            <MetricCard label="Retryable failures" value={actorRuns?.retryableFailures ?? 0} hint="Bounded recovery candidates" icon="activity" tone={actorRuns?.retryableFailures ? 'warning' : 'default'} />
+            <MetricCard label="Pending outbox" value={data.pendingOutbox} hint="Durable dispatch intent" icon="cases" tone={data.pendingOutbox ? 'warning' : 'default'} />
+            <MetricCard label="Recovery status" value={data.recoveryStatus === 'clear' ? 'Clear' : 'Pending'} hint="Safe aggregate readiness" icon="shield" tone={data.recoveryStatus === 'clear' ? 'success' : 'warning'} />
+            <MetricCard label="Latest failure" value={actorRuns?.latestFailureCode ?? 'None'} hint="Safe failure classification" icon="activity" />
+          </div>
+
+          <section className="dash-panel">
+            <h2 className="text-base font-semibold text-primary">What recruiters can inspect</h2>
+            <ul className="mt-4 grid gap-3 text-sm leading-6 text-muted sm:grid-cols-3">
+              <li className="rounded-xl bg-paper p-4">Whether background work is queued, running, complete, or failed.</li>
+              <li className="rounded-xl bg-paper p-4">Whether durable outbox work is clear or waiting for recovery.</li>
+              <li className="rounded-xl bg-paper p-4">Safe failure categories without replay or write-back controls.</li>
+            </ul>
+          </section>
+        </div>
+      ) : null}
+    </AppShell>
+  );
+}
+
+function AdminOperationsPage() {
   const [data, setData] = useState<Operations | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [replayId, setReplayId] = useState('');

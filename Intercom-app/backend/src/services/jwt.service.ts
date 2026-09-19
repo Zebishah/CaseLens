@@ -6,6 +6,7 @@ export type AppJwtPayload = {
   sub: number;
   email: string;
   role: string;
+  demo?: boolean;
 };
 
 type TokenType = 'access' | 'refresh';
@@ -47,7 +48,8 @@ const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayl
   return {
     sub: Number(payload.sub),
     email: String(payload.email),
-    role: String(payload.role)
+    role: String(payload.role),
+    ...(payload.demo === true ? { demo: true } : {})
   };
 };
 

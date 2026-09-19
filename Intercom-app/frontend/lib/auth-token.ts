@@ -1,5 +1,6 @@
 const ADMIN_TOKEN_KEY = 'adminToken';
 const ADMIN_USER_KEY = 'adminUser';
+const DEMO_MODE_KEY = 'demoMode';
 export const AUTH_STATE_EVENT = 'caseops:auth-state';
 
 export type AdminUser = {
@@ -30,6 +31,19 @@ export const getAdminUser = (): AdminUser | null => {
     sessionStorage.removeItem(ADMIN_USER_KEY);
     return null;
   }
+};
+
+export const isDemoRecruiter = (): boolean =>
+  typeof window !== 'undefined' && sessionStorage.getItem(DEMO_MODE_KEY) === 'recruiter';
+
+export const setDemoRecruiter = (): void => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(DEMO_MODE_KEY, 'recruiter');
+};
+
+export const clearDemoRecruiter = (): void => {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(DEMO_MODE_KEY);
 };
 
 const notify = (): void => {
@@ -69,5 +83,6 @@ export const clearAdminToken = (): void => {
   }
   sessionStorage.removeItem(ADMIN_TOKEN_KEY);
   sessionStorage.removeItem(ADMIN_USER_KEY);
+  clearDemoRecruiter();
   notify();
 };

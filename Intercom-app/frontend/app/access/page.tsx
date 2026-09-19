@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { ApiError, api } from '../../lib/api';
-import { getAdminToken, getAdminUser, isAccessTokenUsable } from '../../lib/auth-token';
 
 type FormState = {
   fullName: string;
@@ -27,11 +26,19 @@ const initialForm: FormState = {
 };
 
 export default function AccessRequestPage() {
-  const [authenticated, setAuthenticated] = useState(() => isAccessTokenUsable(getAdminToken()) && Boolean(getAdminUser()));
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    api.restoreSession().then((session) => setAuthenticated(Boolean(session))).catch(() => setAuthenticated(false));
+    api.restoreSession()
+      .then((session) => setAuthenticated(Boolean(session)))
+      .catch(() => setAuthenticated(false))
+      .finally(() => setChecking(false));
   }, []);
+
+  if (checking) {
+    return <div className="theme-light min-h-screen bg-paper" aria-busy="true" />;
+  }
 
   if (authenticated) {
     return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized HR Intelligence workspace. Intercom access is approved separately."><AccessRequestForm embedded /></AppShell>;

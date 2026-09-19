@@ -18,6 +18,13 @@ describe('JWT service', () => {
     expect(verifyRefreshToken(token)).toEqual(payload);
   });
 
+  test('preserves the explicit recruiter demo marker', () => {
+    const demoPayload = { ...payload, role: 'viewer', demo: true };
+    const token = generateToken(demoPayload);
+
+    expect(verifyToken(token)).toEqual(demoPayload);
+  });
+
   test('does not accept a refresh token as an access token', () => {
     expect(() => verifyToken(generateRefreshToken(payload))).toThrow();
   });

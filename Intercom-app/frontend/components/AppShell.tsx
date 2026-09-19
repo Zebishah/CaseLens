@@ -8,6 +8,7 @@ import { DashboardHero, type DashboardIconName } from './dashboard/ui';
 import {
   AUTH_STATE_EVENT,
   getAdminUser,
+  isDemoRecruiter,
   type AdminUser
 } from '../lib/auth-token';
 
@@ -15,9 +16,15 @@ type IconName = 'overview' | 'cases' | 'directory' | 'operations' | 'quality' | 
 
 type NavGroup = {
   label: string;
-  adminOnly?: boolean;
-  viewerOnly?: boolean;
-  items: Array<{ href: string; label: string; hint: string; icon: IconName }>;
+  items: Array<{
+    href: string;
+    label: string;
+    hint: string;
+    icon: IconName;
+    adminOnly?: boolean;
+    demoOnly?: boolean;
+    hideForDemo?: boolean;
+  }>;
 };
 
 const navGroups: NavGroup[] = [
@@ -31,11 +38,10 @@ const navGroups: NavGroup[] = [
   },
   {
     label: 'Reliability',
-    adminOnly: true,
     items: [
-      { href: '/operations', label: 'Operational health', hint: 'Ingestion and processing', icon: 'operations' },
-      { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality' },
-      { href: '/access-requests', label: 'Access management', hint: 'Reviewer invitations', icon: 'access' }
+      { href: '/operations', label: 'Operational health', hint: 'Ingestion and processing', icon: 'operations', demoOnly: true },
+      { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality', demoOnly: true },
+      { href: '/access-requests', label: 'Access management', hint: 'Reviewer invitations', icon: 'access', adminOnly: true }
     ]
   },
   {
@@ -48,7 +54,7 @@ const navGroups: NavGroup[] = [
     label: 'Product tour & access',
     items: [
       { href: '/demo', label: 'Product walkthrough', hint: 'Video and guided tour', icon: 'demo' },
-      { href: '/access', label: 'Reviewer access', hint: 'Controlled workspace invitation', icon: 'access' }
+      { href: '/access', label: 'Reviewer access', hint: 'Controlled workspace invitation', icon: 'access', hideForDemo: true }
     ]
   }
 ];
@@ -96,6 +102,7 @@ export function AppShell({
   const router = useRouter();
   const [status, setStatus] = useState<'checking' | 'ready' | 'unavailable'>('checking');
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [demoMode, setDemoMode] = useState(false);
   const [open, setOpen] = useState(false);
 
   const restore = useCallback(async () => {
@@ -107,6 +114,7 @@ export function AppShell({
         return;
       }
       setUser(session.user);
+      setDemoMode(isDemoRecruiter());
       setStatus('ready');
     } catch (error) {
       if (error instanceof ApiError && error.sleeping) {
@@ -122,7 +130,10 @@ export function AppShell({
   }, [restore]);
 
   useEffect(() => {
-    const syncUser = () => setUser(getAdminUser());
+    const syncUser = () => {
+      setUser(getAdminUser());
+      setDemoMode(isDemoRecruiter());
+    };
     window.addEventListener(AUTH_STATE_EVENT, syncUser);
     return () => window.removeEventListener(AUTH_STATE_EVENT, syncUser);
   }, []);
@@ -137,14 +148,25 @@ export function AppShell({
   };
 
   const isAdmin = user?.role === 'admin';
-  const visibleNavGroups = navGroups.filter(
-    (group) => (isAdmin || !group.adminOnly) && (!group.viewerOnly || !isAdmin)
-  );
+  const isDemoRecruiterMode = demoMode && !isAdmin;
+  const visibleNavGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        (!item.adminOnly || isAdmin) &&
+        (!item.demoOnly || isDemoRecruiterMode || isAdmin) &&
+        (!item.hideForDemo || !isDemoRecruiterMode)
+      )
+    }))
+    .filter((group) => group.items.length > 0);
   const intercomWorkspaceUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
   const restrictedPath =
-    !isAdmin && ['/operations', '/evaluation', '/access-requests'].some(
+    ((!isAdmin && !isDemoRecruiterMode) && ['/operations', '/evaluation', '/access-requests'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
-    );
+    )) ||
+    (isDemoRecruiterMode && ['/access', '/access-requests'].some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`)
+    ));
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
   const hero = pathname.startsWith('/cases/') ? null : heroByPath[pathname] ?? null;
 
@@ -266,7 +288,7 @@ export function AppShell({
               <div className="flex items-center gap-3">
                 <span className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 sm:flex">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  {isAdmin ? 'Admin workspace' : 'Read-only reviewer workspace'}
+                  {isAdmin ? 'Admin workspace' : isDemoRecruiterMode ? 'Recruiter demo · Read-only' : 'Read-only reviewer workspace'}
                 </span>
                 <button
                   type="button"

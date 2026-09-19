@@ -1,8 +1,10 @@
 import {
   clearAdminToken,
+  clearDemoRecruiter,
   getAdminToken,
   getAdminUser,
   isAccessTokenUsable,
+  setDemoRecruiter,
   setAdminToken,
   type AdminUser
 } from './auth-token';
@@ -109,6 +111,7 @@ const refreshSession = (): Promise<AuthSession | null> => {
     }
 
     const session = await parse<AuthSession>(response);
+    clearDemoRecruiter();
     setAdminToken(session.token, session.user);
     return session;
   })().finally(() => {
@@ -172,6 +175,7 @@ export const api = {
       body: JSON.stringify({ email, password })
     });
     const session = await parse<AuthSession>(response);
+    clearDemoRecruiter();
     setAdminToken(session.token, session.user);
     return session;
   },
@@ -189,6 +193,7 @@ export const api = {
       body: JSON.stringify({ token, password })
     });
     const session = await parse<AuthSession>(response);
+    clearDemoRecruiter();
     setAdminToken(session.token, session.user);
     return session;
   },
@@ -202,6 +207,7 @@ export const api = {
       body: '{}'
     });
     const session = await parse<AuthSession & { expiresAt: string; access: string }>(response);
+    setDemoRecruiter();
     setAdminToken(session.token, session.user);
     return session;
   },

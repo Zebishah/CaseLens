@@ -72,6 +72,28 @@ async function mockApi(page: Page, options: { casesStatus?: number } = {}): Prom
   await page.route('**/api/operations/reviewer-summary', (route) => json(route, {
     jobProcessingMode: 'apify', pendingOutbox: 0, recoveryStatus: 'clear', actorRuns: { queued: 0, running: 0, completed: 1, failed: 0, retryableFailures: 0, latestFailureCode: null, recentRunDurationMs: 3000 }
   }));
+  await page.route('**/api/directory', (route) => json(route, {
+    companies: [{ name: 'Northwind Bakery', slug: 'northwind-bakery' }],
+    stores: [{ storeNumber: '1042', storeName: 'Harbor Street', districtManagerName: 'Sam Patel', vpName: 'Mina Patel' }],
+    employees: [{ id: 1, canonicalName: 'Jordan Hale', storeNumber: '1042', companyDomain: 'northwind.co' }],
+    fixedContacts: [{ name: 'Mina Patel', email: 'mina@example.com', role: 'manager' }],
+    importHistory: [],
+    boxConfigured: false
+  }));
+  await page.route('**/api/evaluation', (route) => json(route, {
+    datasetVersion: 'fixture-v1', datasetSize: 1, promptVersion: 'portfolio-v1', modelVersion: 'fixture-v1', usesLiveModel: false,
+    method: 'subject-heuristic', fixtureDirectory: ['Jordan Hale'], classificationAccuracy: 1, classificationHits: 1,
+    employeeMatchPrecision: 1, employeeMatchRecall: 1, employeeTruePositives: 1, employeeFalsePositives: 0, employeeFalseNegatives: 0,
+    directoryResolutionPrecision: 1, directoryTruePositives: 1, relatedCasePrecision: 1, relatedCaseRecall: 1,
+    relatedTruePositives: 1, relatedFalsePositives: 0, relatedFalseNegatives: 0, lowConfidenceRate: 0, lowConfidenceCount: 0,
+    manualReviewRate: 0, manualReviewCount: 0, cases: [{ id: 'fixture-1', subject: 'Leave — Jordan Hale', expectedEmployee: 'Jordan Hale', predictedEmployee: 'Jordan Hale', expectedCategory: 'leave', predictedCategory: 'leave', nameMatch: true, categoryMatch: true, inFixtureDirectory: true, flaggedForReview: false }]
+  }));
+  await page.route('**/api/demo/sessions', (route) => json(route, {
+    session: { token: 'demo-session-token', receivingAddress: 'demo@example.test', expiresAt: '2026-09-20T09:00:00.000Z', remainingCases: 3, remainingEmails: 3, remainingLiveLlm: 0 },
+    scenarios: [{ id: 'leave', title: 'Leave request', summary: 'A synthetic leave request.' }],
+    llmModeDefault: 'fixture',
+    liveAiConfigured: false
+  }));
   await page.route('**/api/cases**', (route) => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === '/api/cases/overview') return json(route, overview);
@@ -124,11 +146,63 @@ test('reviewer demo opens the overview and case intelligence flow', async ({ pag
   await expect(page.getByText('Previous leave question')).toBeVisible();
 });
 
-test('viewer is redirected away from administrative operations', async ({ page }) => {
+test('recruiter demo exposes the read-only product surface and hides access management', async ({ page }) => {
   await mockApi(page);
   await enterDemo(page);
+
+  const sidebar = page.getByRole('navigation', { name: 'Application' });
+  for (const label of ['Organization overview', 'Case operations', 'Directory intelligence', 'Operational health', 'AI quality', 'Architecture', 'Product walkthrough']) {
+    await expect(sidebar.getByRole('link', { name: label })).toBeVisible();
+  }
+  await expect(sidebar.getByRole('link', { name: 'Access management' })).toHaveCount(0);
+  await expect(sidebar.getByRole('link', { name: 'Reviewer access' })).toHaveCount(0);
+  await expect(page.getByText('Recruiter demo · Read-only')).toBeVisible();
+
+  await page.goto('/directory');
+  await expect(page.getByRole('heading', { name: 'Directory intelligence' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Import & sync' })).toHaveCount(0);
+
   await page.goto('/operations');
+  await expect(page.getByRole('heading', { name: 'Operational health' })).toBeVisible();
+  await expect(page.getByText('Recruiter demo · Read-only.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Force replay|Retry write-back|Dispatch pending events/ })).toHaveCount(0);
+
+  await page.goto('/evaluation');
+  await expect(page.getByRole('heading', { name: 'AI Quality' })).toBeVisible();
+  await expect(page.getByText('Deterministic safety baseline')).toBeVisible();
+
+  await page.goto('/architecture');
+  await expect(page.getByRole('heading', { name: 'Architecture' })).toBeVisible();
+  await page.goto('/demo');
+  await expect(page.getByRole('heading', { name: 'Product walkthrough & access' })).toBeVisible();
+
+  await page.goto('/access-requests');
   await expect(page).toHaveURL(/\/overview$/);
+  await page.goto('/access');
+  await expect(page).toHaveURL(/\/overview$/);
+});
+
+test('recruiter demo is redirected away from access management', async ({ page }) => {
+  await mockApi(page);
+  await enterDemo(page);
+  await page.goto('/access-requests');
+  await expect(page).toHaveURL(/\/overview$/);
+});
+
+test('admin navigation keeps access and maintenance destinations', async ({ page }) => {
+  await mockApi(page);
+  await page.addInitScript(({ token, user }) => {
+    sessionStorage.setItem('adminToken', token);
+    sessionStorage.setItem('adminUser', JSON.stringify(user));
+  }, { token: demoToken, user: { id: 2, name: 'Admin', email: 'admin@example.test', role: 'admin' } });
+  await page.goto('/overview');
+
+  const sidebar = page.getByRole('navigation', { name: 'Application' });
+  await expect(sidebar.getByRole('link', { name: 'Access management' })).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'Reviewer access' })).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'Operational health' })).toBeVisible();
+  await expect(sidebar.getByRole('link', { name: 'AI quality' })).toBeVisible();
+  await expect(page.getByText('Admin workspace')).toBeVisible();
 });
 
 test('case list exposes a recoverable service failure', async ({ page }) => {

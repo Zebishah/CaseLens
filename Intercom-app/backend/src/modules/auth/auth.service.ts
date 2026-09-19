@@ -96,7 +96,7 @@ export const authService = {
     };
     return {
       token: createShortLivedAccessToken(
-        { sub: user.id, email: user.email, role: user.role },
+        { sub: user.id, email: user.email, role: user.role, demo: true },
         `${env.DEMO_AUTH_TTL_MINUTES}m`
       ),
       user,

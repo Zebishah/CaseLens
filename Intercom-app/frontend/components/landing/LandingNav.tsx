@@ -61,7 +61,7 @@ export function LandingNav() {
     >
       <div className="px-4 pt-4 pb-3 md:px-6">
         <div
-          className={`nav-dock mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-full border border-primary/10 bg-white/80 px-3 py-2 backdrop-blur-md md:px-4 ${
+          className={`nav-dock mx-auto flex max-w-6xl items-center justify-between gap-3 rounded-full border border-primary/10 bg-white/80 px-3 py-2 backdrop-blur-md md:px-4 ${
             scrolled ? 'shadow-float' : ''
           }`}
         >
@@ -101,7 +101,7 @@ export function LandingNav() {
         {open ? (
           <div
             id="mobile-nav"
-            className="nav-dock mx-auto mt-3 max-w-5xl rounded-[1.8rem] border border-primary/10 bg-white/95 p-5 shadow-float md:hidden"
+            className="nav-dock mx-auto mt-3 max-w-6xl rounded-[1.8rem] border border-primary/10 bg-white/95 p-5 shadow-float md:hidden"
           >
             <nav className="flex flex-col gap-2 text-sm" aria-label="Mobile landing">
               {links.map((link) => (
