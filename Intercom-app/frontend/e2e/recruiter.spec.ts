@@ -98,6 +98,17 @@ test('public landing page is usable and passes critical accessibility checks', a
   expect(consoleErrors).toEqual([]);
 });
 
+test('landing engineering CTA opens the public case study and passes axe checks', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: /Explore the engineering/ }).click();
+  await expect(page).toHaveURL(/\/engineering$/);
+  await expect(page.getByRole('heading', { name: 'Engineering at HR Intelligence' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'A durable path for bursty background work.' })).toBeVisible();
+  await expect(page.getByText('API → Apify on-demand Actor')).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([]);
+});
+
 test('reviewer demo opens the overview and case intelligence flow', async ({ page }) => {
   await mockApi(page);
   await enterDemo(page);

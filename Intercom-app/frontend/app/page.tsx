@@ -116,6 +116,19 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="bg-paper" aria-labelledby="engineering-teaser-title">
+          <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+            <div className="engineering-card flex flex-col gap-8 overflow-hidden bg-slate-950 text-white md:flex-row md:items-center md:justify-between md:p-9">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Engineering case study</p>
+                <h2 id="engineering-teaser-title" className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">Built as an engineering case study.</h2>
+                <p className="mt-4 text-sm leading-6 text-slate-300 md:text-base">Explore the architecture, reliability patterns, testing strategy, security boundaries, and infrastructure decisions behind HR Intelligence.</p>
+              </div>
+              <Link href="/engineering" className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300">Explore the engineering <span className="ml-2" aria-hidden="true">→</span></Link>
+            </div>
+          </div>
+        </section>
+
         <CtaBand />
       </main>
       <SiteFooter />

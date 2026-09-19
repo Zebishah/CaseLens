@@ -26,6 +26,11 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/engineering" className="hover:text-white">
+                Engineering case study
+              </Link>
+            </li>
+            <li>
               <Link href="/evaluation" className="hover:text-white">
                 AI Evaluation
               </Link>

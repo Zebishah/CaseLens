@@ -9,6 +9,7 @@ const links = [
   { href: '/#ai-intelligence', label: 'AI intelligence', match: 'ai-intelligence' },
   { href: '/#impact', label: 'Impact', match: 'impact' },
   { href: '/#architecture', label: 'Architecture', match: 'architecture' },
+  { href: '/engineering', label: 'Engineering', match: 'engineering' },
   { href: '/#faq', label: 'FAQ', match: 'faq' },
   { href: '/#live-demo', label: 'Live demo', match: 'live-demo' }
 ];
