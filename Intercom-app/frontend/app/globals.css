@@ -94,6 +94,29 @@ body {
   box-shadow: 0 16px 34px rgb(30 78 92 / 0.09);
 }
 
+.engineering-teaser {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-color: rgb(93 218 185 / 0.28);
+  background:
+    radial-gradient(circle at 88% 12%, rgb(45 170 145 / 0.22), transparent 30%),
+    linear-gradient(135deg, #102c36 0%, #173f4b 58%, #214f5c 100%);
+}
+
+.engineering-teaser::after {
+  content: '';
+  position: absolute;
+  right: -7rem;
+  top: -9rem;
+  z-index: -1;
+  width: 22rem;
+  height: 22rem;
+  border: 1px solid rgb(137 239 214 / 0.14);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2.5rem rgb(137 239 214 / 0.035), 0 0 0 5.5rem rgb(137 239 214 / 0.025);
+}
+
 .engineering-number {
   display: inline-flex;
   align-items: center;

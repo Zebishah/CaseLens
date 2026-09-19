@@ -118,7 +118,7 @@ export default function LandingPage() {
 
         <section className="bg-paper" aria-labelledby="engineering-teaser-title">
           <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-            <div className="engineering-card flex flex-col gap-8 overflow-hidden bg-slate-950 text-white md:flex-row md:items-center md:justify-between md:p-9">
+            <div className="engineering-card engineering-teaser flex flex-col gap-8 p-6 text-white md:flex-row md:items-center md:justify-between md:p-9">
               <div className="max-w-2xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">Engineering case study</p>
                 <h2 id="engineering-teaser-title" className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">Built as an engineering case study.</h2>
