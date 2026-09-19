@@ -31,10 +31,10 @@ Backend credentials—including `INTERCOM_ACCESS_TOKEN`, `INTERCOM_CLIENT_SECRET
 - The CSRF helper is not wired to every mutation. Bearer JWT is the dashboard's primary authorization; do not claim comprehensive CSRF-token enforcement.
 - Generic ingestion has a transactional outbox. Intercom uses durable event state plus deterministic revision jobs; do not claim every adapter uses the identical outbox path.
 - Inline demo mode intentionally has weaker crash recovery than PostgreSQL + BullMQ worker mode.
-- `xlsx` has known advisories. CSV is preferred for sanitized imports; imports remain admin-only and size-limited. Do not claim vulnerability-free dependencies.
+- Spreadsheet imports remain admin-only and size-limited; CSV is preferred for sanitized imports. Do not treat an offline audit cache as proof that every upstream advisory is resolved.
 - A queued Intercom event proves delivery/enqueue state, not successful live Gemini completion.
 - Synthetic/local evaluation is not production AI accuracy or customer impact.
 
 ## Dependency advisories
 
-The backend `npm audit` run on 2026-09-18 reported eight advisories: seven moderate across the Apify/Crawlee/`stream-json` runtime chain and the Drizzle Kit/`esbuild` tooling chain, plus one high advisory for `xlsx`. npm did not report an automatic fix for `xlsx`; its suggested changes for the other advisories involve package/version changes that may be breaking. No blanket `npm audit fix` was applied. The spreadsheet import is restricted to the admin path; prefer CSV for sanitized directory imports. Re-run `npm audit` before releases because advisory status changes over time.
+An offline `npm audit --offline --json` run on 2026-09-20 reported zero cached advisories for the backend and frontend lockfiles. The environment blocked the online npm audit endpoint because it would transmit private dependency metadata, so this is a local cache result rather than a complete upstream advisory review. Re-run the online audit from an approved release environment and review any advisories before publishing. No blanket `npm audit fix` was applied.

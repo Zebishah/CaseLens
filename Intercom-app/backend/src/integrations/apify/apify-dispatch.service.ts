@@ -5,6 +5,7 @@ import type { IntercomIntelligenceJobData } from '../../queues/intercom-intellig
 import { intelligenceActorRunRepository } from '../../modules/ingestion/intelligence-actor-run.repository.js';
 import { actorInputSchema, type ActorInput } from './actor-input.schema.js';
 import { apifyClient, ApifyClientError } from './apify.client.js';
+import { operationalMetrics } from '../../observability/metrics.js';
 
 const toActorInput = (data: IntercomIntelligenceJobData): ActorInput => {
   if (data.peerSnapshotRefresh) {
@@ -46,6 +47,7 @@ export const dispatchActorPayload = async (
   input: ActorInput,
   metadata: { conversationId?: number; jobType: string; sourceRevision?: string }
 ): Promise<{ runId: string }> => {
+  operationalMetrics.apifyDispatchAttempt();
   const startedAt = Date.now();
   const run = await apifyClient().startActorRun(input);
   logger.info('[apify] Actor run started', {
@@ -110,6 +112,7 @@ export const dispatchApifyIntelligenceJob = async (
     await intelligenceActorRunRepository.attachApifyRun(row.id, runId);
     return { runId, duplicate: false };
   } catch (error) {
+    operationalMetrics.apifyDispatchFailure();
     const info = getErrorInfo(error);
     await intelligenceActorRunRepository.markFailed({
       id: row.id,
@@ -184,6 +187,8 @@ export const reconcileStaleActorRuns = async (limit = 20): Promise<{ failed: num
       const run = await apifyClient().getActorRun(row.apifyRunId);
       if (run.status === 'SUCCEEDED') {
         await intelligenceActorRunRepository.markCompleted(row.id);
+        operationalMetrics.apifyRunSucceeded();
+        operationalMetrics.apifyRunReconciled();
         completed += 1;
       } else if (['FAILED', 'TIMED-OUT', 'ABORTED'].includes(run.status ?? '')) {
         await intelligenceActorRunRepository.markFailed({
@@ -193,6 +198,8 @@ export const reconcileStaleActorRuns = async (limit = 20): Promise<{ failed: num
           retryable: row.attemptCount < env.APIFY_MAX_ATTEMPTS,
           attemptCount: row.attemptCount
         });
+        operationalMetrics.apifyRunFailed();
+        operationalMetrics.apifyRunReconciled();
         failed += 1;
       }
     } catch {

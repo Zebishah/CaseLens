@@ -62,5 +62,9 @@ jobs:
         run: npm run typecheck
       - name: Test
         run: npm test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser E2E
+        run: npm run test:e2e
       - name: Build
         run: npm run build

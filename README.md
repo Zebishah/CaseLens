@@ -31,9 +31,10 @@ The defensible organizational value is centralized case intelligence, reduced re
 flowchart LR
   A[Intercom or inbound email] --> B[Signed ingestion API]
   B --> C[(PostgreSQL and durable outbox)]
+  B -.-> R[(Redis cache and rate limits)]
   C --> D{Execution mode}
   D -->|inline fallback| E[API process]
-  D -->|BullMQ optional| F[Redis queue and worker]
+  D -->|BullMQ optional| F[Redis queue worker]
   D -->|Apify production| G[On-demand private HR Actor]
   E --> H[Shared intelligence handlers]
   F --> H
@@ -106,10 +107,11 @@ cd Intercom-app/backend
 cp .env.example .env
 docker compose up -d
 npm ci
-npm run db:push
 npm run db:migrate
 npm run dev
 ```
+
+`npm run db:migrate` is the normal path for both a fresh local database and production: it applies the ordered, transactional migration set. `npm run db:push` remains available only as a development convenience for intentionally prototyping a schema against a disposable local database; never use it against production or a shared environment.
 
 In another terminal:
 
@@ -136,6 +138,8 @@ cd ../web
 npm run lint
 npm run typecheck
 npm test
+npx playwright install chromium
+npm run test:e2e
 npm run build
 ```
 

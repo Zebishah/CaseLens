@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { logger } from '../config/logger.config.js';
+import { operationalMetrics } from '../observability/metrics.js';
 
 const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 
@@ -19,6 +20,7 @@ export const requestContext = (req: Request, res: Response, next: NextFunction):
 
   const start = Date.now();
   res.on('finish', () => {
+    operationalMetrics.apiCompleted(res.statusCode, Date.now() - start);
     logger.http('request.completed', {
       requestId,
       correlationId,

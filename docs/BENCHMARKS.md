@@ -2,22 +2,22 @@
 
 No production performance or business metrics are claimed. Values below are labelled by environment.
 
-## Current CI verification
+## Historical CI verification
 
-GitHub Actions run [#106](https://github.com/Zebishah/Hr-intercom/actions/runs/33686513729), commit `3f28869`, 2026-09-02:
+The repository previously recorded a CI snapshot from September 2026. It is retained as historical context only; current test counts and coverage belong to the latest successful CI run and are not hard-coded here.
 
 | Check | Result | Label |
 |---|---:|---|
 | Backend lint | Passed | CI verification |
 | Backend typecheck | Passed | CI verification |
-| Backend tests | **89 suites, 561 tests passed** | CI verification |
+| Backend tests | Passed | Historical CI verification |
 | Backend production build | Passed | CI verification |
 | Migration/evaluation files | Present | CI verification |
 | Frontend lint + typecheck | Passed | CI verification |
 | Frontend production build | Passed | CI verification |
-| Frontend routes | **14 generated pages/routes** | CI build output |
+| Frontend routes | Generated successfully | Historical CI build output |
 
-The install also reported dependency advisories: backend 18 (7 moderate, 10 high, 1 critical) and frontend 2 (1 moderate, 1 high). See `docs/SECURITY.md`; do not describe the dependency tree as vulnerability-free.
+Dependency advisories change over time. See `docs/SECURITY.md` for the latest local audit classification and its limits.
 
 ## Reproducible local commands
 
@@ -36,6 +36,8 @@ cd ../web
 npm ci
 npm run lint
 npx tsc --noEmit
+npx playwright install chromium
+npm run test:e2e
 npm run build
 ```
 

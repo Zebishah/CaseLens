@@ -26,6 +26,12 @@ The Render API acknowledges verified intake after durable persistence and dispat
 
 BullMQ remains supported and tested. It is not the selected production processing path. Resend and optional directory jobs retain their existing queue integrations where configured.
 
+## Architecture evolution
+
+The first implementation centered on an always-running API plus BullMQ worker process. That path remains available for deployments that need continuously running workers. The production portfolio path evolved to a Render API that persists intake in PostgreSQL and dispatches a private Apify Actor only when a case needs background processing. This keeps the durable state and business handlers stable while reducing idle worker cost and isolating execution failures.
+
+Redis remains beside the API for shared rate-limit counters and short-lived directory caches. It is not the source of truth and it is not required by Apify mode. PostgreSQL remains the source of truth in every mode; BullMQ + Redis is retained as a tested alternative rather than silently removed.
+
 ## Reliability boundaries
 
 - **Idempotency:** a unique source/external-event key makes duplicate webhook deliveries safe.

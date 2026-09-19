@@ -175,7 +175,7 @@ export default function EvaluationPage() {
                 <thead>
                   <tr>
                     {['Subject', 'Name', 'Category', 'Directory', 'Review'].map((heading) => (
-                      <th key={heading} className="px-5 py-3">
+                      <th scope="col" key={heading} className="px-5 py-3">
                         {heading}
                       </th>
                     ))}

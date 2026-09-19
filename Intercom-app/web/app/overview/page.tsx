@@ -358,7 +358,7 @@ export default function OverviewPage() {
                   <thead>
                     <tr>
                       {['Subject', 'Employee', 'Category', 'Related', 'Status', 'Received'].map((heading) => (
-                        <th key={heading} className="px-5 py-3">
+                        <th scope="col" key={heading} className="px-5 py-3">
                           {heading}
                         </th>
                       ))}

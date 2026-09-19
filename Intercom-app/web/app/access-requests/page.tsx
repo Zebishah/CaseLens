@@ -147,7 +147,7 @@ export default function AccessRequestsPage() {
               <thead>
                 <tr>
                   {['Reviewer', 'Organization', 'Reason', 'Requested', 'Status', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-5 py-3.5">{heading}</th>
+                    <th scope="col" key={heading} className="px-5 py-3.5">{heading}</th>
                   ))}
                 </tr>
               </thead>

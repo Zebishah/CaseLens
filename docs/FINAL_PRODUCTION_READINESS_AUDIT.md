@@ -1,6 +1,6 @@
 # Engineering readiness audit
 
-Inspection date: 2026-09-18
+Inspection date: 2026-09-20
 Branch: `portfolio-hardening`
 
 This audit distinguishes repository evidence, synthetic demonstration evidence, and unmeasured production outcomes.

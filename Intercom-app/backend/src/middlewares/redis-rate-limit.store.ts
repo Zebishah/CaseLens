@@ -3,6 +3,7 @@ import type { Redis } from 'ioredis';
 import rateLimit from 'express-rate-limit';
 import { logger } from '../config/logger.config.js';
 import { getSharedRedis } from '../config/redis.config.js';
+import { operationalMetrics } from '../observability/metrics.js';
 
 type RateLimitOptions = NonNullable<Parameters<typeof rateLimit>[0]>;
 type RateLimitStore = {
@@ -105,6 +106,7 @@ export const createRedisRateLimitStore = (
   const keyFor = (key: string) => `hr:ratelimit:${namespace}:${digestIdentity(key)}`;
 
   const useFallback = async <T>(operation: string, local: () => Promise<T>): Promise<T> => {
+    operationalMetrics.rateLimitFallback();
     logStoreFailure(namespace, operation);
     return local();
   };

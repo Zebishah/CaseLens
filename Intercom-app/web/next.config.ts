@@ -6,7 +6,8 @@ const projectRoot = dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
-  turbopack: { root: projectRoot }
+  turbopack: { root: projectRoot },
+  experimental: { useTypeScriptCli: false }
 };
 
 export default nextConfig;

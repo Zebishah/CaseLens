@@ -90,7 +90,7 @@ JWT (`JWT_SECRET`, `JWT_EXPIRES_IN`). Bearer middleware unused. Refresh is a no-
 
 ### Tests
 
-53 files under `Intercom-app/backend/tests` (unit + integration). Integration tests use Supertest; env is faked in `tests/setup-env.cjs`. No E2E browser tests. No evaluation dataset. No GitHub Actions CI (only a Render keep-alive workflow).
+At the 2026-09-01 planning snapshot there were 53 backend test files, no browser E2E suite, no evaluation dataset, and no GitHub Actions CI. Those findings are historical; the current repository has Playwright checks and CI. The old nested keep-alive workflow was removed during hardening.
 
 ---
 

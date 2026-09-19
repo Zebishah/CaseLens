@@ -15,6 +15,12 @@ operationsRoutes.get(
   requireRole(ROLES.VIEWER),
   asyncHandler(operationsController.reviewerSummary)
 );
+operationsRoutes.get(
+  '/metrics',
+  authMiddleware,
+  requireRole(ROLES.VIEWER),
+  asyncHandler(operationsController.metrics)
+);
 operationsRoutes.use(authMiddleware, requireRole(ROLES.ADMIN));
 const conversationIdSchema = z.object({ body: z.unknown().optional(), params: z.object({ conversationId: z.coerce.number().int().positive() }), query: z.object({}) });
 operationsRoutes.get('/queues', asyncHandler(operationsController.summary));

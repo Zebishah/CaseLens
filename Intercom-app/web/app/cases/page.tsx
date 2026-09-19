@@ -127,7 +127,7 @@ export default function CasesPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="dash-table min-w-[72rem] w-full text-left text-sm">
-                <thead><tr>{['Case', 'Employee match', 'Category', 'Related', 'Status', 'Source', 'Received', 'Workspace'].map((heading) => <th key={heading} className="px-5 py-3.5">{heading}</th>)}</tr></thead>
+                <thead><tr>{['Case', 'Employee match', 'Category', 'Related', 'Status', 'Source', 'Received', 'Workspace'].map((heading) => <th scope="col" key={heading} className="px-5 py-3.5">{heading}</th>)}</tr></thead>
                 <tbody>
                   {items.map((row) => (
                     <tr key={row.id} className="dash-row border-t border-slate-100">

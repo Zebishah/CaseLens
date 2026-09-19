@@ -11,6 +11,8 @@ import { ingestionService } from '../ingestion/ingestion.service.js';
 import { processCaseIntelligence } from '../intelligence/process-case-intelligence.js';
 import { syncIntercomIntelligence } from '../intercom/intercom.sync.service.js';
 import { intelligenceActorRunRepository } from '../ingestion/intelligence-actor-run.repository.js';
+import { healthService } from '../health/health.service.js';
+import { operationalMetrics } from '../../observability/metrics.js';
 
 const queue = () =>
   new Queue('intercom-intelligence-queue', { connection: getBullMqConnection() });
@@ -31,6 +33,27 @@ const safeJob = (job: {
 });
 
 export const operationsController = {
+  async metrics(_req: Request, res: Response): Promise<void> {
+    const [readiness, pendingOutbox] = await Promise.all([
+      healthService.readiness(),
+      ingestionRepository.countPendingOutbox()
+    ]);
+    const metrics = operationalMetrics.snapshot();
+    sendSuccess(res, {
+      status: readiness.status === 'ready' ? 'healthy' : 'starting',
+      database: { reachable: readiness.postgres === 'up' },
+      redis: {
+        configured: readiness.redisConfigured,
+        reachable: readiness.redisReachable,
+        ...metrics.redis
+      },
+      jobs: metrics.apify,
+      outbox: { pending: pendingOutbox, recovered: metrics.outbox.recovered },
+      ai: { ...metrics.ai, mode: env.LLM_MODE },
+      api: metrics.api
+    });
+  },
+
   async reviewerSummary(_req: Request, res: Response): Promise<void> {
     const [pendingOutbox, actorRuns] = await Promise.all([
       ingestionRepository.countPendingOutbox(),

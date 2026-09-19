@@ -7,6 +7,7 @@ import { closeSharedRedis } from './config/redis.config.js';
 import { shouldStartQueueWorkers } from './config/job-processing.js';
 import { ingestionService } from './modules/ingestion/ingestion.service.js';
 import { demoSessionService } from './modules/demo/demo-session.service.js';
+import { operationalMetrics } from './observability/metrics.js';
 
 process.on('unhandledRejection', (reason) => {
   const message = reason instanceof Error ? reason.message : String(reason);
@@ -42,6 +43,7 @@ const startWorkers = async (): Promise<void> => {
   const recover = async (): Promise<void> => {
     try {
       const recovered = await ingestionService.recoverPendingOutbox();
+      operationalMetrics.outboxRecovered(recovered);
       if (recovered > 0) {
         logger.info('[startup] Recovered pending outbox records', { recovered });
       }

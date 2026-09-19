@@ -80,7 +80,7 @@ export function AlertBanner({
     <div role={tone === 'danger' ? 'alert' : undefined} className={`rounded-xl border px-5 py-4 ${tones[tone]}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-semibold">{title}</p>
+          <h2 className="font-semibold">{title}</h2>
           {children ? <div className="mt-1 text-sm leading-6 opacity-80">{children}</div> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}

@@ -10,9 +10,11 @@ See the [repository README](../../README.md) for the product overview and comple
 cp .env.example .env
 npm ci
 docker compose up -d
-npm run db:push
+npm run db:migrate
 npm run dev
 ```
+
+`npm run db:migrate` is the normal path for fresh local databases and production. `npm run db:push` is retained only for disposable local schema prototyping and must not be used against shared or production databases.
 
 The API listens on `http://localhost:3002` by default. Interactive API documentation is available at `/docs` outside production.
 
@@ -42,13 +44,13 @@ The BullMQ worker architecture remains available and tested as an alternative de
 
 ## Database changes
 
-For local schema development:
+For local schema development and deployment:
 
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
-Deployment-safe SQL migrations and their TypeScript runners are stored in `scripts/`. After creating the base schema with `npm run db:push`, use `npm run db:migrate` to apply and record the ordered application migrations. Existing targeted `db:migrate-*` scripts remain available for controlled repair/debugging. Review the selected `DATABASE_MIGRATION_URL` or `DATABASE_URL` before running a migration. Migrations are never applied at application startup.
+Deployment-safe SQL migrations and their TypeScript runners are stored in `scripts/`. `db:migrate` applies and records the ordered application migrations transactionally. Existing targeted `db:migrate-*` scripts remain available for controlled repair/debugging. Review the selected `DATABASE_MIGRATION_URL` or `DATABASE_URL` before running a migration. Migrations are never applied at application startup. `db:push` is development-only and is not part of deployment.
 
 ## Useful commands
 

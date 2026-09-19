@@ -31,7 +31,7 @@ The workspace owner has manually exercised the Intercom integration. This is dem
 - Human corrections that survive later analysis until an explicit re-analysis.
 - JWT algorithm/issuer/audience checks, viewer/admin authorization, login throttling, CORS/Helmet, input validation, safe request IDs, and atomic demo quotas.
 - Targeted PostgreSQL indexes for message, identity, outbox, event, email, and fuzzy-name access paths.
-- Automated backend unit/integration/E2E tests and frontend lint/typecheck/test/build in GitHub Actions. In the 2026-09-18 validation run, 107 backend suites (647 tests) and 7 frontend tests passed. There is no browser-level E2E suite; end-to-end request flows are covered by backend integration tests.
+- Automated backend unit/integration tests, frontend unit tests, and browser-level Playwright E2E checks run through the repository quality gates. See the latest successful CI run for current test counts and coverage; tests use synthetic fixtures and mocked provider calls.
 
 ## Defensible CV bullets
 
@@ -42,7 +42,7 @@ Use these without inventing business numbers:
 - Hardened a role-based TypeScript/Node.js platform with JWT verification, login throttling, schema validation, atomic demo quotas, structured request tracing, and optimized PostgreSQL lookup indexes.
 - Delivered a recruiter-ready Next.js operations dashboard and synthetic Intercom walkthrough with restricted viewer access, explicit loading/error states, case exploration, directory views, and measured test/evaluation evidence.
 
-The test counts above are a dated validation snapshot. Only add updated exact test counts, accuracy, latency, or throughput after copying the latest successful command output and labeling its environment.
+Current test counts belong to CI output rather than this narrative document. Only add dated exact counts, accuracy, latency, or throughput after copying the latest successful command output and labeling its environment.
 
 ## Do not claim
 

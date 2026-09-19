@@ -77,8 +77,9 @@ export default function ArchitecturePage() {
           <SectionCard title="Why on-demand Actors" description="Background work runs in a bounded container only when dispatched. This replaces the always-running production worker path while keeping the same PostgreSQL-backed handlers and recovery records.">
             <p className="text-sm leading-6 text-muted">BullMQ and Redis remain available for deployments that choose a continuously available queue worker. Inline execution stays useful for local development and deterministic demos. These are supported modes, not separate business logic.</p>
           </SectionCard>
-          <SectionCard title="Evidence and limits" description="Latest validation on 2026-09-18: 647 backend tests and 7 frontend tests passed. CI runs lint, type checks, tests and production builds.">
-            <p className="text-sm leading-6 text-muted">There is no browser-level E2E suite yet; end-to-end request flows are covered by backend integration tests. Evaluation and benchmark outputs are labeled by method and environment. This page makes no claims about production throughput, AI accuracy, customer savings, or service-level latency.</p>
+          <SectionCard title="Evidence and limits" description="Backend and frontend quality gates, including browser-level E2E checks, run in GitHub Actions. See the latest successful CI run for current counts."
+          >
+            <p className="text-sm leading-6 text-muted">Browser-level checks cover the public landing page, reviewer access, case navigation, RBAC redirection, recoverable service errors, and critical accessibility rules with mocked provider calls. Evaluation and benchmark outputs are labeled by method and environment. This page makes no claims about production throughput, AI accuracy, customer savings, or service-level latency.</p>
           </SectionCard>
         </section>
       </div>

@@ -1,5 +1,7 @@
 # Deployment (Render)
 
+The repository does not maintain a Render keep-alive workflow. The old file was nested under `Intercom-app/.github`, where GitHub Actions would not execute it, and artificial uptime is not part of the portfolio deployment model.
+
 Do not provision paid services from this document. Use existing external PostgreSQL. Upstash Redis is optional for local/fallback operation and is recommended for production shared rate limiting and directory caches. It does not run workers in Apify mode.
 
 ## Production API service
@@ -53,12 +55,11 @@ Apply schema before serving traffic:
 
 ```bash
 cd Intercom-app/backend
-npm run db:push
 npm run db:migrate
 npm run db:seed-portfolio
 ```
 
-`db:push` creates the base schema for a fresh environment; `db:migrate` applies the ordered, recorded, transactional application migrations. For an existing deployment, inspect the target database and migration history first. Targeted `db:migrate-*` commands remain available for controlled diagnosis or a single migration. Never run migrations automatically during API startup.
+The command above applies the ordered, recorded, transactional application migrations and is the only migration command for production. `db:push` is retained solely for disposable local prototyping and must not be run against a shared or production database. For an existing deployment, inspect the target database and migration history first. Targeted `db:migrate-*` commands remain available for controlled diagnosis or a single migration. Never run migrations automatically during API startup.
 
 After deploying persistent refresh-session validation, users with refresh cookies issued before this migration may need to sign in once more because those older sessions were not stored in the database. Short-lived recruiter demo sessions are unaffected.
 

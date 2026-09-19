@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { logger } from '../../config/logger.config.js';
 import { getSharedRedis } from '../../config/redis.config.js';
+import { operationalMetrics } from '../../observability/metrics.js';
 
 export const STORE_DIRECTORY_CACHE_TTL_SECONDS = 10 * 60;
 export const STORE_DIRECTORY_NEGATIVE_CACHE_TTL_SECONDS = 45;
@@ -56,7 +57,10 @@ export const readDirectoryCache = async <T>(
 ): Promise<DirectoryCacheRead<T>> => {
   try {
     const redis = getSharedRedis();
-    if (!redis) return { version: 0, value: null };
+    if (!redis) {
+      operationalMetrics.cacheBypass();
+      return { version: 0, value: null };
+    }
     const [rawVersion, rawValue] = await redis.mget(DIRECTORY_CACHE_VERSION_KEY, key);
     const parsedVersion = rawVersion === null ? 0 : Number(rawVersion);
     if (
@@ -69,7 +73,10 @@ export const readDirectoryCache = async <T>(
     }
     const version = parsedVersion;
 
-    if (rawValue === null) return { version, value: null };
+    if (rawValue === null) {
+      operationalMetrics.cacheMiss();
+      return { version, value: null };
+    }
 
     let envelope: unknown;
     try {
@@ -77,6 +84,7 @@ export const readDirectoryCache = async <T>(
     } catch {
       await redis.del(key).catch(() => undefined);
       logCacheFailure('malformed-value');
+      operationalMetrics.cacheMiss();
       return { version, value: null };
     }
 
@@ -92,12 +100,15 @@ export const readDirectoryCache = async <T>(
       if (!envelope || typeof envelope !== 'object' || !('version' in envelope) || !('data' in envelope)) {
         logCacheFailure('invalid-value');
       }
+      operationalMetrics.cacheMiss();
       return { version, value: null };
     }
 
+    operationalMetrics.cacheHit();
     return { version, value: envelope.data };
   } catch {
     logCacheFailure('read');
+    operationalMetrics.cacheBypass();
     return { version: 0, value: null };
   }
 };
@@ -111,7 +122,10 @@ export const writeDirectoryCache = async <T>(
 ): Promise<void> => {
   try {
     const redis = getSharedRedis();
-    if (!redis) return;
+    if (!redis) {
+      operationalMetrics.cacheBypass();
+      return;
+    }
     await redis.eval(
       CACHE_WRITE_SCRIPT,
       2,
@@ -123,6 +137,7 @@ export const writeDirectoryCache = async <T>(
     );
   } catch {
     logCacheFailure('write');
+    operationalMetrics.cacheBypass();
   }
 };
 

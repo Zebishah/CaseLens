@@ -37,9 +37,10 @@ Apply:
 
 ```bash
 cd Intercom-app/backend
-npm run db:migrate-intercom-sync
-npm run db:migrate-intercom-source-revision
+npm run db:migrate
 ```
+
+The ordered migration runner applies the Intercom sync and source-revision migrations in sequence. The targeted `db:migrate-*` scripts remain available only for controlled diagnosis or repair; do not use them as the normal deployment path.
 
 ## Webhook
 
@@ -118,7 +119,7 @@ Provide these backend values (never `NEXT_PUBLIC_*`):
 
 Commands (do not run with production customer data):
 
-1. `cd Intercom-app/backend && npm run db:migrate-intercom-sync && npm run db:migrate-intercom-source-revision` (or `npm run db:push` on a fresh database)
+1. `cd Intercom-app/backend && npm run db:migrate` for the ordered migration runner (targeted `db:migrate-*` scripts remain available for controlled repairs)
 2. PostgreSQL via `docker compose up -d` in `Intercom-app/backend`; Redis is optional locally unless testing shared rate limits/caches, and required for the BullMQ worker mode
 3. `npm run dev` (API, default `http://localhost:3002`)
 4. BullMQ alternative only: same repo with `RUN_WORKERS=true` (or a second process). Production Apify mode dispatches private Actors on demand.
