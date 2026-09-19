@@ -3,6 +3,7 @@ import { db } from '../../database/connection.js';
 import { companies } from '../../database/schema/companies.js';
 import { companyFixedContacts } from '../../database/schema/company_fixed_contacts.js';
 import { storeDirectory } from '../../database/schema/store_directory.js';
+import { invalidateStoreDirectoryCaches } from './store-directory.cache.js';
 import { logger } from '../../config/logger.config.js';
 
 type DevTestStore = {
@@ -155,6 +156,7 @@ export const seedDevStoreDirectoryTestStores = async (): Promise<{
     }
   }
 
+  if (upserted > 0 || chcId) await invalidateStoreDirectoryCaches();
   logger.info('[store-directory] Dev test stores seeded', { upserted, storeNumbers });
   return { upserted, storeNumbers };
 };

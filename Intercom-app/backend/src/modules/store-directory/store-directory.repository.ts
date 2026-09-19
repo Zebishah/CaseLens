@@ -5,6 +5,14 @@ import { companyFixedContacts } from '../../database/schema/company_fixed_contac
 import { storeDirectory } from '../../database/schema/store_directory.js';
 import { storeDirectorySyncRuns } from '../../database/schema/store_directory_sync_runs.js';
 import { STORE_DIRECTORY_COMPANIES } from '../../constants/store-directory.constants.js';
+import {
+  invalidateStoreDirectoryCaches,
+  readDirectoryCache,
+  STORE_DIRECTORY_CACHE_TTL_SECONDS,
+  STORE_DIRECTORY_NEGATIVE_CACHE_TTL_SECONDS,
+  storeLookupCacheKey,
+  writeDirectoryCache
+} from './store-directory.cache.js';
 import type { ParsedFixedContact, ParsedStoreRow } from './store-directory.parser.js';
 import { normalizeStoreNumber } from './store-directory.parser.js';
 
@@ -118,7 +126,33 @@ const replaceDirectoryData = async (
     );
   });
 
+  // The transaction has committed; advance the cache generation only now.
+  await invalidateStoreDirectoryCaches();
   return stores.length;
+};
+
+const isStoreDirectoryLookupRows = (value: unknown): value is StoreDirectoryLookupRow[] => {
+  if (!Array.isArray(value)) return false;
+  const nullableString = (item: unknown) => item === null || typeof item === 'string';
+  return value.every((item) => {
+    if (!item || typeof item !== 'object') return false;
+    const row = item as Record<string, unknown>;
+    return (
+      typeof row.companyId === 'number' &&
+      typeof row.companySlug === 'string' &&
+      typeof row.companyName === 'string' &&
+      typeof row.storeNumber === 'string' &&
+      nullableString(row.storeName) &&
+      nullableString(row.vpName) &&
+      nullableString(row.vpEmail) &&
+      nullableString(row.directorName) &&
+      nullableString(row.directorEmail) &&
+      nullableString(row.districtManagerName) &&
+      nullableString(row.districtManagerEmail) &&
+      nullableString(row.ownerName) &&
+      nullableString(row.ownerEmail)
+    );
+  });
 };
 
 const findStoresByNumber = async (storeNumber: string): Promise<StoreDirectoryLookupRow[]> => {
@@ -126,6 +160,10 @@ const findStoresByNumber = async (storeNumber: string): Promise<StoreDirectoryLo
   if (!normalized) {
     return [];
   }
+
+  const cacheKey = storeLookupCacheKey(normalized);
+  const cached = await readDirectoryCache(cacheKey, isStoreDirectoryLookupRows);
+  if (cached.value !== null) return cached.value;
 
   const rows = await db
     .select({
@@ -148,6 +186,14 @@ const findStoresByNumber = async (storeNumber: string): Promise<StoreDirectoryLo
     .where(eq(storeDirectory.storeNumber, normalized))
     .orderBy(asc(companies.name));
 
+  await writeDirectoryCache(
+    cacheKey,
+    cached.version,
+    rows,
+    rows.length > 0
+      ? STORE_DIRECTORY_CACHE_TTL_SECONDS
+      : STORE_DIRECTORY_NEGATIVE_CACHE_TTL_SECONDS
+  );
   return rows;
 };
 

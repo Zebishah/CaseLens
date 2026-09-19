@@ -8,6 +8,8 @@ const mockFindStoresByNumber =
   jest.fn<(storeNumber: string) => Promise<StoreDirectoryLookupRow[]>>();
 const mockFindFixedContacts =
   jest.fn<(companyId: number) => Promise<FixedContactLookupRow[]>>();
+const mockReadDirectoryCache = jest.fn(async () => ({ version: 0, value: null as unknown }));
+const mockWriteDirectoryCache = jest.fn(async () => undefined);
 
 await jest.unstable_mockModule(
   '../../../src/modules/store-directory/store-directory.repository.js',
@@ -16,6 +18,16 @@ await jest.unstable_mockModule(
       findStoresByNumber: mockFindStoresByNumber,
       findFixedContacts: mockFindFixedContacts
     }
+  })
+);
+await jest.unstable_mockModule(
+  '../../../src/modules/store-directory/store-directory.cache.js',
+  () => ({
+    readDirectoryCache: mockReadDirectoryCache,
+    writeDirectoryCache: mockWriteDirectoryCache,
+    ccRecipientsCacheKey: (storeNumber: string) => `cc:${storeNumber}`,
+    CC_RECIPIENT_CACHE_TTL_SECONDS: 600,
+    CC_RECIPIENT_NEGATIVE_CACHE_TTL_SECONDS: 45
   })
 );
 
@@ -53,6 +65,7 @@ describe('CC recipient duplicate-store resolution', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFindFixedContacts.mockResolvedValue([]);
+    mockReadDirectoryCache.mockResolvedValue({ version: 0, value: null });
   });
 
   it('keeps existing behavior when the store number has one match', async () => {
@@ -142,5 +155,65 @@ describe('CC recipient duplicate-store resolution', () => {
       companyName: null,
       recipients: []
     });
+  });
+
+  it('returns cached CC candidates without querying the directory again', async () => {
+    const cachedStore = store(1, 'northwind-bakery', 'Northwind Bakery', 'dm@northwind.co');
+    mockReadDirectoryCache.mockResolvedValue({
+      version: 4,
+      value: {
+        matches: [
+          {
+            store: cachedStore,
+            recipients: [
+              {
+                name: 'District Manager',
+                email: 'dm@northwind.co',
+                role: 'District Manager',
+                source: 'store'
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    const result = await resolveWithSender('413', 'sender@northwind.co');
+
+    expect(result.status).toBe('ok');
+    expect(result.recipients).toEqual([
+      expect.objectContaining({ email: 'dm@northwind.co' })
+    ]);
+    expect(mockFindStoresByNumber).not.toHaveBeenCalled();
+    expect(mockFindFixedContacts).not.toHaveBeenCalled();
+  });
+
+  it('caches a computed CC candidate after a database miss', async () => {
+    mockFindStoresByNumber.mockResolvedValue([
+      store(1, 'northwind-bakery', 'Northwind Bakery', 'dm@northwind.co')
+    ]);
+
+    await resolveWithSender('413');
+
+    expect(mockWriteDirectoryCache).toHaveBeenCalledWith(
+      'cc:413',
+      0,
+      expect.objectContaining({ matches: [expect.objectContaining({ store: expect.any(Object) })] }),
+      600
+    );
+  });
+
+  it('briefly caches a store-number miss for CC recipient lookups', async () => {
+    mockFindStoresByNumber.mockResolvedValue([]);
+
+    const result = await resolveWithSender('missing-store');
+
+    expect(result.status).toBe('not_found');
+    expect(mockWriteDirectoryCache).toHaveBeenCalledWith(
+      'cc:missing-store',
+      0,
+      { matches: [] },
+      45
+    );
   });
 });

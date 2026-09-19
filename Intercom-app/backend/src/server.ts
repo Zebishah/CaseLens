@@ -3,7 +3,7 @@ import { env } from './config/env.config.js';
 import { logger } from './config/logger.config.js';
 import { pool } from './database/connection.js';
 import { ensureRequiredApplicationSchema } from './database/startup-schema.js';
-import { getSharedRedis } from './config/redis.config.js';
+import { closeSharedRedis } from './config/redis.config.js';
 import { shouldStartQueueWorkers } from './config/job-processing.js';
 import { ingestionService } from './modules/ingestion/ingestion.service.js';
 import { demoSessionService } from './modules/demo/demo-session.service.js';
@@ -100,8 +100,7 @@ if (env.NODE_ENV !== 'test') {
 const shutdown = async (signal: string): Promise<void> => {
   logger.info('[process] Graceful shutdown started', { signal });
   server?.close();
-  const redis = getSharedRedis();
-  await Promise.allSettled([pool.end(), redis ? redis.quit() : Promise.resolve()]);
+  await Promise.allSettled([pool.end(), closeSharedRedis()]);
   process.exit(0);
 };
 

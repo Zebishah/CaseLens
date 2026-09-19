@@ -9,6 +9,13 @@ import {
   extractEmailDomain,
   isOrganizationalEmailDomain
 } from '../employee/employee.email-domain.util.js';
+import {
+  ccRecipientsCacheKey,
+  CC_RECIPIENT_CACHE_TTL_SECONDS,
+  CC_RECIPIENT_NEGATIVE_CACHE_TTL_SECONDS,
+  readDirectoryCache,
+  writeDirectoryCache
+} from './store-directory.cache.js';
 
 export type CcRecipient = {
   name: string;
@@ -159,6 +166,72 @@ export const buildCcRecipientsForStore = async (
   return recipients;
 };
 
+type CcCandidate = { store: StoreDirectoryLookupRow; recipients: CcRecipient[] };
+type CcCandidateCache = { matches: CcCandidate[] };
+
+const isCcCandidateCache = (value: unknown): value is CcCandidateCache => {
+  if (!value || typeof value !== 'object' || !('matches' in value) || !Array.isArray(value.matches)) {
+    return false;
+  }
+  const nullableString = (item: unknown) => item === null || typeof item === 'string';
+  return value.matches.every((candidate) => {
+    if (!candidate || typeof candidate !== 'object' || !('store' in candidate) || !('recipients' in candidate)) {
+      return false;
+    }
+    const { store, recipients } = candidate;
+    if (!store || typeof store !== 'object' || !Array.isArray(recipients)) return false;
+    const row = store as Record<string, unknown>;
+    const validStore =
+      typeof row.companyId === 'number' &&
+      typeof row.companySlug === 'string' &&
+      typeof row.companyName === 'string' &&
+      typeof row.storeNumber === 'string' &&
+      nullableString(row.storeName) &&
+      nullableString(row.vpName) &&
+      nullableString(row.vpEmail) &&
+      nullableString(row.directorName) &&
+      nullableString(row.directorEmail) &&
+      nullableString(row.districtManagerName) &&
+      nullableString(row.districtManagerEmail) &&
+      nullableString(row.ownerName) &&
+      nullableString(row.ownerEmail);
+    const validRecipients = recipients.every((recipient) => {
+      if (!recipient || typeof recipient !== 'object') return false;
+      const item = recipient as Record<string, unknown>;
+      return (
+        typeof item.name === 'string' &&
+        typeof item.email === 'string' &&
+        typeof item.role === 'string' &&
+        (item.source === 'fixed' || item.source === 'store')
+      );
+    });
+    return validStore && validRecipients;
+  });
+};
+
+const getCcCandidates = async (storeNumber: string): Promise<CcCandidate[]> => {
+  const cacheKey = ccRecipientsCacheKey(storeNumber);
+  const cached = await readDirectoryCache(cacheKey, isCcCandidateCache);
+  if (cached.value !== null) return cached.value.matches;
+
+  const stores = await storeDirectoryRepository.findStoresByNumber(storeNumber);
+  const matches = await Promise.all(
+    stores.map(async (store) => ({
+      store,
+      recipients: await buildCcRecipientsForStore(store)
+    }))
+  );
+  await writeDirectoryCache(
+    cacheKey,
+    cached.version,
+    { matches },
+    matches.length > 0
+      ? CC_RECIPIENT_CACHE_TTL_SECONDS
+      : CC_RECIPIENT_NEGATIVE_CACHE_TTL_SECONDS
+  );
+  return matches;
+};
+
 export const resolveCcRecipientsForStoreNumber = async (
   storeNumber: string | null | undefined,
   senderEmail?: string | null
@@ -175,7 +248,8 @@ export const resolveCcRecipientsForStoreNumber = async (
   }
 
   try {
-    const matches = await storeDirectoryRepository.findStoresByNumber(normalized);
+    const candidates = await getCcCandidates(normalized);
+    const matches = candidates.map(({ store }) => store);
     if (matches.length === 0) {
       return {
         status: 'not_found',
@@ -187,8 +261,7 @@ export const resolveCcRecipientsForStoreNumber = async (
     }
 
     if (matches.length === 1) {
-      const store = matches[0]!;
-      const recipients = await buildCcRecipientsForStore(store);
+      const { store, recipients } = candidates[0]!;
 
       return {
         status: 'ok',
@@ -200,12 +273,6 @@ export const resolveCcRecipientsForStoreNumber = async (
     }
 
     const senderDomain = extractEmailDomain(senderEmail);
-    const candidates = await Promise.all(
-      matches.map(async (store) => ({
-        store,
-        recipients: await buildCcRecipientsForStore(store)
-      }))
-    );
     const domainMatches =
       senderDomain && isOrganizationalEmailDomain(senderDomain)
         ? candidates.filter(({ recipients }) =>

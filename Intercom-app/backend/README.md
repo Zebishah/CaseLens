@@ -20,9 +20,9 @@ The API listens on `http://localhost:3002` by default. Interactive API documenta
 
 - `JOB_PROCESSING_MODE=inline`: processes work in the API process and does not require Redis. This is the recommended low-cost demo configuration.
 - `JOB_PROCESSING_MODE=bullmq`: dispatches jobs to the retained BullMQ implementation. It requires `REDIS_URL`; workers start only when `RUN_WORKERS=true`.
-- `JOB_PROCESSING_MODE=apify`: persists revision-aware Actor dispatch records and starts the private HR Actor asynchronously. It requires `APIFY_API_TOKEN` and `APIFY_ACTOR_ID`, but does not connect to Redis or start BullMQ workers.
+- `JOB_PROCESSING_MODE=apify`: persists revision-aware Actor dispatch records and starts the private HR Actor asynchronously. It requires `APIFY_API_TOKEN` and `APIFY_ACTOR_ID`, and does not start BullMQ workers. If `REDIS_URL` is set, the API uses Redis only for distributed rate limiting and ephemeral store-directory/CC caches.
 
-`RUN_API` and `RUN_WORKERS` control which process roles start. The production background path is Render API plus private, on-demand Apify Actors (`JOB_PROCESSING_MODE=apify`, `RUN_API=true`, `RUN_WORKERS=false`). BullMQ/Redis is a supported alternative; inline mode is for local, fallback, and demo execution. Follow [Apify deployment and smoke testing](../../docs/APIFY_DEPLOYMENT.md) for Actor setup.
+`RUN_API` and `RUN_WORKERS` control which process roles start. The production background path is Render API plus private, on-demand Apify Actors (`JOB_PROCESSING_MODE=apify`, `RUN_API=true`, `RUN_WORKERS=false`). Configure `REDIS_URL` with the Upstash `rediss://` URL for shared API rate limits and short-lived directory/CC caches. PostgreSQL remains authoritative; when Redis is absent or unavailable, the API uses local rate-limit counters and direct PostgreSQL reads. BullMQ/Redis remains a supported worker alternative; inline mode is for local, fallback, and demo execution. Follow [Apify deployment and smoke testing](../../docs/APIFY_DEPLOYMENT.md) for Actor setup.
 
 The BullMQ worker architecture remains available and tested as an alternative deployment. Inline mode remains the local/fallback path.
 

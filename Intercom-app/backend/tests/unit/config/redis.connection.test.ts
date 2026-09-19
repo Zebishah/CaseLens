@@ -1,4 +1,7 @@
-import { parseRedisUrlToOptions } from '../../../src/config/redis.connection.js';
+import {
+  buildRedisClientOptions,
+  parseRedisUrlToOptions
+} from '../../../src/config/redis.connection.js';
 
 describe('redis.connection', () => {
   it('parses local redis urls for BullMQ', () => {
@@ -19,6 +22,19 @@ describe('redis.connection', () => {
       username: 'default',
       password: 'secret!',
       tls: {}
+    });
+  });
+
+  it('uses bounded lazy settings for API cache and rate-limit clients', () => {
+    expect(buildRedisClientOptions('rediss://default:secret@example.upstash.io:6379')).toMatchObject({
+      host: 'example.upstash.io',
+      tls: {},
+      maxRetriesPerRequest: 1,
+      enableReadyCheck: true,
+      enableOfflineQueue: true,
+      lazyConnect: true,
+      connectTimeout: 3_000,
+      commandTimeout: 3_000
     });
   });
 });

@@ -43,9 +43,9 @@ flowchart LR
   C --> J[Intercom Canvas and dashboard]
 ```
 
-The production architecture runs the API on Render and starts private Apify Actor runs for background jobs. The webhook persists the conversation and durable dispatch state before returning; AI processing continues in the Actor. Actors load case content from PostgreSQL and call the same intelligence handlers as the optional BullMQ worker. PostgreSQL remains the source of truth.
+The production architecture runs the API on Render and starts private Apify Actor runs for background jobs. The webhook persists the conversation and durable dispatch state before returning; AI processing continues in the Actor. Actors load case content from PostgreSQL and call the same intelligence handlers as the optional BullMQ worker. PostgreSQL remains the source of truth. When configured, Upstash Redis provides shared API rate-limit counters and short-lived store-directory/CC-routing caches; it holds no business source of truth.
 
-The repository supports three modes: `inline` for local/fallback execution, `bullmq` for the retained Redis worker architecture, and `apify` for on-demand execution. BullMQ still has its queue, worker, retries, exponential backoff, revision-aware IDs, worker tests, store-directory schedule, and optional Resend worker. It is an alternative deployment path; do not describe it as the live production path when Apify is selected.
+The repository supports three modes: `inline` for local/fallback execution, `bullmq` for the retained Redis worker architecture, and `apify` for on-demand execution. BullMQ still has its queue, worker, retries, exponential backoff, revision-aware IDs, worker tests, store-directory schedule, and optional Resend worker. It is an alternative deployment path; do not describe it as the live production path when Apify is selected. Production keeps `JOB_PROCESSING_MODE=apify`; Redis does not run workers in that mode.
 
 On-demand Actors keep long AI work outside the webhook request and do not require a continuously running Redis consumer in Apify mode. Durable ingestion and revision-aware dispatch are retained. See [Apify deployment](docs/APIFY_DEPLOYMENT.md) for the Actor contract, database setup, smoke test, and operational recovery procedure.
 

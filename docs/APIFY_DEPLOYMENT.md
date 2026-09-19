@@ -86,7 +86,7 @@ The ordered migration includes `intelligence_actor_runs` and `refresh_sessions`.
 5. Manually run `{"type":"intelligence","conversationId":<safe test ID>,"intercomId":"<test Intercom ID>","skipSync":true,"forceReprocess":false,"skipPeerRefresh":true}` against an approved test/demo conversation. Confirm the Actor output contains only safe metadata and the conversation reaches `READY` in the HR application.
 6. Create a scoped API token with permission to run the HR Actor. Configure credentials through the platform's secret settings.
 7. Apply `npm run db:migrate` to the selected production database after reviewing the migration URL.
-8. Configure Render with `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`, plus the Apify values. Keep `REDIS_URL` optional and unused in this mode.
+8. Configure Render with `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`, plus the Apify values. Set `REDIS_URL` to the Upstash `rediss://` URL to enable shared API rate limiting and ephemeral directory/CC caches; leave it unset to use process-local rate limits and direct PostgreSQL reads. It never starts workers in Apify mode.
 9. Deploy Render and send a verified Intercom webhook. Confirm it is acknowledged promptly and an HR Actor run is created.
 10. Confirm the Actor reads the stored conversation and the case becomes intelligence `READY`. Confirm duplicate webhook delivery does not create another normal run for the same revision.
 11. Create an Apify Schedule for `{"type":"recover-pending-outbox","limit":20}` with cron `*/5 * * * *`. Each scheduled run processes one bounded batch and exits. Do not configure a repeat loop inside the Actor.
@@ -96,7 +96,7 @@ Schedule timezone settings should match the intended timezone for `STORE_DIRECTO
 
 ## Retained alternatives and operational choices
 
-- Inline still processes locally and does not require Redis or Apify.
+- Inline still processes locally and does not require Redis or Apify for job execution. If `REDIS_URL` is configured, it is used only for shared rate limits and ephemeral directory/CC caches.
 - BullMQ remains fully available with `JOB_PROCESSING_MODE=bullmq`, `RUN_WORKERS=true`, and `REDIS_URL`; its retries, backoff, concurrency, queues, worker tests, and schedules remain intact.
 - Apify revision dedupe uses `(conversation_id, job_type, source_revision)` for normal intelligence. A force reprocess gets a fresh durable execution key.
 - PostgreSQL session advisory locks serialize active processing for a single conversation across Actor containers. A different conversation uses a different lock key.

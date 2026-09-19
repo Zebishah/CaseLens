@@ -119,7 +119,7 @@ Provide these backend values (never `NEXT_PUBLIC_*`):
 Commands (do not run with production customer data):
 
 1. `cd Intercom-app/backend && npm run db:migrate-intercom-sync && npm run db:migrate-intercom-source-revision` (or `npm run db:push` on a fresh database)
-2. PostgreSQL via `docker compose up -d` in `Intercom-app/backend`; Redis only if `JOB_PROCESSING_MODE=bullmq`
+2. PostgreSQL via `docker compose up -d` in `Intercom-app/backend`; Redis is optional locally unless testing shared rate limits/caches, and required for the BullMQ worker mode
 3. `npm run dev` (API, default `http://localhost:3002`)
 4. BullMQ alternative only: same repo with `RUN_WORKERS=true` (or a second process). Production Apify mode dispatches private Actors on demand.
 5. `cd Intercom-app/web && npm run dev` (`http://localhost:3001`)

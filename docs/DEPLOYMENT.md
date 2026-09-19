@@ -1,6 +1,6 @@
 # Deployment (Render)
 
-Do not provision paid services from this document. Use existing external PostgreSQL. Redis is required only for `JOB_PROCESSING_MODE=bullmq`.
+Do not provision paid services from this document. Use existing external PostgreSQL. Upstash Redis is optional for local/fallback operation and is recommended for production shared rate limiting and directory caches. It does not run workers in Apify mode.
 
 ## Production API service
 
@@ -10,9 +10,16 @@ Do not provision paid services from this document. Use existing external Postgre
 - Supported alternative: `JOB_PROCESSING_MODE=bullmq RUN_WORKERS=true` plus `REDIS_URL`
 - Local/fallback/demo mode: `JOB_PROCESSING_MODE=inline`
 - Health: `GET /health`
-- Readiness: `GET /ready` (PostgreSQL; Redis only when `JOB_PROCESSING_MODE=bullmq`)
+- Readiness: `GET /ready` (reports safe Redis configured/reachable flags; Redis is required for readiness only when `JOB_PROCESSING_MODE=bullmq`)
 
-PostgreSQL is the source of truth. Redis is not required for Apify or inline mode and is used by the optional BullMQ worker path.
+PostgreSQL is the source of truth. In production, keep `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`. Configure the Upstash connection URL as `REDIS_URL` on the Render API service to enable shared API rate-limit counters and short-lived store routing/CC caches. Use the provider's `rediss://` URL; credentials remain in Render environment settings and must not be committed. With no `REDIS_URL`, the API uses process-local memory rate limits and reads directory metadata directly from PostgreSQL. During a Redis outage, rate limits temporarily become per-instance and directory/CC caches bypass Redis.
+
+Deployment sequence:
+
+1. Create or select an Upstash Redis database in the deployment region and copy its Redis connection URL (`rediss://...`).
+2. Add that value as the secret `REDIS_URL` in the Render API service environment. Keep `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`.
+3. Deploy the API using the existing Render build and start commands below; no database migration or worker service is needed for Redis.
+4. Check `GET /ready` after deploy. Confirm `redisConfigured: true` and `redisReachable: true`; the response does not expose the URL or credentials.
 
 Set `INTERCOM_ENABLED=false` and `BOX_SYNC_ENABLED=false` unless you are connecting the Developer Workspace. Set `LLM_MODE=fixture` for deterministic samples, or `LLM_MODE=live` plus `GEMINI_API_KEY` for arbitrary custom cases.
 

@@ -26,6 +26,7 @@ const { env } = await import('../../../src/config/env.config.js');
 
 describe('healthService readiness', () => {
   beforeEach(() => {
+    env.REDIS_URL = undefined;
     mockQuery.mockReset();
     mockQuery.mockResolvedValue(undefined);
     mockGetSharedRedis.mockReset();
@@ -45,12 +46,15 @@ describe('healthService readiness', () => {
     expect(result).toEqual({
       status: 'ready',
       postgres: 'up',
-      redis: 'disabled'
+      redis: 'disabled',
+      redisConfigured: false,
+      redisReachable: false
     });
     expect(mockGetSharedRedis).not.toHaveBeenCalled();
   });
 
   test('bullmq mode requires a Redis ping', async () => {
+    env.REDIS_URL = 'rediss://default:secret@example.upstash.io:6379';
     mockIsBullmq.mockReturnValue(true);
     mockGetSharedRedis.mockReturnValue({
       ping: async () => 'PONG'
@@ -61,17 +65,25 @@ describe('healthService readiness', () => {
     expect(result).toEqual({
       status: 'ready',
       postgres: 'up',
-      redis: 'up'
+      redis: 'up',
+      redisConfigured: true,
+      redisReachable: true
     });
     expect(mockGetSharedRedis).toHaveBeenCalled();
   });
 
-  test('apify mode treats Redis as disabled and exposes only safe flags', async () => {
+  test('apify mode treats unconfigured Redis as disabled and exposes only safe flags', async () => {
     mockIsApify.mockReturnValue(true);
     env.APIFY_API_TOKEN = 'unit-test-token';
     env.APIFY_ACTOR_ID = 'owner~hr-intelligence-worker';
     const result = await healthService.readiness();
-    expect(result).toEqual({ status: 'ready', postgres: 'up', redis: 'disabled' });
+    expect(result).toEqual({
+      status: 'ready',
+      postgres: 'up',
+      redis: 'disabled',
+      redisConfigured: false,
+      redisReachable: false
+    });
     expect(mockGetSharedRedis).not.toHaveBeenCalled();
     expect(healthService.processFlags()).toMatchObject({
       jobProcessingMode: expect.any(String),
@@ -79,5 +91,23 @@ describe('healthService readiness', () => {
       workersEnabled: false
     });
     expect(JSON.stringify(healthService.processFlags())).not.toContain('token');
+  });
+
+  test('Apify stays ready when its optional Redis cache layer is unreachable', async () => {
+    mockIsApify.mockReturnValue(true);
+    env.REDIS_URL = 'rediss://default:secret@example.upstash.io:6379';
+    env.APIFY_API_TOKEN = 'unit-test-token';
+    env.APIFY_ACTOR_ID = 'owner~hr-intelligence-worker';
+    mockGetSharedRedis.mockReturnValue({ ping: async () => { throw new Error('offline'); } });
+
+    const result = await healthService.readiness();
+
+    expect(result).toEqual({
+      status: 'ready',
+      postgres: 'up',
+      redis: 'down',
+      redisConfigured: true,
+      redisReachable: false
+    });
   });
 });

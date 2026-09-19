@@ -8,7 +8,7 @@ const usesTls = (redisUrl: string): boolean =>
 
 const decodeRedisCredential = (value: string): string => decodeURIComponent(value);
 
-export const parseRedisUrlToOptions = (redisUrl: string): RedisOptions => {
+const parseRedisUrl = (redisUrl: string): Pick<RedisOptions, 'host' | 'port' | 'username' | 'password' | 'tls'> => {
   const normalized = redisUrl
     .replace(/^rediss:\/\//, 'https://')
     .replace(/^redis:\/\//, 'http://');
@@ -19,27 +19,47 @@ export const parseRedisUrlToOptions = (redisUrl: string): RedisOptions => {
     port: url.port ? Number(url.port) : 6379,
     ...(url.username ? { username: decodeRedisCredential(url.username) } : {}),
     ...(url.password ? { password: decodeRedisCredential(url.password) } : {}),
-    maxRetriesPerRequest: null,
-    enableReadyCheck: false,
-    connectTimeout: 5_000,
-    retryStrategy: (times) => Math.min(times * 200, 2_000),
     ...(usesTls(redisUrl) ? { tls: {} } : {})
   };
 };
 
-export const buildRedisOptions = (redisUrl: string): RedisOptions => parseRedisUrlToOptions(redisUrl);
+/** BullMQ needs an unlimited per-request retry setting and disables ready checks. */
+export const parseRedisUrlToOptions = (redisUrl: string): RedisOptions => ({
+  ...parseRedisUrl(redisUrl),
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  connectTimeout: 5_000,
+  retryStrategy: (times) => Math.min(times * 200, 2_000)
+});
+
+/** Bounded, lazy connection settings for API cache and rate-limit traffic. */
+export const buildRedisClientOptions = (redisUrl: string): RedisOptions => ({
+  ...parseRedisUrl(redisUrl),
+  maxRetriesPerRequest: 1,
+  enableReadyCheck: true,
+  enableOfflineQueue: true,
+  lazyConnect: true,
+  connectTimeout: 3_000,
+  commandTimeout: 3_000,
+  retryStrategy: (times) => Math.min(250 * 2 ** Math.min(times - 1, 4), 5_000)
+});
 
 export const createRedisClient = (label: string, redisUrl: string): Redis => {
-  const client = new Redis(buildRedisOptions(redisUrl));
+  const client = new Redis(buildRedisClientOptions(redisUrl));
+  let connectedOnce = false;
+  let lastErrorLoggedAt = 0;
 
   client.on('error', (error) => {
+    if (Date.now() - lastErrorLoggedAt < 60_000) return;
+    lastErrorLoggedAt = Date.now();
     logger.error(`[redis:${label}] Connection error`, {
-      message: error.message,
       code: (error as NodeJS.ErrnoException).code
     });
   });
 
   client.on('connect', () => {
+    if (connectedOnce) return;
+    connectedOnce = true;
     logger.info(`[redis:${label}] Connected`);
   });
 
@@ -51,5 +71,5 @@ export const getBullMqConnection = (): RedisOptions => {
     throw new Error('REDIS_URL is required when JOB_PROCESSING_MODE=bullmq');
   }
 
-  return buildRedisOptions(env.REDIS_URL);
+  return parseRedisUrlToOptions(env.REDIS_URL);
 };

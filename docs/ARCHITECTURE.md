@@ -56,7 +56,11 @@ Stored conversation
 
 Intercom Inbox and Canvas remain the operator workspace. The Next.js application presents persisted cases, directory context, reviewer access, architecture, and read-only operational aggregates. Administrative recovery controls are separate and require the admin role.
 
-PostgreSQL stores conversations, messages, identity links, intelligence snapshots, inbound events, outbox records, Actor runs, refresh sessions, and application logs. Redis is needed only by the BullMQ execution mode.
+PostgreSQL stores conversations, messages, identity links, intelligence snapshots, inbound events, outbox records, Actor runs, refresh sessions, and application logs. It remains the durable source of truth.
+
+When `REDIS_URL` is configured, Upstash Redis is an ephemeral infrastructure layer for distributed API rate limiting and cache-aside reads of store-directory routing metadata and CC-recipient candidates. Directory caches are version-invalidated after successful PostgreSQL commits and expire after 10 minutes; negative lookups expire after 45 seconds. Redis does not store conversation bodies, HR case details, sessions, or durable job state. If Redis is unavailable, rate limits fall back to per-instance in-memory counters and directory/CC lookups use PostgreSQL directly. Redis failure does not start a BullMQ worker or change `JOB_PROCESSING_MODE=apify`.
+
+BullMQ remains a separately supported queue/worker option. Its worker connections use BullMQ-specific settings; normal API Redis commands use bounded request retries and lazy shared connections. Set `REDIS_URL` to the Upstash Redis connection URL (including `rediss://` TLS) on the Render API service to enable shared counters and caches.
 
 ## Setup and migrations
 

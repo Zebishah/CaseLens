@@ -11,9 +11,12 @@ export const healthService = {
     status: 'ready' | 'starting';
     postgres: 'up' | 'down';
     redis: 'up' | 'down' | 'disabled';
+    redisConfigured: boolean;
+    redisReachable: boolean;
   }> {
     let postgres: 'up' | 'down' = 'down';
     let redisStatus: 'up' | 'down' | 'disabled' = 'disabled';
+    const redisConfigured = Boolean(env.REDIS_URL);
 
     try {
       const { pool } = await import('../../database/connection.js');
@@ -23,7 +26,7 @@ export const healthService = {
       postgres = 'down';
     }
 
-    if (isBullmqJobProcessing()) {
+    if (redisConfigured) {
       try {
         const client = getSharedRedis();
         if (!client) {
@@ -38,14 +41,16 @@ export const healthService = {
     }
 
     const apifyConfigured = Boolean(env.APIFY_API_TOKEN && env.APIFY_ACTOR_ID);
-    const ready =
-      postgres === 'up' &&
-      (redisStatus === 'up' || redisStatus === 'disabled') &&
+    const redisRequiredForWorkers = isBullmqJobProcessing();
+    const ready = postgres === 'up' &&
+      (!redisRequiredForWorkers || redisStatus === 'up') &&
       (!isApifyJobProcessing() || apifyConfigured);
     return {
       status: ready ? 'ready' : 'starting',
       postgres,
-      redis: redisStatus
+      redis: redisStatus,
+      redisConfigured,
+      redisReachable: redisStatus === 'up'
     };
   },
 
