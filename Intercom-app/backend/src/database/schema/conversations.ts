@@ -53,6 +53,7 @@ export const conversations = pgTable(
   (table) => [
     index('conversations_employee_identity_id_idx').on(table.employeeIdentityId),
     index('conversations_intelligence_status_idx').on(table.intelligenceStatus),
+    index('conversations_created_at_idx').on(table.createdAt),
     index('conversations_reporter_store_number_idx').on(table.reporterStoreNumber),
     index('conversations_reporter_company_domain_idx').on(table.reporterCompanyDomain)
   ]

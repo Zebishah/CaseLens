@@ -21,6 +21,13 @@ const overview = {
   recentCases: []
 };
 
+const trendBuckets = Array.from({ length: 30 }, (_, index) => ({
+  date: new Date(Date.UTC(2026, 7, 22 + index)).toISOString().slice(0, 10),
+  casesCreated: index === 29 ? 1 : 0,
+  completed: index === 29 ? 1 : 0,
+  failed: 0
+}));
+
 const caseRow = {
   id: 42,
   source: 'demo',
@@ -60,7 +67,7 @@ async function json(route: Route, data: unknown, status = 200): Promise<void> {
   await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify({ success: status < 400, data }) });
 }
 
-async function mockApi(page: Page, options: { casesStatus?: number } = {}): Promise<void> {
+async function mockApi(page: Page, options: { casesStatus?: number; accessStatus?: unknown } = {}): Promise<void> {
   await page.route('**/ready', (route) => json(route, { status: 'ready' }));
   await page.route('**/api/auth/demo', (route) => json(route, {
     token: demoToken,
@@ -69,9 +76,20 @@ async function mockApi(page: Page, options: { casesStatus?: number } = {}): Prom
     access: 'demo'
   }));
   await page.route('**/api/cases/overview', (route) => json(route, overview));
+  await page.route('**/api/demo/cases**', (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (pathname === '/api/demo/cases/42') return json(route, caseDetail);
+    return json(route, { items: [caseRow], total: 1 });
+  });
   await page.route('**/api/operations/reviewer-summary', (route) => json(route, {
     jobProcessingMode: 'apify', pendingOutbox: 0, recoveryStatus: 'clear', actorRuns: { queued: 0, running: 0, completed: 1, failed: 0, retryableFailures: 0, latestFailureCode: null, recentRunDurationMs: 3000 }
   }));
+  await page.route('**/api/access-requests/me', (route) => json(route, options.accessStatus ?? null));
+  await page.route('**/api/access-requests', (route) => {
+    if (new URL(route.request().url()).pathname === '/api/access-requests/me') return json(route, options.accessStatus ?? null);
+    if (route.request().method() === 'POST') return json(route, { received: true }, 201);
+    return json(route, []);
+  });
   await page.route('**/api/directory', (route) => json(route, {
     companies: [{ name: 'Northwind Bakery', slug: 'northwind-bakery' }],
     stores: [{ storeNumber: '1042', storeName: 'Harbor Street', districtManagerName: 'Sam Patel', vpName: 'Mina Patel' }],
@@ -88,6 +106,7 @@ async function mockApi(page: Page, options: { casesStatus?: number } = {}): Prom
     relatedTruePositives: 1, relatedFalsePositives: 0, relatedFalseNegatives: 0, lowConfidenceRate: 0, lowConfidenceCount: 0,
     manualReviewRate: 0, manualReviewCount: 0, cases: [{ id: 'fixture-1', subject: 'Leave — Jordan Hale', expectedEmployee: 'Jordan Hale', predictedEmployee: 'Jordan Hale', expectedCategory: 'leave', predictedCategory: 'leave', nameMatch: true, categoryMatch: true, inFixtureDirectory: true, flaggedForReview: false }]
   }));
+  await page.route('**/api/cases/trends**', (route) => json(route, { range: new URL(route.request().url()).searchParams.get('range') ?? '30d', startDate: '2026-08-22', endDate: '2026-09-20', buckets: trendBuckets }));
   await page.route('**/api/demo/sessions', (route) => json(route, {
     session: { token: 'demo-session-token', receivingAddress: 'demo@example.test', expiresAt: '2026-09-20T09:00:00.000Z', remainingCases: 3, remainingEmails: 3, remainingLiveLlm: 0 },
     scenarios: [{ id: 'leave', title: 'Leave request', summary: 'A synthetic leave request.' }],
@@ -97,6 +116,7 @@ async function mockApi(page: Page, options: { casesStatus?: number } = {}): Prom
   await page.route('**/api/cases**', (route) => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === '/api/cases/overview') return json(route, overview);
+    if (pathname === '/api/cases/trends') return json(route, { range: new URL(route.request().url()).searchParams.get('range') ?? '30d', startDate: '2026-08-22', endDate: '2026-09-20', buckets: trendBuckets });
     if (pathname === '/api/cases/42') return json(route, caseDetail);
     if (options.casesStatus && options.casesStatus >= 400) return route.fulfill({ status: options.casesStatus, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'Case service unavailable' }) });
     return json(route, { items: [caseRow], total: 1 });
@@ -135,6 +155,10 @@ test('reviewer demo opens the overview and case intelligence flow', async ({ pag
   await mockApi(page);
   await enterDemo(page);
   await expect(page.getByText('Demo Reviewer')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Volume and processing outcomes over time' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cases created' })).toBeVisible();
+  await page.getByRole('button', { name: '7 days' }).click();
+  await expect(page.getByRole('button', { name: '7 days' })).toHaveAttribute('aria-pressed', 'true');
   const overviewA11y = await new AxeBuilder({ page }).analyze();
   expect(overviewA11y.violations.filter((violation) => violation.impact === 'critical')).toEqual([]);
 
@@ -155,8 +179,28 @@ test('recruiter demo exposes the read-only product surface and hides access mana
     await expect(sidebar.getByRole('link', { name: label })).toBeVisible();
   }
   await expect(sidebar.getByRole('link', { name: 'Access management' })).toHaveCount(0);
-  await expect(sidebar.getByRole('link', { name: 'Reviewer access' })).toHaveCount(0);
+  await expect(sidebar.getByRole('link', { name: 'Reviewer access' })).toBeVisible();
   await expect(page.getByText('Recruiter demo · Read-only')).toBeVisible();
+
+  await expect(page.getByRole('button', { name: 'Open Intercom inbox' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Intercom inbox' }).click();
+  await expect(page.getByRole('dialog', { name: 'Connect an Intercom workspace' })).toBeVisible();
+  await expect(page.getByText('Never paste Intercom API keys or access tokens here.')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Connect an Intercom workspace' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open Intercom inbox' }).click();
+  await page.getByRole('link', { name: 'Request reviewer access' }).click();
+  await expect(page).toHaveURL(/\/access$/);
+  await expect(page.getByRole('heading', { name: 'Request a personal reviewer account.' })).toBeVisible();
+  await expect(page.getByLabel('Intercom Workspace ID')).toBeVisible();
+  await page.getByLabel('Full name').fill('Demo Recruiter');
+  await page.getByLabel('Work email').fill('demo.recruiter@example.test');
+  await page.getByLabel('Intercom Workspace ID').fill('workspace_demo_123');
+  await page.getByLabel('Reason for access').fill('I am reviewing this portfolio and need the connected demo workflow.');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Request reviewer access' }).click();
+  await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible();
+  await expect(page.getByText('pending', { exact: true })).toBeVisible();
 
   await page.goto('/directory');
   await expect(page.getByRole('heading', { name: 'Directory intelligence' })).toBeVisible();
@@ -179,7 +223,8 @@ test('recruiter demo exposes the read-only product surface and hides access mana
   await page.goto('/access-requests');
   await expect(page).toHaveURL(/\/overview$/);
   await page.goto('/access');
-  await expect(page).toHaveURL(/\/overview$/);
+  await expect(page).toHaveURL(/\/access$/);
+  await expect(page.getByRole('heading', { name: 'Request a personal reviewer account.' })).toBeVisible();
 });
 
 test('recruiter demo is redirected away from access management', async ({ page }) => {
@@ -187,6 +232,15 @@ test('recruiter demo is redirected away from access management', async ({ page }
   await enterDemo(page);
   await page.goto('/access-requests');
   await expect(page).toHaveURL(/\/overview$/);
+});
+
+test('approved reviewer status explains when no safe inbox deep link is configured', async ({ page }) => {
+  await mockApi(page, { accessStatus: { status: 'approved', workspaceId: 'workspace_demo_123', connectedInboxUrl: null } });
+  await enterDemo(page);
+  await page.getByRole('button', { name: 'Open Intercom inbox' }).click();
+  await expect(page.getByRole('dialog', { name: 'Connect an Intercom workspace' })).toBeVisible();
+  await expect(page.getByText('Approved', { exact: true })).toBeVisible();
+  await expect(page.getByText('this environment does not have a safe direct inbox link configured', { exact: false })).toBeVisible();
 });
 
 test('admin navigation keeps access and maintenance destinations', async ({ page }) => {

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, api } from '../lib/api';
 import { DashboardHero, type DashboardIconName } from './dashboard/ui';
 import {
@@ -25,6 +25,13 @@ type NavGroup = {
     demoOnly?: boolean;
     hideForDemo?: boolean;
   }>;
+};
+
+type ReviewerAccessStatus = {
+  status: 'pending' | 'approved' | 'invited' | 'declined' | 'expired';
+  workspaceId?: string | null;
+  reviewNote?: string | null;
+  connectedInboxUrl?: string | null;
 };
 
 const navGroups: NavGroup[] = [
@@ -54,7 +61,7 @@ const navGroups: NavGroup[] = [
     label: 'Product tour & access',
     items: [
       { href: '/demo', label: 'Product walkthrough', hint: 'Video and guided tour', icon: 'demo' },
-      { href: '/access', label: 'Reviewer access', hint: 'Controlled workspace invitation', icon: 'access', hideForDemo: true }
+      { href: '/access', label: 'Reviewer access', hint: 'Controlled workspace invitation', icon: 'access' }
     ]
   }
 ];
@@ -104,6 +111,9 @@ export function AppShell({
   const [user, setUser] = useState<AdminUser | null>(null);
   const [demoMode, setDemoMode] = useState(false);
   const [open, setOpen] = useState(false);
+  const [inboxModalOpen, setInboxModalOpen] = useState(false);
+  const [reviewerAccess, setReviewerAccess] = useState<ReviewerAccessStatus | null>(null);
+  const [reviewerAccessLoading, setReviewerAccessLoading] = useState(false);
 
   const restore = useCallback(async () => {
     setStatus('checking');
@@ -164,7 +174,7 @@ export function AppShell({
     ((!isAdmin && !isDemoRecruiterMode) && ['/operations', '/evaluation', '/access-requests'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
     )) ||
-    (isDemoRecruiterMode && ['/access', '/access-requests'].some(
+    (isDemoRecruiterMode && ['/access-requests'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
     ));
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -175,6 +185,22 @@ export function AppShell({
       router.replace('/overview');
     }
   }, [restrictedPath, router, status]);
+
+  useEffect(() => {
+    if (!inboxModalOpen || !isDemoRecruiterMode) return;
+    let active = true;
+    setReviewerAccessLoading(true);
+    api.get<ReviewerAccessStatus | null>('/api/access-requests/me')
+      .then((result) => { if (active) setReviewerAccess(result); })
+      .catch(() => { if (active) setReviewerAccess(null); })
+      .finally(() => { if (active) setReviewerAccessLoading(false); });
+    return () => { active = false; };
+  }, [inboxModalOpen, isDemoRecruiterMode]);
+
+  const openIntercomInbox = () => {
+    setOpen(false);
+    setInboxModalOpen(true);
+  };
 
   if (status !== 'ready' || restrictedPath) {
     return (
@@ -255,6 +281,11 @@ export function AppShell({
                 <span>Open Intercom inbox</span>
                 <span aria-hidden="true">↗</span>
               </a>
+            ) : isDemoRecruiterMode ? (
+              <button type="button" onClick={openIntercomInbox} className="mb-4 flex w-full items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-2.5 text-left text-sm font-medium text-emerald-200 hover:bg-emerald-300/15">
+                <span>Open Intercom inbox</span>
+                <span aria-hidden="true">↗</span>
+              </button>
             ) : null}
             <Link
               href="/"
@@ -315,6 +346,10 @@ export function AppShell({
                   <a href={intercomWorkspaceUrl} target="_blank" rel="noreferrer" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-secondary">
                     Open Intercom inbox ↗
                   </a>
+                ) : isDemoRecruiterMode ? (
+                  <button type="button" onClick={openIntercomInbox} className="mt-2 block w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-secondary">
+                    Open Intercom inbox ↗
+                  </button>
                 ) : null}
                 <Link href="/" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-slate-700">
                   Back to landing page
@@ -340,6 +375,93 @@ export function AppShell({
               {children}
             </div>
           </main>
+        </div>
+      </div>
+      {isDemoRecruiterMode ? (
+        <IntercomOnboardingModal
+          open={inboxModalOpen}
+          loading={reviewerAccessLoading}
+          access={reviewerAccess}
+          onClose={() => setInboxModalOpen(false)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function IntercomOnboardingModal({
+  open,
+  loading,
+  access,
+  onClose
+}: {
+  open: boolean;
+  loading: boolean;
+  access: ReviewerAccessStatus | null;
+  onClose: () => void;
+}) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose, open]);
+
+  if (!open) return null;
+  const statusLabel = access?.status === 'approved' || access?.status === 'invited'
+    ? 'Approved'
+    : access?.status === 'pending'
+      ? 'Pending'
+      : access?.status === 'declined'
+        ? 'Needs update'
+        : access?.status === 'expired'
+          ? 'Expired'
+          : 'Not requested';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-6" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="intercom-onboarding-title" className="max-h-[calc(100vh-3rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-primary/15 bg-white p-6 shadow-2xl md:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="dashboard-section-label">Connected inbox</p>
+            <h2 id="intercom-onboarding-title" className="mt-2 text-2xl font-semibold tracking-tight text-primary">Connect an Intercom workspace</h2>
+          </div>
+          <button ref={closeRef} type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Close</button>
+        </div>
+        <p className="mt-4 text-sm leading-6 text-muted">To use the connected Intercom experience, first create or use a test/demo Intercom workspace. Then provide your workspace identifier through Reviewer Access. Once the access request is approved, HR Intelligence can associate your reviewer account with that workspace.</p>
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Reviewer access status</p><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-primary">{loading ? 'Checking…' : statusLabel}</span></div>
+          <p className="mt-2 text-sm leading-6 text-muted">{loading ? 'Checking your latest reviewer access request.' : access?.status === 'pending' ? 'Your reviewer access request is waiting for approval.' : access?.status === 'approved' || access?.status === 'invited' ? access.connectedInboxUrl ? 'Your reviewer account is connected to the approved Intercom workspace.' : 'Your request is approved, but this environment does not have a safe direct inbox link configured.' : access?.status === 'declined' ? access.reviewNote || 'Your request needs an update. Review the admin note and resubmit if allowed.' : 'No reviewer access request has been submitted yet.'}</p>
+        </div>
+        <ol className="mt-6 grid gap-3 sm:grid-cols-2">
+          {['Create or sign in to a test Intercom workspace.', 'Find the workspace identifier in Intercom.', 'Open Reviewer Access and submit it.', 'Wait for admin approval.', 'Return here to open the connected inbox.'].map((step, index) => <li key={step} className="flex gap-3 rounded-xl border border-slate-200 p-3 text-sm leading-5 text-muted"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">{index + 1}</span><span>{step}</span></li>)}
+        </ol>
+        <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-900"><strong>Never paste Intercom API keys or access tokens here.</strong> Only the workspace identifier is required; provider credentials and webhook secrets stay securely configured on the server.</div>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {access?.connectedInboxUrl ? <a href={access.connectedInboxUrl} target="_blank" rel="noreferrer" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">Open connected inbox ↗</a> : null}
+          <Link href="/access" onClick={onClose} className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">Request reviewer access</Link>
+          <Link href="/architecture" onClick={onClose} className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">Learn how integration works</Link>
         </div>
       </div>
     </div>

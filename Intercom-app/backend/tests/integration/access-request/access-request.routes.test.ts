@@ -6,6 +6,7 @@ import { errorHandler } from '../../../src/middlewares/error.middleware.js';
 const mockSubmit = jest.fn();
 const mockList = jest.fn();
 const mockReview = jest.fn();
+const mockStatus = jest.fn();
 
 await jest.unstable_mockModule(
   '../../../src/modules/access-request/access-request.service.js',
@@ -13,7 +14,8 @@ await jest.unstable_mockModule(
     accessRequestService: {
       submit: mockSubmit,
       list: mockList,
-      review: mockReview
+      review: mockReview,
+      status: mockStatus
     }
   })
 );
@@ -34,6 +36,7 @@ describe('recruiter access request routes', () => {
     mockSubmit.mockReset();
     mockList.mockReset();
     mockReview.mockReset();
+    mockStatus.mockReset();
     mockSubmit.mockResolvedValue({ received: true });
   });
 
@@ -89,5 +92,39 @@ describe('recruiter access request routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toEqual({ success: true, data: [] });
     expect(mockList).toHaveBeenCalledWith('pending');
+  });
+
+  test('rejects malformed workspace identifiers', async () => {
+    const response = await request(app).post('/api/access-requests').send({
+      fullName: 'Amina Khan',
+      workEmail: 'amina@example.com',
+      workspaceId: 'not safe',
+      purpose: 'I am reviewing this project for a full-stack engineering position.',
+      consent: true,
+      website: ''
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(mockSubmit).not.toHaveBeenCalled();
+  });
+
+  test('returns self status only to an authenticated reviewer', async () => {
+    mockStatus.mockResolvedValue({ status: 'pending', workspaceId: 'workspace_demo_123', connectedInboxUrl: null });
+    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer' });
+
+    const response = await request(app).get('/api/access-requests/me').set('Authorization', `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.data).toEqual({ status: 'pending', workspaceId: 'workspace_demo_123', connectedInboxUrl: null });
+    expect(response.body.data).not.toHaveProperty('accessToken');
+    expect(response.body.data).not.toHaveProperty('clientSecret');
+  });
+
+  test('does not allow a reviewer to access the admin queue', async () => {
+    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer' });
+    const response = await request(app).get('/api/access-requests').set('Authorization', `Bearer ${token}`);
+
+    expect(response.statusCode).toBe(403);
+    expect(mockList).not.toHaveBeenCalled();
   });
 });

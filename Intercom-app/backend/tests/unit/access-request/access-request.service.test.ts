@@ -4,6 +4,7 @@ const mockFindPendingByEmail = jest.fn();
 const mockCreate = jest.fn();
 const mockList = jest.fn();
 const mockUpdateStatus = jest.fn();
+const mockFindLatestByEmail = jest.fn();
 
 await jest.unstable_mockModule(
   '../../../src/modules/access-request/access-request.repository.js',
@@ -12,7 +13,8 @@ await jest.unstable_mockModule(
       findPendingByEmail: mockFindPendingByEmail,
       create: mockCreate,
       list: mockList,
-      updateStatus: mockUpdateStatus
+      updateStatus: mockUpdateStatus,
+      findLatestByEmail: mockFindLatestByEmail
     }
   })
 );
@@ -27,6 +29,7 @@ describe('accessRequestService', () => {
     mockCreate.mockReset();
     mockList.mockReset();
     mockUpdateStatus.mockReset();
+    mockFindLatestByEmail.mockReset();
   });
 
   test('normalizes and stores a new request', async () => {
@@ -75,6 +78,22 @@ describe('accessRequestService', () => {
     await expect(accessRequestService.review(4, 'invited')).resolves.toMatchObject({
       status: 'invited'
     });
+  });
+
+  test('returns the latest request status without provider credentials', async () => {
+    mockFindLatestByEmail.mockResolvedValue({
+      status: 'pending',
+      workspaceId: 'workspace_demo_123',
+      reviewNote: null,
+      createdAt: new Date('2026-09-20T00:00:00.000Z'),
+      reviewedAt: null
+    });
+
+    await expect(accessRequestService.status(' REVIEWER@EXAMPLE.COM ')).resolves.toMatchObject({
+      status: 'pending',
+      workspaceId: 'workspace_demo_123'
+    });
+    expect(mockFindLatestByEmail).toHaveBeenCalledWith('reviewer@example.com');
   });
 
   test('rejects review of a missing request', async () => {

@@ -9,5 +9,7 @@ export const PORTFOLIO_MIGRATIONS = [
   { id: '008-app-logs', file: 'migrate-app-logs-schema.sql' },
   { id: '009-apify-actor-runs', file: 'migrate-apify-actor-runs-schema.sql' },
   { id: '010-recruiter-access', file: 'migrate-recruiter-access-schema.sql' },
-  { id: '011-refresh-sessions', file: 'migrate-refresh-sessions-schema.sql' }
+  { id: '011-refresh-sessions', file: 'migrate-refresh-sessions-schema.sql' },
+  { id: '012-analytics-trends-indexes', file: 'migrate-analytics-trends-indexes.sql' },
+  { id: '013-reviewer-workspace-id', file: 'migrate-reviewer-workspace-id.sql' }
 ] as const;

@@ -15,6 +15,7 @@ import {
   applyOperatorCorrectionToSnapshot,
   isOperatorCorrectionField
 } from './operator-correction.util.js';
+import { caseTrendsRepository, TREND_RANGES } from './case-trends.js';
 
 const toCaseSummary = (row: Awaited<ReturnType<typeof conversationRepository.findById>>) => {
   if (!row) {
@@ -54,6 +55,11 @@ const toCaseSummary = (row: Awaited<ReturnType<typeof conversationRepository.fin
 };
 
 export const casesController = {
+  async trends(req: Request, res: Response): Promise<void> {
+    const query = z.object({ range: z.enum(TREND_RANGES).default('30d') }).parse(req.query);
+    sendSuccess(res, await caseTrendsRepository.get(query.range));
+  },
+
   async list(req: Request, res: Response): Promise<void> {
     const query = z
       .object({

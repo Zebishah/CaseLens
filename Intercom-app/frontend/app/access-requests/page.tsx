@@ -13,6 +13,7 @@ type AccessRequest = {
   workEmail: string;
   organization: string | null;
   role: string | null;
+  workspaceId: string | null;
   purpose: string;
   status: Status;
   reviewNote: string | null;
@@ -146,7 +147,7 @@ export default function AccessRequestsPage() {
             <table className="dash-table min-w-[68rem] w-full text-left text-sm">
               <thead>
                 <tr>
-                  {['Reviewer', 'Organization', 'Reason', 'Requested', 'Status', 'Actions'].map((heading) => (
+                  {['Reviewer', 'Organization', 'Intercom workspace', 'Reason', 'Requested', 'Status', 'Actions'].map((heading) => (
                     <th scope="col" key={heading} className="px-5 py-3.5">{heading}</th>
                   ))}
                 </tr>
@@ -164,6 +165,7 @@ export default function AccessRequestsPage() {
                       <p>{row.organization || 'Not provided'}</p>
                       <p className="mt-1 text-xs">{row.role || 'Role not provided'}</p>
                     </td>
+                    <td className="px-5 py-4 font-mono text-xs text-muted">{row.workspaceId || 'Not provided'}</td>
                     <td className="max-w-md px-5 py-4 leading-6 text-muted">{row.purpose}</td>
                     <td className="whitespace-nowrap px-5 py-4 text-muted">{new Date(row.createdAt).toLocaleDateString()}</td>
                     <td className="px-5 py-4">
@@ -205,7 +207,7 @@ export default function AccessRequestsPage() {
 function RequestDrawer({ row, onClose }: { row: AccessRequest; onClose: () => void }) {
   return <aside className="mt-5 rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift" aria-label="Access request details">
     <div className="flex items-start justify-between gap-4"><div><p className="dashboard-section-label text-emerald-300">Request detail · #{row.id}</p><h2 className="mt-2 text-xl font-semibold">{row.fullName}</h2><p className="mt-1 text-sm text-slate-400">{row.organization || 'Organization not provided'} · {row.role || 'Role not provided'}</p></div><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Close</button></div>
-    <div className="mt-5 grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Status</p><div className="mt-2"><StatusBadge status={row.status} /></div></div><div className="rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Email</p><p className="mt-2 break-all text-sm font-medium text-white">{row.workEmail}</p></div></div>
+    <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Status</p><div className="mt-2"><StatusBadge status={row.status} /></div></div><div className="rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Email</p><p className="mt-2 break-all text-sm font-medium text-white">{row.workEmail}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Intercom workspace</p><p className="mt-2 break-all font-mono text-sm font-medium text-white">{row.workspaceId || 'Not provided'}</p></div></div>
     <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.06] p-4"><p className="text-xs text-slate-400">Reason for access</p><p className="mt-2 text-sm leading-6 text-slate-200">{row.purpose}</p></div>
     <p className="mt-4 text-xs text-slate-400">Requested {new Date(row.createdAt).toLocaleString()}{row.reviewedAt ? ` · reviewed ${new Date(row.reviewedAt).toLocaleString()}` : ''}</p>
   </aside>;

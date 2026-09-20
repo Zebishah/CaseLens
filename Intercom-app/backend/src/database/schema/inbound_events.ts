@@ -40,6 +40,8 @@ export const inboundEvents = pgTable(
     uniqueIndex('inbound_events_source_external_uidx').on(table.source, table.externalEventId),
     uniqueIndex('inbound_events_email_received_uidx').on(table.source, table.receivedEmailId),
     index('inbound_events_status_idx').on(table.status),
+    index('inbound_events_completed_at_idx').on(table.completedAt),
+    index('inbound_events_failed_at_idx').on(table.failedAt),
     index('inbound_events_correlation_idx').on(table.correlationId)
   ]
 );

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, MetricCard, PageSkeleton } from '../../components/dashboard/ui';
+import { DistributionBars } from '../../components/dashboard/AnalyticsCharts';
 import { api } from '../../lib/api';
 import { formatCategoryLabel } from '../../lib/case-display';
 
@@ -116,6 +117,30 @@ export default function EvaluationPage() {
               tone={reviewCount > 0 ? 'warning' : 'success'}
             />
           </div>
+
+          <section className="dash-panel" aria-labelledby="metric-comparison-title">
+            <p className="dashboard-section-label">AI quality · Deterministic fixture evaluation</p>
+            <h2 id="metric-comparison-title" className="mt-2 text-lg font-semibold tracking-tight text-primary">Metric comparison</h2>
+            <p className="mt-1 text-sm leading-6 text-muted">Exact rates from the versioned anonymized regression set. These values describe the fixture baseline, not live production quality.</p>
+            <div className="mt-5 grid gap-6 lg:grid-cols-2">
+              <DistributionBars
+                total={100}
+                ariaLabel="AI quality metric comparison"
+                items={[
+                  { label: 'Classification accuracy', count: data.classificationAccuracy, color: 'bg-secondary' },
+                  { label: 'Name extraction precision', count: data.employeeMatchPrecision, color: 'bg-success' },
+                  { label: 'Name extraction recall', count: data.employeeMatchRecall, color: 'bg-success' },
+                  { label: 'Related-case precision', count: data.relatedCasePrecision, color: 'bg-highlight' },
+                  { label: 'Related-case recall', count: data.relatedCaseRecall, color: 'bg-highlight' }
+                ].map((item) => ({ ...item, count: Math.round(item.count * 100), label: `${item.label} · ${pct(item.count / 100)}` }))}
+              />
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-primary">Safety routing</p>
+                <p className="mt-1 text-sm leading-6 text-muted">{data.manualReviewCount} of {data.datasetSize} fixture cases were routed for human review ({pct(data.manualReviewRate)}). Low-confidence rate: {pct(data.lowConfidenceRate)}.</p>
+                <div className="mt-4"><Bar label="Protected by human review" count={data.manualReviewCount} total={total} color="bg-highlight" /></div>
+              </div>
+            </div>
+          </section>
 
           <div className="grid gap-4 lg:grid-cols-3">
             <section className="dash-panel">

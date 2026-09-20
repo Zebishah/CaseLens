@@ -9,10 +9,16 @@ export type SubmitAccessRequest = {
   workEmail: string;
   organization?: string;
   role?: string;
+  workspaceId?: string;
   purpose: string;
 };
 
 const clean = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+const cleanWorkspaceId = (value?: string): string | undefined => {
+  const normalized = value?.trim();
+  return normalized || undefined;
+};
 
 export const accessRequestService = {
   async submit(input: SubmitAccessRequest): Promise<{ received: true }> {
@@ -26,12 +32,27 @@ export const accessRequestService = {
         workEmail,
         organization: input.organization ? clean(input.organization) : undefined,
         role: input.role ? clean(input.role) : undefined,
+        workspaceId: cleanWorkspaceId(input.workspaceId),
         purpose: clean(input.purpose),
         consentAt: new Date()
       });
     }
 
     return { received: true };
+  },
+
+  async status(workEmail: string) {
+    const row = await accessRequestRepository.findLatestByEmail(workEmail.trim().toLowerCase());
+    if (!row) {
+      return null;
+    }
+    return {
+      status: row.status,
+      workspaceId: row.workspaceId,
+      reviewNote: row.reviewNote,
+      createdAt: row.createdAt,
+      reviewedAt: row.reviewedAt
+    };
   },
 
   async list(status?: AccessRequestStatus) {

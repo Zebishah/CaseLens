@@ -12,6 +12,7 @@ export type CreateAccessRequest = {
   workEmail: string;
   organization?: string;
   role?: string;
+  workspaceId?: string;
   purpose: string;
   consentAt: Date;
 };
@@ -23,6 +24,13 @@ export const accessRequestRepository = {
         eq(recruiterAccessRequests.workEmail, workEmail),
         eq(recruiterAccessRequests.status, 'pending')
       )
+    });
+  },
+
+  async findLatestByEmail(workEmail: string): Promise<RecruiterAccessRequest | undefined> {
+    return db.query.recruiterAccessRequests.findFirst({
+      where: eq(recruiterAccessRequests.workEmail, workEmail),
+      orderBy: (requests, { desc }) => [desc(requests.createdAt)]
     });
   },
 

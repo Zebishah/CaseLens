@@ -16,6 +16,11 @@ const submitSchema = z.object({
     workEmail: z.string().trim().email().max(255),
     organization: z.string().trim().max(160).optional(),
     role: z.string().trim().max(120).optional(),
+    workspaceId: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9_-]{3,64}$/, 'Workspace ID must use letters, numbers, hyphens, or underscores')
+      .optional(),
     purpose: z.string().trim().min(20).max(800),
     consent: z.literal(true),
     website: z.string().max(0).optional().default('')
@@ -50,6 +55,13 @@ accessRequestRoutes.post(
   accessRequestRateLimit,
   validate(submitSchema),
   asyncHandler(accessRequestController.submit)
+);
+
+accessRequestRoutes.get(
+  '/me',
+  authMiddleware,
+  requireRole(ROLES.ADMIN, ROLES.VIEWER),
+  asyncHandler(accessRequestController.status)
 );
 
 accessRequestRoutes.get(

@@ -7,6 +7,15 @@ import {
 } from './access-request.service.js';
 import type { AccessRequestStatus } from './access-request.repository.js';
 import { authService } from '../auth/auth.service.js';
+import { intercomConfig } from '../../config/intercom.config.js';
+
+const connectedInboxUrl = (workspaceId: string | null | undefined, status: string): string | null =>
+  (status === 'approved' || status === 'invited') &&
+  Boolean(workspaceId) &&
+  intercomConfig.enabled &&
+  workspaceId === intercomConfig.workspaceId
+    ? `https://app.intercom.com/a/inbox/${encodeURIComponent(intercomConfig.workspaceId)}`
+    : null;
 
 export const accessRequestController = {
   async submit(req: Request, res: Response): Promise<void> {
@@ -17,6 +26,11 @@ export const accessRequestController = {
   async list(req: Request, res: Response): Promise<void> {
     const status = req.query.status as AccessRequestStatus | undefined;
     sendSuccess(res, await accessRequestService.list(status));
+  },
+
+  async status(req: Request, res: Response): Promise<void> {
+    const result = await accessRequestService.status(req.user?.email ?? '');
+    sendSuccess(res, result ? { ...result, connectedInboxUrl: connectedInboxUrl(result.workspaceId, result.status) } : null);
   },
 
   async review(req: Request, res: Response): Promise<void> {

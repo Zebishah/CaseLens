@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { AlertBanner, DashboardIcon, MetricCard, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../components/dashboard/ui';
+import { DistributionBars, TrendChart, type TrendBucket } from '../../components/dashboard/AnalyticsCharts';
 import { ApiError, api } from '../../lib/api';
 import { formatCategoryLabel, formatMentionStatus, formatRelativeTime } from '../../lib/case-display';
 
@@ -54,6 +55,9 @@ type ReviewerOperations = {
   recoveryStatus: 'clear' | 'pending';
 };
 
+type TrendRange = '7d' | '30d' | '90d';
+type CaseTrends = { range: TrendRange; startDate: string; endDate: string; buckets: TrendBucket[] };
+
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const percent = (part: number, total: number): string => {
@@ -77,6 +81,10 @@ export default function OverviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [sleeping, setSleeping] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [trendRange, setTrendRange] = useState<TrendRange>('30d');
+  const [trends, setTrends] = useState<CaseTrends | null>(null);
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendError, setTrendError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -121,6 +129,23 @@ export default function OverviewPage() {
     void load();
   }, [load]);
 
+  const loadTrends = useCallback(async (range: TrendRange) => {
+    setTrendRange(range);
+    setTrendLoading(true);
+    setTrendError(null);
+    try {
+      setTrends(await api.get<CaseTrends>(`/api/cases/trends?range=${range}`));
+    } catch (err) {
+      setTrendError(err instanceof Error ? err.message : 'Unable to load historical trends');
+    } finally {
+      setTrendLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadTrends('30d');
+  }, [loadTrends]);
+
   const total = data?.casesProcessed ?? 0;
   const matched = data?.matchedEmployeeCases ?? 0;
   const related = data?.casesWithRelated ?? 0;
@@ -128,6 +153,16 @@ export default function OverviewPage() {
   const categoryEntries = Object.entries(data?.casesByCategory ?? {}).sort((left, right) => right[1] - left[1]);
   const sourceEntries = Object.entries(data?.casesBySource ?? {});
   const mentionTotal = Object.values(data?.mentionStatus ?? {}).reduce((sum, value) => sum + value, 0);
+  const categoryItems = categoryEntries.map(([label, count]) => ({ label: formatCategoryLabel(label), count, color: 'bg-secondary' }));
+  const mentionItems = mentionBars
+    .filter((row) => (data?.mentionStatus?.[row.key] ?? 0) > 0 || row.key === 'resolved')
+    .map((row) => ({ label: row.label, count: data?.mentionStatus?.[row.key] ?? 0, color: row.color }));
+  const processingItems = [
+    { label: 'Ready', count: data?.completed ?? 0, color: 'bg-success' },
+    { label: 'Processing', count: data?.processing ?? 0, color: 'bg-secondary' },
+    { label: 'Pending', count: data?.pending ?? 0, color: 'bg-slate-400' },
+    { label: 'Failed', count: data?.failed ?? 0, color: 'bg-danger' }
+  ];
 
   return (
     <AppShell
@@ -235,60 +270,52 @@ export default function OverviewPage() {
             />
           </div>
 
+          <section className="dash-panel" aria-labelledby="analytics-trends-title">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="dashboard-section-label">Analytics trends · Real historical data</p>
+                <h2 id="analytics-trends-title" className="mt-2 text-lg font-semibold tracking-tight text-primary">Volume and processing outcomes over time</h2>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">Cases created use persisted conversation timestamps. Completed and failed series use inbound lifecycle timestamps. Identity and manual-review history is not charted because those snapshots are not versioned.</p>
+              </div>
+              <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1" aria-label="Trend range">
+                {(['7d', '30d', '90d'] as TrendRange[]).map((range) => (
+                  <button key={range} type="button" aria-pressed={trendRange === range} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${trendRange === range ? 'bg-white text-primary shadow-sm' : 'text-muted hover:text-primary'}`} onClick={() => void loadTrends(range)}>
+                    {range === '7d' ? '7 days' : range === '30d' ? '30 days' : '90 days'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {trendLoading ? <p className="mt-6 text-sm text-muted" role="status">Loading historical trends…</p> : null}
+            {trendError ? <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">Historical trends are unavailable right now. Current totals remain available above.</p> : null}
+            {trends && !trendLoading ? (
+              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+                <section className="dash-panel-soft p-4" aria-labelledby="cases-created-title">
+                  <h3 id="cases-created-title" className="text-sm font-semibold text-primary">Cases created</h3>
+                  <p className="mt-1 text-xs text-muted">{trends.startDate} through {trends.endDate} UTC</p>
+                  <div className="mt-4"><TrendChart title="Cases created" buckets={trends.buckets} series={[{ key: 'casesCreated', label: 'Cases created', color: '--secondary' }]} /></div>
+                </section>
+                <section className="dash-panel-soft p-4" aria-labelledby="processing-outcomes-title">
+                  <h3 id="processing-outcomes-title" className="text-sm font-semibold text-primary">Inbound processing outcomes</h3>
+                  <p className="mt-1 text-xs text-muted">Completed and failed lifecycle events by UTC day</p>
+                  <div className="mt-4"><TrendChart title="Inbound processing outcomes" buckets={trends.buckets} series={[{ key: 'completed', label: 'Completed', color: '--success' }, { key: 'failed', label: 'Failed', color: '--danger' }]} /></div>
+                </section>
+              </div>
+            ) : null}
+          </section>
+
           <div className="grid gap-4 lg:grid-cols-5">
             <section className="dash-panel lg:col-span-2">
               <p className="dashboard-section-label">Distribution</p>
               <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Case categories</h2>
               <p className="mt-1 text-sm text-muted">From extracted case type on each conversation.</p>
-              {categoryEntries.length === 0 ? (
-                <p className="mt-8 text-sm text-muted">No categorized cases yet.</p>
-              ) : (
-                <ul className="mt-5 space-y-3">
-                  {categoryEntries.map(([label, count]) => (
-                    <li key={label}>
-                      <div className="mb-1 flex items-center justify-between text-sm">
-                        <span className="font-medium text-primary">{label}</span>
-                        <span className="tabular-nums text-muted">
-                          {count} · {percent(count, total)}
-                        </span>
-                      </div>
-                      <div className="chart-track mt-2">
-                        <div
-                          className="chart-fill bg-secondary"
-                          style={{ width: percent(count, total) }}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <DistributionBars items={categoryItems} total={total} ariaLabel="Current case category distribution" />
             </section>
 
             <section className="dash-panel lg:col-span-2">
               <p className="dashboard-section-label">Resolution</p>
               <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Identity resolution</h2>
               <p className="mt-1 text-sm text-muted">How extracted names landed against the employee directory.</p>
-              <ul className="mt-5 space-y-4">
-                {mentionBars
-                  .filter((row) => (data.mentionStatus?.[row.key] ?? 0) > 0 || row.key === 'resolved')
-                  .map((row) => {
-                  const count = data.mentionStatus?.[row.key] ?? 0;
-                  return (
-                    <li key={row.key}>
-                      <div className="mb-1 flex items-center justify-between text-sm">
-                        <span className="text-primary">{row.label}</span>
-                        <span className="tabular-nums text-muted">{count}</span>
-                      </div>
-                      <div className="chart-track mt-2">
-                        <div
-                          className={`chart-fill ${row.color}`}
-                          style={{ width: percent(count, mentionTotal || total) }}
-                        />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+              <DistributionBars items={mentionItems} total={mentionTotal || total} ariaLabel="Current identity resolution distribution" />
               {sourceEntries.length > 0 ? (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {sourceEntries.map(([source, count]) => (
@@ -307,19 +334,7 @@ export default function OverviewPage() {
               <p className="dashboard-section-label">Pipeline</p>
               <h2 className="mt-2 text-base font-semibold tracking-tight text-primary">Processing status</h2>
               <p className="mt-1 text-sm text-muted">Current case state, not a historical trend.</p>
-              <div className="mt-5 space-y-3">
-                {[
-                  ['Ready', data.completed, 'bg-success'],
-                  ['Processing', data.processing ?? 0, 'bg-secondary'],
-                  ['Pending', data.pending ?? 0, 'bg-slate-400'],
-                  ['Failed', data.failed, 'bg-danger']
-                ].map(([label, count, color]) => (
-                  <div key={String(label)}>
-                    <div className="flex items-center justify-between text-sm"><span className="text-primary">{label}</span><span className="tabular-nums text-muted">{count}</span></div>
-                    <div className="chart-track mt-2"><div className={`chart-fill ${color}`} style={{ width: percent(Number(count), total) }} /></div>
-                  </div>
-                ))}
-              </div>
+              <DistributionBars items={processingItems} total={total} ariaLabel="Current processing status distribution" />
             </section>
           </div>
 

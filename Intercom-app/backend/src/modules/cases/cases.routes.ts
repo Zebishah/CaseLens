@@ -18,6 +18,12 @@ casesRoutes.get(
   requireCaseReader,
   asyncHandler(casesController.overview)
 );
+casesRoutes.get(
+  '/trends',
+  authMiddleware,
+  requireCaseReader,
+  asyncHandler(casesController.trends)
+);
 casesRoutes.get('/', authMiddleware, requireCaseReader, asyncHandler(casesController.list));
 casesRoutes.get('/:id', authMiddleware, requireCaseReader, validate(caseIdSchema), asyncHandler(casesController.get));
 

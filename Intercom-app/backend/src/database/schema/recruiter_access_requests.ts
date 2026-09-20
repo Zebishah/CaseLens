@@ -8,6 +8,7 @@ export const recruiterAccessRequests = pgTable(
     workEmail: varchar('work_email', { length: 255 }).notNull(),
     organization: varchar('organization', { length: 160 }),
     role: varchar('role', { length: 120 }),
+    workspaceId: varchar('workspace_id', { length: 64 }),
     purpose: varchar('purpose', { length: 800 }).notNull(),
     status: varchar('status', { length: 32 }).notNull().default('pending'),
     reviewNote: varchar('review_note', { length: 500 }),

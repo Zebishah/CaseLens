@@ -199,6 +199,13 @@ body {
 .attention-item.is-clear { border-left-color: rgb(var(--success)); background: rgb(240 253 250 / 0.72); }
 .chart-track { height: 0.55rem; overflow: hidden; border-radius: 999px; background: rgb(226 232 240); }
 .chart-fill { height: 100%; border-radius: inherit; transition: width 500ms ease; }
+.analytics-bar-track { height: 0.55rem; overflow: hidden; border-radius: 999px; background: rgb(226 232 240); }
+.analytics-bar-fill { height: 100%; min-width: 0.2rem; border-radius: inherit; }
+.analytics-chart { min-width: 0; }
+.analytics-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.analytics-grid-line { stroke: rgb(226 232 240); stroke-width: 1; stroke-dasharray: 3 5; }
+.analytics-axis-label { fill: rgb(100 116 139); font-size: 10px; }
+.analytics-legend-dot { display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 999px; }
 .empty-state { min-height: 9rem; }
 
 .dash-field {

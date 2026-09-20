@@ -10,6 +10,7 @@ type FormState = {
   workEmail: string;
   organization: string;
   role: string;
+  workspaceId: string;
   purpose: string;
   consent: boolean;
   website: string;
@@ -20,6 +21,7 @@ const initialForm: FormState = {
   workEmail: '',
   organization: '',
   role: '',
+  workspaceId: '',
   purpose: '',
   consent: false,
   website: ''
@@ -51,6 +53,14 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
   const [form, setForm] = useState<FormState>(initialForm);
   const [state, setState] = useState<'idle' | 'submitting' | 'complete'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [accessStatus, setAccessStatus] = useState<AccessStatus | null>(null);
+
+  useEffect(() => {
+    if (!embedded) return;
+    api.get<AccessStatus | null>('/api/access-requests/me')
+      .then(setAccessStatus)
+      .catch(() => setAccessStatus(null));
+  }, [embedded]);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -60,6 +70,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
     setError(null);
     try {
       await api.post('/api/access-requests', form);
+      setAccessStatus({ status: 'pending', workspaceId: form.workspaceId || null, reviewNote: null });
       setState('complete');
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -138,6 +149,21 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
               ))}
             </ol>
           </div>
+
+          <div className="mt-5 rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">How the connection works</p>
+            <ol className="mt-4 space-y-3 text-sm leading-6 text-muted">
+              {[
+                'Intercom receives a conversation or event.',
+                'Intercom sends the authorized event to the HR Intelligence API.',
+                'The API validates the request and processes the case asynchronously.',
+                'Employee, store, and related-case intelligence is persisted.',
+                'Results appear in the HR Intelligence dashboard.',
+                'Where configured, safe output can also be written back to Intercom.'
+              ].map((step, index) => <li key={step} className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-paper text-xs font-semibold text-primary">{index + 1}</span><span>{step}</span></li>)}
+            </ol>
+            <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900"><strong>Never paste Intercom API keys or access tokens here.</strong> Reviewer users submit only a non-secret workspace identifier. Provider credentials and webhook secrets stay server-side.</p>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-lift md:p-8">
@@ -153,6 +179,7 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                 While you wait, use the public walkthrough and screenshots. They demonstrate the same synthetic Inbox,
                 Canvas intelligence, and operational health views without requiring third-party access.
               </div>
+              <AccessStatusPanel status={accessStatus ?? { status: 'pending', workspaceId: form.workspaceId || null, reviewNote: null }} />
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link href="/overview" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">
                   Back to dashboard
@@ -172,6 +199,8 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
               <p className="mt-2 text-sm leading-6 text-muted">
                 Access is manually approved and limited to a synthetic, read-only HR Intelligence workspace.
               </p>
+
+              {accessStatus ? <AccessStatusPanel status={accessStatus} /> : null}
 
               {error ? (
                 <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -194,6 +223,9 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
                     <input maxLength={120} autoComplete="organization-title" className="dash-field mt-2" placeholder="HR reviewer, operator…" value={form.role} onChange={(event) => update('role', event.target.value)} />
                   </Field>
                 </div>
+                <Field label="Intercom Workspace ID" required={embedded} hint="Use the workspace identifier shown in Intercom. This is a non-secret identifier; do not enter an API key or access token.">
+                  <input required={embedded} minLength={3} maxLength={64} pattern="[A-Za-z0-9_-]{3,64}" className="dash-field mt-2" placeholder="Example: workspace_123" value={form.workspaceId} onChange={(event) => update('workspaceId', event.target.value)} />
+                </Field>
                 <Field label="Reason for access" required hint="Minimum 20 characters. Do not include confidential information.">
                   <textarea required minLength={20} maxLength={800} rows={5} className="dash-field mt-2 resize-y" placeholder="I am reviewing this project for…" value={form.purpose} onChange={(event) => update('purpose', event.target.value)} />
                 </Field>
@@ -225,6 +257,23 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
       </div>
     </main>
   );
+}
+
+type AccessStatus = {
+  status: 'pending' | 'approved' | 'invited' | 'declined' | 'expired';
+  workspaceId?: string | null;
+  reviewNote?: string | null;
+};
+
+function AccessStatusPanel({ status }: { status: AccessStatus }) {
+  const copy = status.status === 'pending'
+    ? 'Your reviewer access request is waiting for approval.'
+    : status.status === 'approved' || status.status === 'invited'
+      ? 'Your reviewer access request is approved. The connected workspace is used only after server-side linkage is confirmed.'
+      : status.status === 'declined'
+        ? status.reviewNote || 'Your request needs an update. Review the admin note and resubmit if allowed.'
+        : 'This request is no longer active.';
+  return <div role="status" className="mt-5 rounded-xl border border-secondary/20 bg-emerald-50/70 p-4"><div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary">Request status</p><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold capitalize text-primary">{status.status}</span></div><p className="mt-2 text-sm leading-6 text-muted">{copy}</p>{status.workspaceId ? <p className="mt-2 text-xs text-muted">Workspace ID submitted: <span className="font-mono text-primary">{status.workspaceId}</span></p> : null}</div>;
 }
 
 function Field({
