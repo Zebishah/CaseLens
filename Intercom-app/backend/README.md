@@ -18,6 +18,8 @@ npm run dev
 
 The API listens on `http://localhost:3002` by default. Interactive API documentation is available at `/docs` outside production.
 
+`GET /` is a public, uncached liveness endpoint returning HTTP 200 with `success: true`, `data.status: "ok"`, and a readable API-running message. It does not query external dependencies. `GET /health` remains a bodyless HTTP 204 liveness check; `GET /ready` checks dependency readiness. See [UptimeRobot settings](../../docs/DEPLOYMENT.md#uptimerobot-monitoring) for external monitoring setup.
+
 ## Processing modes
 
 - `JOB_PROCESSING_MODE=inline`: processes work in the API process and does not require Redis. This is the recommended low-cost demo configuration.

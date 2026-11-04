@@ -14,6 +14,7 @@ import { resendWebhookRoutes } from './modules/resend/resend.webhook.routes.js';
 import { healthService } from './modules/health/health.service.js';
 import { AppError } from './utils/error.util.js';
 import { STATUS_CODES } from './constants/statusCodes.js';
+import { sendSuccess } from './utils/response.util.js';
 
 const swaggerSpec = swaggerJSDoc({
   definition: {
@@ -74,6 +75,15 @@ if (env.NODE_ENV !== 'production') {
 }
 
 app.use('/api', apiRateLimit, apiRouter);
+
+/** Public liveness response for browsers and external uptime monitors. */
+app.get('/', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  sendSuccess(res, {
+    ...healthService.liveness(),
+    message: 'HR Intelligence API is running',
+  });
+});
 
 app.get('/health', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');

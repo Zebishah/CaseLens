@@ -335,73 +335,72 @@
 }
 
 .auth-product-preview {
-  position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   margin-top: 20px;
-  height: 190px;
   overflow: hidden;
-  border-radius: 10px;
-  border: 1px solid rgb(var(--primary) / 0.19);
+  border-radius: 12px;
+  border: 1px solid var(--brand-line);
   background: var(--brand-surface);
-  border-color: var(--brand-line);
-}
-
-.auth-product-preview::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(0deg,var(--brand-surface),#FFFFFF00);
+  box-shadow: 0 6px 24px var(--brand-shadow);
 }
 
 .auth-product-preview > img {
+  display: block;
   width: 100%;
-  height: 100%;
+  height: 160px;
   object-fit: cover;
   object-position: 70% 35%;
-  opacity: .6;
-  filter: saturate(.4);
-  transition: opacity .3s, transform .3s;
+  transition: transform .3s;
 }
 
 .auth-product-preview:hover > img {
-  opacity: .8;
-  transform: scale(1.03);
+  transform: scale(1.015);
 }
 
 .auth-product-preview > span {
-  position: absolute;
+  position: relative;
   z-index: 1;
-  left: 20px;
-  right: 20px;
-  bottom: 19px;
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-top: 1px solid var(--brand-line);
   color: var(--brand-ink);
-  background: linear-gradient(0deg,var(--brand-surface),#FFFFFF99);
+  background: var(--brand-surface);
 }
 
 .auth-product-preview > span > span {
+  min-width: 0;
   font-family: var(--font-body), Arial, sans-serif;
-  font-size: 6px;
-  letter-spacing: 1.3px;
-  color: var(--brand-muted);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: .12em;
+  color: var(--brand-link);
 }
 
 .auth-product-preview strong {
   display: block;
-  font-family: var(--font-body), Arial, sans-serif;
+  font-family: var(--font-display), Arial, sans-serif;
   color: var(--brand-ink);
   font-size: 14px;
-  font-weight: 450;
+  font-weight: 500;
+  line-height: 1.5;
   letter-spacing: -.2px;
-  margin-top: 7px;
+  margin-top: 5px;
 }
 
 .auth-product-preview svg {
-  width: 18px;
-  height: 18px;
-  color: var(--brand-muted);
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border: 1px solid var(--brand-line);
+  border-radius: 50%;
+  background: var(--brand-wash);
+  color: var(--brand-link);
 }
 
 .auth-audiences {

@@ -1,6 +1,6 @@
 # Deployment (Render)
 
-The repository does not maintain a Render keep-alive workflow. The old file was nested under `Intercom-app/.github`, where GitHub Actions would not execute it, and artificial uptime is not part of the portfolio deployment model.
+The repository does not maintain a Render keep-alive workflow. External uptime monitoring can use the public API root described below; no GitHub Actions schedule is required.
 
 Do not provision paid services from this document. Use existing external PostgreSQL. Upstash Redis is optional for local/fallback operation and is recommended for production shared rate limiting and directory caches. It does not run workers in Apify mode.
 
@@ -11,7 +11,8 @@ Do not provision paid services from this document. Use existing external Postgre
 - Background work: private on-demand Apify Actor runs dispatched by the Render API
 - Supported alternative: `JOB_PROCESSING_MODE=bullmq RUN_WORKERS=true` plus `REDIS_URL`
 - Local/fallback/demo mode: `JOB_PROCESSING_MODE=inline`
-- Health: `GET /health`
+- Public liveness: `GET /` (HTTP 200 with an uncached JSON success response; no authentication or dependency checks)
+- Health: `GET /health` (HTTP 204)
 - Readiness: `GET /ready` (reports safe Redis configured/reachable flags; Redis is required for readiness only when `JOB_PROCESSING_MODE=bullmq`)
 
 PostgreSQL is the source of truth. In production, keep `JOB_PROCESSING_MODE=apify`, `RUN_API=true`, and `RUN_WORKERS=false`. Configure the Upstash connection URL as `REDIS_URL` on the Render API service to enable shared API rate-limit counters and short-lived store routing/CC caches. Use the provider's `rediss://` URL; credentials remain in Render environment settings and must not be committed. With no `REDIS_URL`, the API uses process-local memory rate limits and reads directory metadata directly from PostgreSQL. During a Redis outage, rate limits temporarily become per-instance and directory/CC caches bypass Redis.
@@ -72,6 +73,27 @@ Frontend: deploy `Intercom-app/frontend` with `NEXT_PUBLIC_API_URL` pointing at 
 ## Cold start
 
 The UI Wake Demo button polls `/ready`. A sleeping free instance is shown as “Starting demo service”, not as an application bug.
+
+## UptimeRobot monitoring
+
+After deploying the backend change, create a monitor with these settings:
+
+| Setting | Value |
+| --- | --- |
+| Monitor type | HTTP(s) |
+| Friendly name | HR Intelligence API |
+| URL | `https://hr-intercom.onrender.com/` (use the current API origin if it changes) |
+| HTTP method | GET, selected under Advanced Settings |
+| Monitoring interval | 5 minutes |
+| Expected status | 200 |
+| Authentication / custom headers | None required |
+| Alert contact | Your preferred downtime notification contact |
+
+The root returns `{ "success": true, "data": { "status": "ok", "message": "HR Intelligence API is running" } }`. It checks that the HTTP process responds, without querying PostgreSQL, Redis, or AI providers. Express also handles `HEAD /` with the same HTTP status and no body. Use the existing `/ready` endpoint for dependency readiness monitoring instead.
+
+See [UptimeRobot's monitor setup guide](https://help.uptimerobot.com/en/articles/11358364-how-to-create-your-first-monitor-on-uptimerobot-quick-setup-guide) and [HTTP method guidance](https://uptimerobot.com/knowledge-hub/monitoring/which-urls-should-you-monitor/).
+
+Five-minute requests can help avoid Render's 15-minute idle spin-down, but they do not guarantee uninterrupted availability: free services can restart and share a 750-hour monthly workspace allowance. See [Render Free service limits](https://render.com/docs/free). Paid web services do not spin down due to inactivity; see [Render's FAQ](https://render.com/docs/faq).
 # Recruiter-facing deployment note
 
 The hosted product walkthrough should expose the public landing story and deterministic assistant even when optional providers are unavailable. Configure the API URL and CORS origin for the web app, keep reviewer credentials separate from Intercom invitations, and use synthetic or sanitized records only. The assistant is not a dependency of core case ingestion or processing.
