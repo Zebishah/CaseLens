@@ -1,7 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { PORTFOLIO_MIGRATIONS } from '../../../scripts/migration-registry.js';
 import { runOrderedMigrations, type MigrationAdapter, type OrderedMigration } from '../../../scripts/migration-runner.core.js';
 import { describe, expect, jest, test } from '@jest/globals';
 
 describe('ordered migration runner', () => {
+  test.each(PORTFOLIO_MIGRATIONS)('$id has a readable, nonempty SQL file in scripts/', ({ file }) => {
+    const sql = readFileSync(new URL(`../../../scripts/${file}`, import.meta.url), 'utf8');
+    expect(sql.trim().length).toBeGreaterThan(0);
+  });
+
   test('applies pending migrations in registry order and skips recorded migrations', async () => {
     const completed = new Set(['001-base']);
     const applied: string[] = [];

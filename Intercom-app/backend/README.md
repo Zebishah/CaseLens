@@ -69,3 +69,38 @@ npm run intercom:canvas-smoke
 ```
 
 Seed scripts require explicit credentials through environment variables. Never commit `.env` files, provider secrets, database URLs, or generated credentials.
+
+### Account security and Resend setup
+
+Dashboard administrators can open **Account security** to change their own password.
+The API also enforces the administrator role and requires the current password.
+New passwords require at least 12 characters and at most 72 UTF-8 bytes (bcrypt's limit).
+A change signs out all previous sessions, including access tokens. Password, role, or
+email changes through user management also invalidate previously issued tokens.
+
+Before deploying this version, configure these backend environment variables:
+
+```dotenv
+RESEND_AUTH_EMAIL_ENABLED=true
+RESEND_API_KEY=your-resend-sending-api-key
+RESEND_FROM_EMAIL=access@your-verified-domain.example
+RESEND_FROM_NAME=HR Intelligence
+PUBLIC_APP_URL=https://your-frontend.example
+EMAIL_VERIFICATION_TTL_MINUTES=30
+```
+
+Use a sender domain verified in Resend. See the [Resend sending API documentation](https://resend.com/docs/api-reference/emails/send-email).
+`RESEND_ENABLED` remains the separate inbound-email switch; receiving webhook/domain
+settings are not required for sending account emails. Workspace invitations now use
+Resend; legacy Brevo settings are no longer used. Email delivery failures are
+reported, including when sending is disabled in development.
+
+Run `npm run db:migrate` before starting the updated backend. Migration
+`014-account-security` adds verification tokens, verification timestamps, and session
+versions. Existing accounts (including seeded administrators) are **not** automatically
+verified and old sessions expire. At sign in, enter the correct password, then choose
+**Send or resend verification email**. Open the email and confirm verification before
+signing in again. Resends require the account password and have a one-minute cooldown.
+Links are single-use, expire after 30 minutes by default, and only work for the current
+email address. Accepting an invitation verifies the invited address while setting the
+password. Public registration remains disabled, and the synthetic demo stays read-only.

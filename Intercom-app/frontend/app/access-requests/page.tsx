@@ -65,15 +65,15 @@ export default function AccessRequestsPage() {
       const result = await api.patch<{ invitation?: { sent: boolean } }>(`/api/access-requests/${id}`, { status });
       setNotice(status === 'approved'
         ? result.invitation?.sent === false
-          ? 'The viewer account was prepared, but Brevo is not enabled in this environment. Configure Brevo before approving production requests.'
-          : 'Viewer account prepared and the one-time password setup email was sent through Brevo.'
+          ? 'The viewer account was prepared, but the invitation email was not sent. Check account email configuration before retrying.'
+          : 'Viewer account prepared and the one-time password setup email was sent.'
         : `Request marked ${status}.`);
       await load();
     } catch (err) {
       setError(
         err instanceof ApiError && err.sleeping
           ? 'The backend service is starting. Retry in a moment.'
-          : 'The request could not be updated. Refresh the queue and try again.'
+          : err instanceof ApiError ? err.message : 'The request could not be updated. Refresh the queue and try again.'
       );
     } finally {
       setAction(null);
@@ -92,7 +92,7 @@ export default function AccessRequestsPage() {
   return (
     <AppShell
       title="Access management"
-      description="Review requests for personal, read-only organization workspace accounts. Approval creates a viewer account and sends a one-time password setup link through Brevo; Intercom access remains separate."
+      description="Review requests for personal, read-only organization workspace accounts. Approval creates a viewer account and sends a one-time password setup link to the approved address; Intercom access remains separate."
     >
       {error || notice ? (
         <div className="mb-4 space-y-4">

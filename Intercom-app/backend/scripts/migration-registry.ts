@@ -11,5 +11,6 @@ export const PORTFOLIO_MIGRATIONS = [
   { id: '010-recruiter-access', file: 'migrate-recruiter-access-schema.sql' },
   { id: '011-refresh-sessions', file: 'migrate-refresh-sessions-schema.sql' },
   { id: '012-analytics-trends-indexes', file: 'migrate-analytics-trends-indexes.sql' },
-  { id: '013-reviewer-workspace-id', file: 'migrate-reviewer-workspace-id.sql' }
+  { id: '013-reviewer-workspace-id', file: 'migrate-reviewer-workspace-id.sql' },
+  { id: '014-account-security', file: 'migrate-account-security.sql' }
 ] as const;

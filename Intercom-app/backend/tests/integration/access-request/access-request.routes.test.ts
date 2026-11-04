@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import express from 'express';
 import request from 'supertest';
 import { errorHandler } from '../../../src/middlewares/error.middleware.js';
@@ -25,6 +25,8 @@ const { accessRequestRoutes } = await import(
 );
 const { generateToken } = await import('../../../src/services/jwt.service.js');
 
+const { authRepository } = await import('../../../src/modules/auth/auth.repository.js');
+
 const app = express();
 app.set('trust proxy', false);
 app.use(express.json());
@@ -33,12 +35,19 @@ app.use(errorHandler);
 
 describe('recruiter access request routes', () => {
   beforeEach(() => {
+    jest.spyOn(authRepository, 'findUserById').mockImplementation(async (id) => ({
+      id, email: id === 1 ? 'admin@example.com' : 'reviewer@example.com',
+      name: 'Account', role: id === 1 ? 'admin' : 'viewer', authVersion: 0,
+      emailVerifiedAt: new Date(), createdAt: new Date(), updatedAt: new Date()
+    }));
     mockSubmit.mockReset();
     mockList.mockReset();
     mockReview.mockReset();
     mockStatus.mockReset();
     mockSubmit.mockResolvedValue({ received: true });
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   test('accepts a valid public invitation request', async () => {
     const response = await request(app).post('/api/access-requests').send({
@@ -82,7 +91,7 @@ describe('recruiter access request routes', () => {
     const token = generateToken({
       sub: 1,
       email: 'admin@example.com',
-      role: 'admin'
+      role: 'admin', authVersion: 0
     });
 
     const response = await request(app)
@@ -110,7 +119,7 @@ describe('recruiter access request routes', () => {
 
   test('returns self status only to an authenticated reviewer', async () => {
     mockStatus.mockResolvedValue({ status: 'pending', workspaceId: 'workspace_demo_123', connectedInboxUrl: null });
-    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer' });
+    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer', authVersion: 0 });
 
     const response = await request(app).get('/api/access-requests/me').set('Authorization', `Bearer ${token}`);
 
@@ -121,7 +130,7 @@ describe('recruiter access request routes', () => {
   });
 
   test('does not allow a reviewer to access the admin queue', async () => {
-    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer' });
+    const token = generateToken({ sub: 2, email: 'reviewer@example.com', role: 'viewer', authVersion: 0 });
     const response = await request(app).get('/api/access-requests').set('Authorization', `Bearer ${token}`);
 
     expect(response.statusCode).toBe(403);

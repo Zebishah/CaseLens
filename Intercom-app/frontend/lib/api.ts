@@ -22,7 +22,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly sleeping = false
+    readonly sleeping = false,
+    readonly code?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -57,14 +58,16 @@ const parse = async <T>(response: Response): Promise<T> => {
     success?: boolean;
     data?: T;
     message?: string;
+    errors?: { code?: string };
+    details?: { code?: string };
   };
 
   if (response.status === 503) {
-    throw new ApiError('Starting demo service', 503, true);
+    throw new ApiError(body.message ?? 'Starting demo service', 503, !body.message);
   }
 
   if (!response.ok) {
-    throw new ApiError(body.message ?? 'Request failed', response.status);
+    throw new ApiError(body.message ?? 'Request failed', response.status, false, body.errors?.code ?? body.details?.code);
   }
 
   return (body.data ?? body) as T;
@@ -178,6 +181,29 @@ export const api = {
     clearDemoRecruiter();
     setAdminToken(session.token, session.user);
     return session;
+  },
+
+  async resendVerification(email: string, password: string): Promise<{ message: string }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/email-verification/resend`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ email, password })
+    });
+    return parse(response);
+  },
+
+  async verifyEmail(token: string): Promise<{ verified: boolean }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/email-verification/verify`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ token })
+    });
+    return parse(response);
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await request('/api/auth/change-password', {
+      method: 'POST', body: JSON.stringify({ currentPassword, newPassword })
+    });
+    clearAdminToken();
   },
 
   async inspectInvite(token: string): Promise<{ email: string; name: string; expiresAt: string }> {

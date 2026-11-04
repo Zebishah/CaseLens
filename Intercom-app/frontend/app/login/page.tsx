@@ -16,6 +16,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendAvailableAt, setResendAvailableAt] = useState(0);
+  const [resendWait, setResendWait] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,6 +27,8 @@ export default function LoginPage() {
     const launchDemo = new URLSearchParams(window.location.search).get('mode') === 'demo';
     if (reason === 'session-expired') {
       setNotice('Your access session ended. Sign in again to continue.');
+    } else if (reason === 'password-changed') {
+      setNotice('Your password was changed and all previous sessions ended. Sign in with your new password.');
     } else if (reason === 'signed-out') {
       setNotice('You have been signed out securely.');
     }
@@ -40,15 +46,39 @@ export default function LoginPage() {
       .finally(() => setChecking(false));
   }, [router]);
 
+  useEffect(() => {
+    if (!resendAvailableAt) return;
+    const remaining = Math.max(0, resendAvailableAt - Date.now());
+    setResendWait(remaining > 0);
+    const timeout = window.setTimeout(() => setResendWait(false), remaining);
+    return () => window.clearTimeout(timeout);
+  }, [resendAvailableAt]);
+
+  const resendVerification = async () => {
+    setError(null);
+    setResending(true);
+    try {
+      const result = await api.resendVerification(email.trim(), password);
+      setNotice(result.message);
+      setResendAvailableAt(Date.now() + 60_000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to send verification email.');
+    } finally { setResending(false); }
+  };
+
   const submit = async () => {
     setError(null);
     setNotice(null);
     setLoading(true);
+    setNeedsVerification(false);
     try {
       await api.login(email.trim(), password);
       router.replace('/overview');
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
+      if (err instanceof ApiError && err.code === 'EMAIL_VERIFICATION_REQUIRED') {
+        setNeedsVerification(true);
+        setError('Verify your email address before signing in. Use the button below to receive a verification link.');
+      } else if (err instanceof ApiError && err.status === 401) {
         setError('The email or password is incorrect.');
       } else if (err instanceof ApiError && err.sleeping) {
         setError('The service is starting. Please try again in a moment.');
@@ -84,11 +114,17 @@ export default function LoginPage() {
         {notice && !checking ? <div className="auth-notice" role="status">{notice}</div> : null}
         {error ? <div className="auth-error" role="alert">{error}</div> : null}
         <form className="auth-form" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-          <label>Email address<input required type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+          <label>Email address<input required type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(event) => { setEmail(event.target.value); setNeedsVerification(false); }} /></label>
           <label>Password<span className="auth-password-field"><input required type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></span></label>
           <div className="auth-form-links"><span><SignalIcon type="shield" /> Protected workspace</span><Link href="/forgot-password">Forgot password?</Link></div>
           <button type="submit" disabled={loading || checking} className="product-primary-button">{loading ? 'Signing in…' : 'Sign in to workspace'}<ArrowIcon /></button>
         </form>
+        {needsVerification ? <div className="auth-notice">
+          <p>Open the verification email, then return here to sign in. Links expire after a short time.</p>
+          <button type="button" className="product-secondary-button mt-3" disabled={resending || resendWait || !email || !password} onClick={() => void resendVerification()}>
+            {resending ? 'Sending verification email…' : resendWait ? 'Please wait a minute before resending' : 'Send or resend verification email'}
+          </button>
+        </div> : null}
         <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what HR Intelligence can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}<ArrowIcon /></button></div>
         <div className="auth-sales-link"><p>Bringing this to your organization?</p><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link></div>
         <p className="auth-fine-print">Workspace accounts are invitation-based. Product demos use synthetic records; Intercom access is approved separately.</p>

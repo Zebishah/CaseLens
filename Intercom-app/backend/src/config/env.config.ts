@@ -133,16 +133,16 @@ const envSchema = z
 
     RESEND_ENABLED: booleanFlag(false),
     RESEND_API_KEY: optionalSecret,
+    RESEND_AUTH_EMAIL_ENABLED: booleanFlag(false),
+    RESEND_FROM_EMAIL: z.preprocess(
+      (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+      z.string().email().optional()
+    ),
+    RESEND_FROM_NAME: z.string().trim().min(1).max(120).regex(/^[^<>\r\n]+$/).default('HR Intelligence'),
+    EMAIL_VERIFICATION_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(30),
     RESEND_WEBHOOK_SECRET: optionalSecret,
     RESEND_RECEIVING_DOMAIN: optionalSecret,
 
-    BREVO_ENABLED: booleanFlag(false),
-    BREVO_API_KEY: optionalSecret,
-    BREVO_SENDER_EMAIL: z.preprocess(
-      (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
-      z.string().email().optional()
-    ),
-    BREVO_SENDER_NAME: z.string().trim().min(1).max(120).default('HR Intelligence'),
     PUBLIC_APP_URL: z.string().url().default('http://localhost:3001'),
     INVITE_TTL_HOURS: z.coerce.number().int().positive().max(168).default(48),
 
@@ -232,36 +232,16 @@ const envSchema = z
       }
     }
 
-    if (value.BREVO_ENABLED) {
-      for (const key of ['BREVO_API_KEY', 'BREVO_SENDER_EMAIL'] as const) {
-        if (!value[key]) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [key],
-            message: `${key} is required when BREVO_ENABLED=true`
-          });
-        }
+    if (value.RESEND_AUTH_EMAIL_ENABLED) {
+      for (const key of ['RESEND_API_KEY', 'RESEND_FROM_EMAIL'] as const) {
+        if (!value[key]) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key],
+          message: `${key} is required when RESEND_AUTH_EMAIL_ENABLED=true` });
       }
-
-      if (value.NODE_ENV === 'production') {
-        let publicAppUrl: URL | undefined;
-        try {
-          publicAppUrl = new URL(value.PUBLIC_APP_URL);
-        } catch {
-          // PUBLIC_APP_URL is validated as a URL above; keep this guard defensive.
-        }
-
-        if (
-          !publicAppUrl ||
-          publicAppUrl.protocol !== 'https:' ||
-          isLocalAppHost(publicAppUrl.hostname)
-        ) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: ['PUBLIC_APP_URL'],
-            message: 'PUBLIC_APP_URL must be a public HTTPS URL when BREVO_ENABLED=true in production'
-          });
-        }
+      let appUrl: URL | undefined;
+      try { appUrl = new URL(value.PUBLIC_APP_URL); } catch { /* URL schema reports the invalid value. */ }
+      if (value.NODE_ENV === 'production' && (!appUrl || appUrl.protocol !== 'https:' || isLocalAppHost(appUrl.hostname))) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['PUBLIC_APP_URL'],
+          message: 'PUBLIC_APP_URL must be a public HTTPS URL for account emails in production' });
       }
     }
 

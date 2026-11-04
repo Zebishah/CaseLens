@@ -9,8 +9,8 @@ import { demoSessionService } from '../demo/demo-session.service.js';
 import { env } from '../../config/env.config.js';
 import { AUTH_CONSTANTS } from './auth.constants.js';
 import { workspaceInviteRepository } from './workspace-invite.repository.js';
+import { sendVerificationEmail } from './account-email.service.js';
 import { sendWorkspaceInviteEmail } from './invite-email.service.js';
-import { userRepository } from '../user/user.repository.js';
 import { accessRequestRepository } from '../access-request/access-request.repository.js';
 import { refreshSessionRepository } from './refresh-session.repository.js';
 
@@ -19,6 +19,7 @@ type AuthUser = {
   email: string;
   name: string;
   role: string;
+  authVersion: number;
 };
 
 const publicUser = (user: AuthUser) => ({
@@ -46,7 +47,7 @@ const refreshDurationMs = (value: string): number => {
 };
 
 const buildSession = (user: AuthUser) => {
-  const payload = { sub: user.id, email: user.email, role: user.role };
+  const payload = { sub: user.id, email: user.email, role: user.role, authVersion: user.authVersion };
   return {
     token: createAccessToken(payload),
     refreshToken: createRefreshToken(payload),
@@ -66,8 +67,8 @@ const createSession = async (user: AuthUser) => {
 
 export const authService = {
   async register(payload: { email: string; password: string; name: string }) {
-    const user = await userService.createUser(payload);
-    return createSession(user);
+    void payload;
+    throw AppError.forbidden('Public registration is disabled; access is invite-controlled');
   },
 
   async login(payload: { email: string; password: string }) {
@@ -82,7 +83,55 @@ export const authService = {
       throw AppError.unauthorized('Invalid credentials');
     }
 
+    if (!user.emailVerifiedAt) {
+      throw new AppError(403, 'Verify your email address before signing in', { code: 'EMAIL_VERIFICATION_REQUIRED' });
+    }
     return createSession(user);
+  },
+
+  async resendVerification(payload: { email: string; password: string }) {
+    const user = await authRepository.findUserByEmail(payload.email);
+    if (!user || !(await bcrypt.compare(payload.password, user.password))) {
+      throw AppError.unauthorized('Invalid credentials');
+    }
+    if (user.emailVerifiedAt) return { message: 'Your email is already verified. You can sign in.' };
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = hashInviteToken(token);
+    const expiresAt = new Date(Date.now() + env.EMAIL_VERIFICATION_TTL_MINUTES * 60_000);
+    const created = await authRepository.createVerification({ userId: user.id, email: user.email, tokenHash, expiresAt });
+    if (created) {
+      try {
+        await sendVerificationEmail({ email: user.email, name: user.name, expiresAt,
+          verificationUrl: `${env.PUBLIC_APP_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(token)}` });
+      } catch (error) {
+        await authRepository.discardVerification(tokenHash);
+        throw error;
+      }
+    }
+    return { message: 'Check your inbox for a verification link. Please wait at least a minute before requesting another.' };
+  },
+
+  async verifyEmail(token: string) {
+    if (!(await authRepository.verifyEmail(hashInviteToken(token)))) {
+      throw AppError.badRequest('This verification link is invalid, expired, or already used. Request another from sign in.');
+    }
+    return { verified: true };
+  },
+
+  async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const account = await authRepository.findUserById(userId);
+    if (!account || account.role !== 'admin') throw AppError.forbidden('Only administrators can change passwords');
+    const user = await authRepository.findUserByEmail(account.email);
+    if (!user || user.id !== userId || !(await bcrypt.compare(currentPassword, user.password))) {
+      throw AppError.badRequest('The current password is incorrect');
+    }
+    if (await bcrypt.compare(newPassword, user.password)) {
+      throw AppError.badRequest('Choose a different new password');
+    }
+    const passwordHash = await bcrypt.hash(newPassword, AUTH_CONSTANTS.SALT_ROUNDS);
+    const updated = await authRepository.changeAdminPassword(userId, user.password, passwordHash);
+    if (!updated) throw AppError.conflict('Your account changed. Sign in again and retry.');
+    return { changed: true };
   },
 
   async enterDemo() {
@@ -114,7 +163,7 @@ export const authService = {
     }
 
     const user = await authRepository.findUserById(payload.sub);
-    if (!user) {
+    if (!user || !user.emailVerifiedAt || payload.authVersion !== user.authVersion || payload.demo === true) {
       throw AppError.unauthorized('Session expired');
     }
 
@@ -157,19 +206,9 @@ export const authService = {
         role: 'viewer'
       });
     } else if (existing.role !== 'viewer') {
-      user = (await userRepository.updateById(existing.id, { role: 'viewer' })) ?? {
-        id: existing.id,
-        email: existing.email,
-        name: existing.name,
-        role: 'viewer'
-      };
+      throw AppError.conflict('Reviewer invitations are only available for reviewer accounts');
     } else {
-      user = {
-        id: existing.id,
-        email: existing.email,
-        name: existing.name,
-        role: existing.role
-      };
+      user = existing;
     }
 
     await workspaceInviteRepository.revokeActiveForRequest(input.accessRequestId);
@@ -203,17 +242,10 @@ export const authService = {
       throw AppError.badRequest('This setup link is invalid or has expired');
     }
 
-    const consumed = await workspaceInviteRepository.consume(invite.id);
-    if (!consumed) {
-      throw AppError.badRequest('This setup link is invalid or has already been used');
-    }
-
     const passwordHash = await bcrypt.hash(password, AUTH_CONSTANTS.SALT_ROUNDS);
-    const user = await userRepository.updatePasswordHash(invite.userId, passwordHash);
-    if (!user) {
-      throw AppError.badRequest('The invited account is no longer available');
-    }
-    await accessRequestRepository.updateStatus(invite.accessRequestId, 'invited');
-    return createSession(user);
+    const accepted = await authRepository.acceptInvite(hashInviteToken(token), passwordHash);
+    if (!accepted) throw AppError.badRequest('This setup link is invalid or has already been used');
+    await accessRequestRepository.updateStatus(accepted.accessRequestId, 'invited');
+    return createSession(accepted.user);
   }
 };

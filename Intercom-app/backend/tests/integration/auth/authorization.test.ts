@@ -1,9 +1,18 @@
-import { describe, expect, test } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, jest, test } from '@jest/globals';
 import request from 'supertest';
 import { app } from '../../../src/app.js';
 import { generateToken } from '../../../src/services/jwt.service.js';
 
+import { authRepository } from '../../../src/modules/auth/auth.repository.js';
+
 describe('Authorization', () => {
+  beforeEach(() => {
+    jest.spyOn(authRepository, 'findUserById').mockResolvedValue({
+      id: 2, email: 'viewer@example.com', name: 'Viewer', role: 'viewer',
+      authVersion: 0, emailVerifiedAt: new Date(), createdAt: new Date(), updatedAt: new Date()
+    });
+  });
+  afterEach(() => jest.restoreAllMocks());
   test('GET /api/users requires authentication', async () => {
     const res = await request(app).get('/api/users');
     expect(res.statusCode).toBe(401);
@@ -15,7 +24,7 @@ describe('Authorization', () => {
   });
 
   test('GET /api/evaluation is limited to admins and the marked recruiter demo', async () => {
-    const viewerToken = generateToken({ sub: 2, email: 'viewer@example.com', role: 'viewer' });
+    const viewerToken = generateToken({ sub: 2, email: 'viewer@example.com', role: 'viewer', authVersion: 0 });
     const demoToken = generateToken({ sub: 3, email: 'demo@example.com', role: 'viewer', demo: true });
 
     const viewer = await request(app).get('/api/evaluation').set('Authorization', `Bearer ${viewerToken}`);

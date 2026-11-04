@@ -26,18 +26,18 @@ Deployment sequence:
 
 Set `INTERCOM_ENABLED=false` and `BOX_SYNC_ENABLED=false` unless you are connecting the Developer Workspace. Set `LLM_MODE=fixture` for deterministic samples, or `LLM_MODE=live` plus `GEMINI_API_KEY` for arbitrary custom cases.
 
-For approved reviewer dashboard accounts, configure the Brevo SMTP API sender on the backend:
+For email verification and approved reviewer dashboard accounts, configure the Resend sending API sender on the backend:
 
 ```env
-BREVO_ENABLED=true
-BREVO_API_KEY=your-brevo-api-key
-BREVO_SENDER_EMAIL=access@your-verified-domain.example
-BREVO_SENDER_NAME=HR Intelligence
+RESEND_AUTH_EMAIL_ENABLED=true
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=access@your-verified-domain.example
+RESEND_FROM_NAME=HR Intelligence
 PUBLIC_APP_URL=https://your-frontend.example
 INVITE_TTL_HOURS=48
 ```
 
-The sender address/domain must be verified in Brevo. Approval sends a one-time password setup link; it does not grant administrator access or create an Intercom teammate.
+The sender address/domain must be verified in Resend. This sending configuration is independent of the `RESEND_ENABLED` inbound-email switch. Approval sends a one-time password setup link; it does not grant administrator access or create an Intercom teammate.
 
 When Intercom is enabled on Render, set backend-only:
 
@@ -61,6 +61,8 @@ npm run db:seed-portfolio
 ```
 
 The command above applies the ordered, recorded, transactional application migrations and is the only migration command for production. `db:push` is retained solely for disposable local prototyping and must not be run against a shared or production database. For an existing deployment, inspect the target database and migration history first. Targeted `db:migrate-*` commands remain available for controlled diagnosis or a single migration. Never run migrations automatically during API startup.
+
+Migration `014-account-security` requires existing accounts, including administrators, to verify their email before signing in again. Configure Resend before deploying. Enter the correct credentials at sign in, choose **Send or resend verification email**, and confirm the link. Accepting new invitations verifies the invited email automatically. Administrator password changes are available under **Account security** and invalidate all previous sessions.
 
 After deploying persistent refresh-session validation, users with refresh cookies issued before this migration may need to sign in once more because those older sessions were not stored in the database. Short-lived recruiter demo sessions are unaffected.
 

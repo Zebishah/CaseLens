@@ -7,6 +7,7 @@ export type AppJwtPayload = {
   email: string;
   role: string;
   demo?: boolean;
+  authVersion?: number;
 };
 
 type TokenType = 'access' | 'refresh';
@@ -40,6 +41,9 @@ const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayl
     !('sub' in payload) ||
     !('email' in payload) ||
     !('role' in payload) ||
+    !Number.isSafeInteger(Number(payload.sub)) || Number(payload.sub) <= 0 ||
+    typeof payload.email !== 'string' || typeof payload.role !== 'string' ||
+    (payload.authVersion !== undefined && (!Number.isSafeInteger(payload.authVersion) || payload.authVersion < 0)) ||
     payload.tokenType !== tokenType
   ) {
     throw new Error('Invalid token payload');
@@ -49,6 +53,7 @@ const verify = (token: string, tokenType: TokenType, secret: string): AppJwtPayl
     sub: Number(payload.sub),
     email: String(payload.email),
     role: String(payload.role),
+    ...(typeof payload.authVersion === 'number' ? { authVersion: payload.authVersion } : {}),
     ...(payload.demo === true ? { demo: true } : {})
   };
 };

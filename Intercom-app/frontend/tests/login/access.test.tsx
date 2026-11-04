@@ -7,7 +7,8 @@ const { apiMocks, routerReplace } = vi.hoisted(() => ({
   apiMocks: {
     restoreSession: vi.fn(),
     enterDemo: vi.fn(),
-    login: vi.fn()
+    login: vi.fn(),
+    resendVerification: vi.fn()
   },
   routerReplace: vi.fn()
 }));
@@ -16,7 +17,7 @@ vi.mock('next/link', () => ({ default: ({ href, children, ...props }: React.Comp
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: routerReplace }) }));
 vi.mock('../../lib/api', () => {
   class ApiError extends Error {
-    constructor(message: string, readonly status: number, readonly sleeping = false) {
+    constructor(message: string, readonly status: number, readonly sleeping = false, readonly code?: string) {
       super(message);
     }
   }
@@ -28,6 +29,7 @@ describe('login and recruiter access', () => {
     apiMocks.restoreSession.mockResolvedValue(null);
     apiMocks.enterDemo.mockResolvedValue({ token: 'synthetic-session' });
     apiMocks.login.mockResolvedValue({ token: 'access-token' });
+    apiMocks.resendVerification.mockResolvedValue({ message: 'Check your inbox for a verification link.' });
     routerReplace.mockReset();
     window.history.replaceState({}, '', '/login');
   });
@@ -69,4 +71,21 @@ describe('login and recruiter access', () => {
     expect(password).toHaveAttribute('type', 'text');
     expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-pressed', 'true');
   });
+  it('offers verification after a correct-password login requires it, and resends with a cooldown', async () => {
+    const user = userEvent.setup();
+    apiMocks.login.mockRejectedValueOnce(new (await import('../../lib/api')).ApiError(
+      'Verify your email', 403, false, 'EMAIL_VERIFICATION_REQUIRED'
+    ));
+    render(<LoginPage />);
+    await user.type(await screen.findByLabelText('Email address'), 'admin@example.com');
+    await user.type(screen.getByLabelText('Password'), 'correct-password-123');
+    await user.click(screen.getByRole('button', { name: 'Sign in to workspace' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Verify your email address');
+    await user.click(screen.getByRole('button', { name: 'Send or resend verification email' }));
+    expect(apiMocks.resendVerification).toHaveBeenCalledWith('admin@example.com', 'correct-password-123');
+    expect(await screen.findByRole('status')).toHaveTextContent('Check your inbox');
+    expect(screen.getByRole('button', { name: 'Please wait a minute before resending' })).toBeDisabled();
+    expect(routerReplace).not.toHaveBeenCalled();
+  });
+
 });

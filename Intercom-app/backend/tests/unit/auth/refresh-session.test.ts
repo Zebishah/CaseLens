@@ -1,6 +1,8 @@
+import bcrypt from 'bcrypt';
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 const mockFindUserById = jest.fn();
+const mockFindUserByEmail = jest.fn();
 const mockRotate = jest.fn();
 const mockCreate = jest.fn();
 const mockRevoke = jest.fn();
@@ -8,7 +10,7 @@ const mockRevokeAllForUser = jest.fn();
 const mockCreateUser = jest.fn();
 
 await jest.unstable_mockModule('../../../src/modules/auth/auth.repository.js', () => ({
-  authRepository: { findUserById: mockFindUserById }
+  authRepository: { findUserById: mockFindUserById, findUserByEmail: mockFindUserByEmail }
 }));
 await jest.unstable_mockModule('../../../src/modules/auth/refresh-session.repository.js', () => ({
   refreshSessionRepository: {
@@ -40,24 +42,19 @@ await jest.unstable_mockModule('../../../src/modules/access-request/access-reque
 const { authService, hashRefreshToken } = await import('../../../src/modules/auth/auth.service.js');
 const { generateRefreshToken, verifyRefreshToken } = await import('../../../src/services/jwt.service.js');
 
-const user = { id: 7, email: 'reviewer@example.test', name: 'Reviewer', role: 'viewer' };
+const user = { id: 7, email: 'reviewer@example.test', name: 'Reviewer', role: 'viewer', authVersion: 0, emailVerifiedAt: new Date() };
 
 describe('persistent refresh sessions', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     mockFindUserById.mockResolvedValue(user);
+    mockFindUserByEmail.mockResolvedValue({ ...user, password: await bcrypt.hash('test-password-123', 4) });
     mockRotate.mockResolvedValue(true);
     mockCreate.mockResolvedValue(undefined);
   });
 
   test('stores only a hash when creating a session', async () => {
-    mockCreateUser.mockResolvedValue(user);
-
-    const session = await authService.register({
-      email: user.email,
-      name: user.name,
-      password: 'unused-test-password'
-    });
+    const session = await authService.login({ email: user.email, password: 'test-password-123' });
 
     const stored = mockCreate.mock.calls[0]?.[0] as { tokenHash: string; expiresAt: Date };
     expect(stored.tokenHash).toBe(hashRefreshToken(session.refreshToken));
@@ -67,7 +64,7 @@ describe('persistent refresh sessions', () => {
   });
 
   test('atomically rotates a valid refresh token and persists only hashes', async () => {
-    const oldToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role });
+    const oldToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role, authVersion: user.authVersion });
 
     const rotated = await authService.refreshToken(oldToken);
 
@@ -86,13 +83,13 @@ describe('persistent refresh sessions', () => {
 
   test('rejects a replay when the repository reports that the token was already consumed', async () => {
     mockRotate.mockResolvedValueOnce(false);
-    const oldToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role });
+    const oldToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role, authVersion: user.authVersion });
 
     await expect(authService.refreshToken(oldToken)).rejects.toThrow('Session expired');
   });
 
   test('revokes the current refresh session on logout and supports user-wide revocation', async () => {
-    const refreshToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role });
+    const refreshToken = generateRefreshToken({ sub: user.id, email: user.email, role: user.role, authVersion: user.authVersion });
     await authService.logout(refreshToken);
     await authService.revokeAllSessions(user.id);
 

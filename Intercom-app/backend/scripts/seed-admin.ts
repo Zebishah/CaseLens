@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { AUTH_CONSTANTS } from '../src/modules/auth/auth.constants.js';
 import { ROLES } from '../src/constants/roles.js';
 import { db, pool } from '../src/database/connection.js';
@@ -25,6 +25,7 @@ const main = async (): Promise<void> => {
       .update(users)
       .set({
         password: hashedPassword,
+        authVersion: sql`${users.authVersion} + 1`,
         name,
         role: ROLES.ADMIN,
         updatedAt: new Date()

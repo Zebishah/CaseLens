@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../../database/connection.js';
 import { users } from '../../database/schema/users.js';
 import type { CreateUserDto } from './user.dto.js';
@@ -8,6 +8,8 @@ const publicUserColumns = {
   email: users.email,
   name: users.name,
   role: users.role,
+  emailVerifiedAt: users.emailVerifiedAt,
+  authVersion: users.authVersion,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt
 };
@@ -34,7 +36,12 @@ export const userRepository = {
   async updateById(id: number, payload: Partial<CreateUserDto>) {
     const [user] = await db
       .update(users)
-      .set({ ...payload, updatedAt: new Date() })
+      .set({
+        ...payload,
+        ...(payload.email ? { emailVerifiedAt: null } : {}),
+        ...(payload.email || payload.password || payload.role ? { authVersion: sql`${users.authVersion} + 1` } : {}),
+        updatedAt: new Date()
+      })
       .where(eq(users.id, id))
       .returning(publicUserColumns);
     return user;
@@ -43,13 +50,15 @@ export const userRepository = {
   async updatePasswordHash(id: number, password: string) {
     const [user] = await db
       .update(users)
-      .set({ password, updatedAt: new Date() })
+      .set({ password, authVersion: sql`${users.authVersion} + 1`, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning({
         id: users.id,
         email: users.email,
         name: users.name,
-        role: users.role
+        role: users.role,
+        emailVerifiedAt: users.emailVerifiedAt,
+        authVersion: users.authVersion
       });
     return user;
   },

@@ -5,6 +5,7 @@ import { validate } from '../../middlewares/validate.middleware.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { requireRole } from '../../middlewares/requireRole.middleware.js';
 import { ROLES } from '../../constants/roles.js';
+import { newPasswordSchema } from '../auth/auth.validation.js';
 import { userController } from './user.controller.js';
 
 const idSchema = z.object({
@@ -16,7 +17,7 @@ const idSchema = z.object({
 const createSchema = z.object({
   body: z.object({
     email: z.string().trim().toLowerCase().email(),
-    password: z.string().min(8),
+    password: newPasswordSchema,
     name: z.string().trim().min(1).max(255),
     role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
   }),
@@ -28,7 +29,7 @@ const updateSchema = z.object({
   body: z
     .object({
       email: z.string().trim().toLowerCase().email().optional(),
-      password: z.string().min(8).optional(),
+      password: newPasswordSchema.optional(),
       name: z.string().trim().min(1).max(255).optional(),
       role: z.enum([ROLES.ADMIN, ROLES.VIEWER, ROLES.USER]).optional()
     })

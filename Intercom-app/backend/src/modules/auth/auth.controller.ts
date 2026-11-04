@@ -25,6 +25,20 @@ export const authController = {
     sendSession(res, result);
   },
 
+  async resendVerification(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.resendVerification(req.body));
+  },
+
+  async verifyEmail(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.verifyEmail(req.body.token));
+  },
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    const result = await authService.changePassword(req.user!.sub, req.body.currentPassword, req.body.newPassword);
+    clearRefreshCookie(res);
+    sendSuccess(res, result);
+  },
+
   async enterDemo(_req: Request, res: Response): Promise<void> {
     sendSuccess(res, await authService.enterDemo());
   },

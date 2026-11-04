@@ -50,6 +50,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/operations', label: 'Operational health', hint: 'Ingestion and processing', icon: 'operations', demoOnly: true },
       { href: '/evaluation', label: 'AI quality', hint: 'Measured evaluation', icon: 'quality', demoOnly: true },
+      { href: '/settings/security', label: 'Account security', hint: 'Change administrator password', icon: 'access', adminOnly: true },
       { href: '/access-requests', label: 'Access management', hint: 'Reviewer invitations', icon: 'access', adminOnly: true }
     ]
   },
@@ -69,6 +70,7 @@ const navGroups: NavGroup[] = [
 ];
 
 const heroByPath: Record<string, { eyebrow: string; title: string; icon: DashboardIconName; meta: string }> = {
+  '/settings/security': { eyebrow: 'Account security', title: 'Protect your administrator account.', icon: 'shield', meta: 'Administrator only' },
   '/overview': { eyebrow: 'Organization overview', title: 'Your HR conversations. One connected picture.', icon: 'activity', meta: 'Live operating view' },
   '/cases': { eyebrow: 'Case operations', title: 'Every HR case, with the context to move forward.', icon: 'cases', meta: 'Persisted case evidence' },
   '/directory': { eyebrow: 'Directory intelligence', title: 'Resolve people, stores, and ownership with confidence.', icon: 'users', meta: 'Organization context' },
@@ -173,10 +175,10 @@ export function AppShell({
     .filter((group) => group.items.length > 0);
   const intercomWorkspaceUrl = process.env.NEXT_PUBLIC_INTERCOM_WORKSPACE_URL?.trim();
   const restrictedPath =
-    ((!isAdmin && !isDemoRecruiterMode) && ['/operations', '/evaluation', '/access-requests'].some(
+    ((!isAdmin && !isDemoRecruiterMode) && ['/operations', '/evaluation', '/access-requests', '/settings/security'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
     )) ||
-    (isDemoRecruiterMode && ['/access-requests'].some(
+    (isDemoRecruiterMode && ['/access-requests', '/settings/security'].some(
       (route) => pathname === route || pathname.startsWith(`${route}/`)
     ));
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);

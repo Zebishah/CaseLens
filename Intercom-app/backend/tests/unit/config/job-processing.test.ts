@@ -44,34 +44,46 @@ describe('JOB_PROCESSING_MODE', () => {
     expect(parsed.REDIS_URL).toBeUndefined();
   });
 
-  test('production Brevo invites require a public HTTPS app URL', () => {
+  test('production Resend invites require a public HTTPS app URL', () => {
     expect(() =>
       parseAppEnv({
         ...base,
         NODE_ENV: 'production',
         JWT_SECRET: 'a'.repeat(32),
         JWT_REFRESH_SECRET: 'b'.repeat(32),
-        BREVO_ENABLED: 'true',
-        BREVO_API_KEY: 'test-brevo-key',
-        BREVO_SENDER_EMAIL: 'access@example.com',
+        RESEND_AUTH_EMAIL_ENABLED: 'true',
+        RESEND_API_KEY: 'test-resend-key',
+        RESEND_FROM_EMAIL: 'access@example.com',
         PUBLIC_APP_URL: 'http://localhost:3001'
       })
     ).toThrow(/PUBLIC_APP_URL/);
   });
 
-  test('accepts a deployed HTTPS app URL for Brevo invites', () => {
+  test('accepts a deployed HTTPS app URL for Resend invites', () => {
     const parsed = parseAppEnv({
       ...base,
       NODE_ENV: 'production',
       JWT_SECRET: 'a'.repeat(32),
       JWT_REFRESH_SECRET: 'b'.repeat(32),
-      BREVO_ENABLED: 'true',
-      BREVO_API_KEY: 'test-brevo-key',
-      BREVO_SENDER_EMAIL: 'access@example.com',
+      RESEND_AUTH_EMAIL_ENABLED: 'true',
+      RESEND_API_KEY: 'test-resend-key',
+      RESEND_FROM_EMAIL: 'access@example.com',
       PUBLIC_APP_URL: 'https://nagumo-hr-intelligence.vercel.app'
     });
 
     expect(parsed.PUBLIC_APP_URL).toBe('https://nagumo-hr-intelligence.vercel.app');
+  });
+
+  test('sending account email does not require inbound Resend configuration', () => {
+    const parsed = parseAppEnv({ ...base, RESEND_AUTH_EMAIL_ENABLED: 'true',
+      RESEND_API_KEY: 'sending-only-key', RESEND_FROM_EMAIL: 'access@example.com' });
+    expect(parsed.RESEND_ENABLED).toBe(false);
+    expect(parsed.RESEND_WEBHOOK_SECRET).toBeUndefined();
+  });
+
+  test('account email requires sending credentials and a safe sender name', () => {
+    expect(() => parseAppEnv({ ...base, RESEND_AUTH_EMAIL_ENABLED: 'true' })).toThrow(/RESEND_API_KEY/);
+    expect(() => parseAppEnv({ ...base, RESEND_FROM_NAME: 'Name\r\nBcc: other@example.com' })).toThrow();
   });
 
   test('does not start BullMQ workers in inline mode', () => {

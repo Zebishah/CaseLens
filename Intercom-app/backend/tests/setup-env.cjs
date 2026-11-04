@@ -22,8 +22,9 @@ process.env.RUN_API = process.env.RUN_API || 'true';
 process.env.RUN_WORKERS = process.env.RUN_WORKERS || 'false';
 process.env.JOB_PROCESSING_MODE = process.env.JOB_PROCESSING_MODE || 'bullmq';
 process.env.CORS_ORIGINS = process.env.CORS_ORIGINS || 'http://localhost:3001';
-// Keep local/deployment Brevo settings from leaking into test bootstrap.
-process.env.BREVO_ENABLED = 'false';
-process.env.BREVO_API_KEY = 'test-brevo-key';
-process.env.BREVO_SENDER_EMAIL = 'access@example.com';
 process.env.PUBLIC_APP_URL = 'http://localhost:3001';
+
+process.env.RESEND_AUTH_EMAIL_ENABLED = 'false';
+process.env.RESEND_ENABLED = 'false';
+process.env.RESEND_API_KEY = 'test-resend-key';
+process.env.RESEND_FROM_EMAIL = 'access@example.com';
