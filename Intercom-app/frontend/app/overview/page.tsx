@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '../../components/AppShell';
+import { WorkspaceLaunchpad } from '../../components/dashboard/WorkspaceLaunchpad';
 import { AlertBanner, DashboardIcon, MetricCard, PageSkeleton, SectionCard, StatusBadge, TextButton } from '../../components/dashboard/ui';
 import { DistributionBars, TrendChart, type TrendBucket } from '../../components/dashboard/AnalyticsCharts';
 import { ApiError, api } from '../../lib/api';
@@ -195,8 +196,9 @@ export default function OverviewPage() {
 
       {data ? (
         <div className="space-y-6">
+          <WorkspaceLaunchpad />
           {operations ? (
-            <section className="dash-panel" aria-labelledby="runtime-summary-title">
+            <details className="dash-panel workspace-runtime"><summary><span>Processing details</span><span>Inspect technical evidence +</span></summary><div className="mt-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="dashboard-section-label">Read-only runtime evidence</p>
@@ -215,11 +217,11 @@ export default function OverviewPage() {
                 <OperationalMetric label="Recent run duration" value={operations.actorRuns.recentRunDurationMs == null ? '—' : `${operations.actorRuns.recentRunDurationMs} ms`} />
                 <OperationalMetric label="Outbox recovery" value={operations.recoveryStatus === 'clear' ? 'Clear' : `${operations.pendingOutbox} pending`} />
               </dl> : <p className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-muted">Actor run counts are recorded when Apify mode is active. This deployment is using {operations.jobProcessingMode} mode.</p>}
-            </section>
+            </div></details>
           ) : null}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-muted">
-              Last Intercom webhook:{' '}
+              Last Intercom activity:{' '}
               <span className="font-medium text-primary">
                 {data.lastIntercomWebhookAt
                   ? `${formatRelativeTime(data.lastIntercomWebhookAt)} · ${new Date(data.lastIntercomWebhookAt).toLocaleString()}`
@@ -273,9 +275,9 @@ export default function OverviewPage() {
           <section className="dash-panel" aria-labelledby="analytics-trends-title">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="dashboard-section-label">Analytics trends · Real historical data</p>
+                <p className="dashboard-section-label">WORKSPACE ACTIVITY · RECORDED CASE HISTORY</p>
                 <h2 id="analytics-trends-title" className="mt-2 text-lg font-semibold tracking-tight text-primary">Volume and processing outcomes over time</h2>
-                <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">Cases created use persisted conversation timestamps. Completed and failed series use inbound lifecycle timestamps. Identity and manual-review history is not charted because those snapshots are not versioned.</p>
+                <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">See incoming case volume and processing outcomes over time. Choose a date range to understand activity; current employee matches and review needs appear in the summaries above.</p>
               </div>
               <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1" aria-label="Trend range">
                 {(['7d', '30d', '90d'] as TrendRange[]).map((range) => (
@@ -347,7 +349,7 @@ export default function OverviewPage() {
                 <AttentionItem label="Duplicate events blocked" value={data.duplicateEventsPrevented} copy="Repeated inbound events safely ignored." tone="success" />
               </div>
             </SectionCard>
-            <SectionCard title="Platform proof" description="A compact tour of the workflow behind these live records." action={<Link href="/demo" className="text-sm font-semibold text-primary hover:text-primary-hover">Open walkthrough →</Link>}>
+            <SectionCard title="Your team’s workflow" description="See how conversations become cases your team can act on." action={<Link href="/demo" className="text-sm font-semibold text-primary hover:text-primary-hover">Open walkthrough →</Link>}>
               <div className="flex items-start gap-3 rounded-xl border border-primary/10 bg-emerald-50/60 p-4">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-secondary shadow-sm"><DashboardIcon name="spark" /></span>
                 <div><p className="text-sm font-semibold text-primary">Cases become explainable work</p><p className="mt-1 text-sm leading-5 text-muted">Identity evidence, related history, routing context, and safe processing state are shown together.</p></div>
@@ -405,7 +407,7 @@ export default function OverviewPage() {
             )}
           </section>
 
-          <p className="text-xs text-muted">Live database snapshot · Last Intercom webhook: {data.lastIntercomWebhookAt ? formatRelativeTime(data.lastIntercomWebhookAt) : 'none recorded'}.</p>
+          <p className="text-xs text-muted">Current workspace snapshot · Last Intercom activity: {data.lastIntercomWebhookAt ? formatRelativeTime(data.lastIntercomWebhookAt) : 'none recorded'}.</p>
         </div>
       ) : null}
     </AppShell>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './product-system.css';
 import { HRIntelligenceAssistant } from '../components/HRIntelligenceAssistant';
 
 export const metadata: Metadata = {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#2b6777',
+  themeColor: '#101013',
   width: 'device-width',
   initialScale: 1
 };

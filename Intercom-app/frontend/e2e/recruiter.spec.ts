@@ -68,6 +68,7 @@ async function json(route: Route, data: unknown, status = 200): Promise<void> {
 }
 
 async function mockApi(page: Page, options: { casesStatus?: number; accessStatus?: unknown } = {}): Promise<void> {
+  await page.route('**/api/auth/refresh-token', route => json(route, null, 401));
   await page.route('**/ready', (route) => json(route, { status: 'ready' }));
   await page.route('**/api/auth/demo', (route) => json(route, {
     token: demoToken,
@@ -133,11 +134,71 @@ test('public landing page is usable and passes critical accessibility checks', a
   const consoleErrors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Turn fragmented HR conversations/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /HR conversations.*Clearer decisions/ })).toBeVisible();
   await expect(page.getByRole('link', { name: /Explore reviewer walkthrough/ })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([]);
   expect(consoleErrors).toEqual([]);
+});
+
+test('landing workflow supports keyboard exploration, motion controls, and on-demand video', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(() => page.locator('.neural-core').evaluate((canvas: HTMLCanvasElement) => canvas.width)).toBeGreaterThan(300);
+  await page.getByRole('button', { name: 'Pause visual animation' }).click();
+  await expect(page.getByRole('button', { name: 'Resume visual animation' })).toHaveAttribute('aria-pressed', 'true');
+
+  const firstStep = page.getByRole('tab', { name: /Understand the conversation/ });
+  await firstStep.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('tab', { name: /Connect the right context/ })).toBeFocused();
+  await expect(page.locator('.workflow-explorer').getByRole('tabpanel')).toContainText('Directory record matched');
+  await page.keyboard.press('End');
+  await expect(page.locator('.workflow-explorer').getByRole('tabpanel')).toContainText('Human reviewer decides');
+
+  await expect(page.locator('.product-film iframe')).toHaveCount(0);
+  await page.locator('.film-poster').scrollIntoViewIfNeeded();
+  await expect.poll(() => page.locator('.film-poster img').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  await page.route('https://embed.app.guidde.com/**', route => route.fulfill({ contentType: 'text/html', body: '<p>Product walkthrough player</p>' }));
+  await page.getByRole('button', { name: 'Play the five-minute product walkthrough' }).click();
+  await expect(page.locator('.product-film iframe')).toBeVisible();
+  await page.getByRole('button', { name: 'Close video' }).click();
+  await expect(page.getByRole('button', { name: 'Play the five-minute product walkthrough' })).toBeVisible();
+});
+
+test('landing case animation is explorable and real product screenshots explain the evidence', async ({ page }) => {
+  await page.goto('/');
+  const caseControls = page.getByRole('group', { name: 'Explore a sample HR case' });
+  await caseControls.getByRole('button', { name: /Resolve identity/ }).click();
+  await expect(page.locator('.core-process')).toContainText('Connecting the employee');
+  await expect(page.getByRole('button', { name: 'Resume visual animation' })).toHaveAttribute('aria-pressed', 'true');
+
+  const proof = page.locator('.product-proof');
+  const firstScreen = proof.getByRole('tab', { name: 'Employee identity', exact: true });
+  await firstScreen.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(proof.getByRole('tab', { name: 'Related history', exact: true })).toBeFocused();
+  await expect(proof.getByRole('tabpanel')).toContainText('Uncertain identity stays a human decision.');
+  await expect(proof.getByRole('link', { name: 'Open full-size product screenshot: Related history' })).toHaveAttribute('href', '/product-screenshots/ayesha-related-case-evidence.webp');
+  await expect.poll(() => proof.locator('img').evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  await page.keyboard.press('End');
+  await expect(proof.getByRole('tabpanel')).toContainText('The conversation has a clear case category.');
+  await expect(proof.getByRole('link', { name: 'Explore the product yourself' })).toHaveAttribute('href', '/login?mode=demo');
+});
+
+test('mobile landing navigation and FAQs work without horizontal overflow', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: /HR conversations/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  const mobileNav = page.getByRole('navigation', { name: 'Mobile landing' });
+  await expect(mobileNav).toBeVisible();
+  await mobileNav.getByRole('link', { name: 'How it works' }).click();
+  await expect(mobileNav).toHaveCount(0);
+  await expect(page).toHaveURL(/#workflow$/);
+  await page.locator('summary').filter({ hasText: 'Can I explore it without connecting company data?' }).click();
+  await expect(page.getByText(/The reviewer walkthrough uses synthetic records in a read-only workspace/)).toBeVisible();
 });
 
 test('landing engineering CTA opens the public case study and passes axe checks', async ({ page }) => {
@@ -180,7 +241,7 @@ test('recruiter demo exposes the read-only product surface and hides access mana
   }
   await expect(sidebar.getByRole('link', { name: 'Access management' })).toHaveCount(0);
   await expect(sidebar.getByRole('link', { name: 'Reviewer access' })).toBeVisible();
-  await expect(page.getByText('Recruiter demo · Read-only')).toBeVisible();
+  await expect(page.getByText('Product demo · Read-only')).toBeVisible();
 
   await expect(page.getByRole('button', { name: 'Open Intercom inbox' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Intercom inbox' }).click();
@@ -208,7 +269,7 @@ test('recruiter demo exposes the read-only product surface and hides access mana
 
   await page.goto('/operations');
   await expect(page.getByRole('heading', { name: 'Operational health' })).toBeVisible();
-  await expect(page.getByText('Recruiter demo · Read-only.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Product demo · Read-only.', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: /Force replay|Retry write-back|Dispatch pending events/ })).toHaveCount(0);
 
   await page.goto('/evaluation');
@@ -265,4 +326,74 @@ test('case list exposes a recoverable service failure', async ({ page }) => {
   await page.goto('/cases');
   await expect(page.getByRole('heading', { name: 'Could not load cases' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
+});
+
+
+test('customer demo requests retain the workflow context and use the existing approval service', async ({ page }) => {
+  await mockApi(page);
+  let refreshCalls = 0;
+  await page.route('**/api/auth/refresh-token', route => { refreshCalls++; return json(route, null, 401); });
+  let requestBody: Record<string, unknown> | null = null;
+  await page.route('**/api/access-requests', async route => {
+    requestBody = route.request().postDataJSON();
+    return json(route, { received: true }, 201);
+  });
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Request a product demo', exact: true }).first().click();
+  await expect(page).toHaveURL(/access\?intent=customer/);
+  await expect(page.getByRole('heading', { name: 'Put your HR workflow in the picture.' })).toBeVisible();
+  expect(refreshCalls).toBe(0);
+  await expect(page.getByRole('button', { name: /For my organization/ })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Full name').fill('Morgan Smith');
+  await page.getByLabel('Work email').fill('morgan@example.test');
+  await page.getByLabel('Organization').fill('Example Stores');
+  await page.getByLabel('What would you like to explore?').fill('We want to connect attendance cases across our store teams.');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Request a product demo', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Request received' })).toBeVisible();
+  expect(requestBody).toMatchObject({ organization: 'Example Stores', purpose: '[Customer product demo] We want to connect attendance cases across our store teams.' });
+  expect(requestBody).not.toHaveProperty('workspaceId');
+});
+
+test('authentication explains the product and provides working demo and recovery paths', async ({ page }) => {
+  await mockApi(page);
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
+  await expect(page.getByText('AI-POWERED HR CASE INTELLIGENCE', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Request a product demo/ })).toHaveAttribute('href', '/access?intent=customer');
+  const a11y = await new AxeBuilder({ page }).analyze();
+  expect(a11y.violations.filter(violation => violation.impact === 'critical')).toEqual([]);
+  await page.getByRole('link', { name: 'Forgot password?' }).click();
+  await expect(page.getByRole('heading', { name: 'Let’s get you back in.' })).toBeVisible();
+  await expect(page.getByText(/This page does not send a reset email/)).toBeVisible();
+  await page.goto('/set-password');
+  await expect(page.getByRole('alert').filter({ hasText: 'missing its invitation token' })).toBeVisible();
+  await page.route('**/api/auth/invite?token=synthetic-invitation', route => json(route, { name: 'Morgan Smith', email: 'morgan@example.test', expiresAt: '2026-11-05T00:00:00Z' }));
+  await page.route('**/api/auth/invite/accept', route => json(route, { token: demoToken, user: { id: 2, name: 'Morgan Smith', email: 'morgan@example.test', role: 'viewer' } }));
+  await page.goto('/set-password?token=synthetic-invitation');
+  await page.getByLabel(/^New password/).fill('first-password-123');
+  await page.getByLabel('Confirm password').fill('other-password-123');
+  await page.getByRole('button', { name: 'Create password and enter workspace' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Passwords do not match.' })).toBeVisible();
+  await expect(page.getByLabel('Confirm password')).toBeVisible();
+  await page.getByLabel('Confirm password').fill('first-password-123');
+  await page.getByRole('button', { name: 'Create password and enter workspace' }).click();
+  await expect(page).toHaveURL(/overview$/);
+});
+
+test('mobile workspace and authentication keep the product context usable', async ({ page }) => {
+  await mockApi(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: /Your inbox has the messages/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Enter read-only demo' }).click();
+  await expect(page).toHaveURL(/overview$/);
+  await expect(page.getByRole('navigation', { name: 'Workspace quick actions' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Mobile application' }).getByRole('link', { name: 'Case operations' }).click();
+  await expect(page.getByRole('heading', { name: 'Case operations', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

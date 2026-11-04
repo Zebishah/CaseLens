@@ -1,148 +1,84 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { IntelligenceMark, SignalIcon } from './LandingIcons';
+import { NeuralCore } from './NeuralCore';
 
-const phases = [
-  { label: 'Queued', className: 'status-queued' },
-  { label: 'Processing', className: 'status-processing' },
-  { label: 'Completed', className: 'status-completed' }
-] as const;
-
-const rails = [
-  { label: 'Case', detail: 'Attendance intake' },
-  { label: 'Match', detail: 'Jordan Hale' },
-  { label: 'History', detail: 'Prior coaching' },
-  { label: 'Route', detail: 'Sam Patel' }
+const stages = [
+  { label: 'Classify the case', action: 'Understanding the conversation', detail: 'Attendance · Store 1042' },
+  { label: 'Resolve identity', action: 'Connecting the employee', detail: 'Jordan → Jordan Hale' },
+  { label: 'Connect history', action: 'Finding the relevant history', detail: 'Prior coaching · Evidence attached' },
+  { label: 'Inform the reviewer', action: 'Putting your team in control', detail: 'Suggested stakeholder · Sam Patel' }
 ];
-
-const findings = [
-  { initials: 'JH', title: 'Jordan Hale', meta: 'Identity matched · high confidence', tone: 'bg-mist' },
-  { initials: '04', title: 'Write-up follow-up', meta: 'Related attendance history', tone: 'bg-paper' },
-  { initials: 'SP', title: 'Sam Patel', meta: 'District manager · routed', tone: 'bg-primary text-white' }
-];
-
-const Check = () => (
-  <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="none" aria-hidden="true">
-    <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 export function HeroVisual() {
-  const [phase, setPhase] = useState(0);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  const [active, setActive] = useState(0);
+  const [motionAllowed, setMotionAllowed] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const reduced =
-      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      setPhase(2);
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      setPhase((current) => (current + 1) % phases.length);
-    }, 2600);
-    return () => window.clearInterval(timer);
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const syncMotion = () => setMotionAllowed(!media.matches);
+    syncMotion();
+    media.addEventListener('change', syncMotion);
+    let inView = true;
+    const syncVisibility = () => setVisible(inView && !document.hidden);
+    const observer = new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; syncVisibility(); });
+    if (stageRef.current) observer.observe(stageRef.current);
+    document.addEventListener('visibilitychange', syncVisibility);
+    return () => {
+      media.removeEventListener('change', syncMotion);
+      document.removeEventListener('visibilitychange', syncVisibility);
+      observer.disconnect();
+    };
   }, []);
 
-  const status = phases[phase] ?? phases[0];
-  const railActive = phase === 0 ? 0 : phase === 1 ? 1 : 3;
-  const fillHeight = `${(railActive / (rails.length - 1)) * 100}%`;
-  const unlocked = phase === 0 ? 1 : phase === 1 ? 2 : 3;
+  useEffect(() => {
+    if (paused || !motionAllowed || !visible) return;
+    const timer = window.setInterval(() => setActive(current => (current + 1) % stages.length), 3600);
+    return () => window.clearInterval(timer);
+  }, [paused, motionAllowed, visible]);
 
+  const stopped = paused || !motionAllowed || !visible;
+  const stage = stages[active];
   return (
-    <div className="relative mx-auto w-full max-w-[34rem]">
-      <div
-        className="pointer-events-none absolute -inset-6 rounded-[2.4rem] bg-gradient-to-br from-white/80 via-mist/50 to-secondary/20 blur-xl"
-        aria-hidden="true"
-      />
-      <div className="relative overflow-hidden rounded-[1.7rem] border border-white/80 bg-white shadow-float">
-        <div className="flex items-center gap-3 border-b border-primary/10 bg-paper/80 px-4 py-3">
-          <span className="flex gap-1.5" aria-hidden="true">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#d65c5c]/70" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#d8a24a]/80" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#3ca678]/80" />
-          </span>
-          <p className="text-xs font-medium tracking-[0.14em] text-muted">Case intelligence</p>
-          <p className={`ml-auto rounded-full px-2.5 py-1 text-[11px] font-medium ${status.className}`} aria-live="polite">
-            {status.label}
-          </p>
-        </div>
+    <div ref={stageRef} className="intelligence-stage" data-paused={stopped} data-stage={active}>
+      <div className="stage-grid" aria-hidden="true" />
+      <div className="stage-orbit orbit-one" aria-hidden="true" />
+      <div className="stage-orbit orbit-two" aria-hidden="true" />
+      <svg className="stage-connections" viewBox="0 0 1200 480" fill="none" aria-hidden="true">
+        <path className="signal-track" d="M315 162C450 162 410 236 600 236S890 150 965 160" />
+        <path className="signal-track" d="M965 160C915 235 830 332 925 332" />
+        <path className="signal-track" d="M925 332C750 420 500 390 350 355" />
+        <path className="signal-travel signal-travel-one" d="M315 162C450 162 410 236 600 236S890 150 965 160" />
+        <path className="signal-travel signal-travel-two" d="M965 160C915 235 830 332 925 332" />
+        <path className="signal-travel signal-travel-three" d="M925 332C750 420 500 390 350 355" />
+      </svg>
+      <span className="stage-coordinate coordinate-left" aria-hidden="true">CONVERSATIONS IN.</span>
+      <span className="stage-coordinate coordinate-right" aria-hidden="true">CASE INTELLIGENCE OUT.</span>
+      <div className="core-container"><NeuralCore paused={stopped} /></div>
+      <div className="core-label"><IntelligenceMark /><span>HR INTELLIGENCE<span>AI + DIRECTORY EVIDENCE</span></span></div>
+      <div className="core-process" aria-live="off"><span className="status-light" /><span key={active}>{stage.action}</span></div>
 
-        <div className="grid lg:grid-cols-[11.5rem_minmax(0,1fr)]">
-          <aside className="border-b border-primary/10 p-5 lg:border-b-0 lg:border-r">
-            <div className="relative">
-              <span className="pointer-events-none absolute bottom-3 left-[9px] top-3 w-1 overflow-hidden rounded-full bg-mist">
-                <span className="step-track-fill absolute inset-x-0 top-0 rounded-full bg-gradient-to-b from-secondary to-primary" style={{ height: fillHeight }} />
-              </span>
-              <ol className="relative space-y-5">
-                {rails.map((item, index) => {
-                  const done = index < railActive;
-                  const current = index === railActive;
-                  const waiting = index > railActive;
-                  return (
-                    <li key={item.label} className="grid grid-cols-[22px_1fr] items-start gap-3">
-                      <span
-                        className={`relative z-10 mt-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full text-white ${
-                          done
-                            ? 'bg-secondary'
-                            : current
-                              ? 'step-pulse bg-primary'
-                              : 'border-2 border-mist bg-white'
-                        }`}
-                      >
-                        {done ? <Check /> : current ? <span className="h-1.5 w-1.5 rounded-full bg-white" /> : null}
-                      </span>
-                      <div className={waiting ? 'opacity-45' : ''}>
-                        <p className={`text-sm font-semibold ${current || done ? 'text-primary' : 'text-muted'}`}>
-                          {item.label}
-                        </p>
-                        <p className="text-[11px] text-muted">{item.detail}</p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-          </aside>
-
-          <div key={phase} className="scene-swap p-5 md:p-6">
-            <p className="text-[11px] tracking-[0.16em] text-secondary">Attendance case</p>
-            <h3 className="mt-1 text-xl font-semibold text-primary">Jordan Hale · Store 1042</h3>
-            <p className="mt-3 rounded-2xl bg-paper px-4 py-3 text-sm leading-6 text-muted">
-              “Late three times this week. Policy guidance requested.”
-            </p>
-            <ul className="mt-5 space-y-2.5">
-              {findings.map((item, index) => {
-                const open = index < unlocked;
-                return (
-                  <li
-                    key={item.title}
-                    className={`flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-500 ${
-                      item.tone
-                    } ${open ? 'translate-y-0 opacity-100' : 'translate-y-1 opacity-35'}`}
-                  >
-                    <span
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                        item.tone.includes('text-white') ? 'bg-white/15 text-white' : 'bg-white text-primary'
-                      }`}
-                    >
-                      {item.initials}
-                    </span>
-                    <span>
-                      <span className={`block text-sm font-semibold ${item.tone.includes('text-white') ? 'text-white' : 'text-primary'}`}>
-                        {item.title}
-                      </span>
-                      <span className={`block text-[11px] ${item.tone.includes('text-white') ? 'text-white/70' : 'text-muted'}`}>
-                        {item.meta}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
+      <div className={`insight-float insight-input ${active === 0 ? 'is-processing' : ''}`}>
+        <div className="insight-heading"><span className="insight-icon"><SignalIcon type="message" /></span><span>01 / Conversation → case</span><span className="insight-dots" aria-hidden="true">•••</span></div>
+        <p>“Jordan has been late three times this week. What’s the next step?”</p>
+        <div className="insight-meta"><span className="source-dot" /> Intercom <span className="case-category">Attendance · Store 1042</span></div>
       </div>
+      <div className={`insight-float insight-identity ${active === 1 ? 'is-processing' : ''}`}>
+        <div className="insight-heading"><span className="insight-icon"><SignalIcon type="person" /></span><span>02 / Employee identity</span><span className="tiny-check">✓</span></div>
+        <div className="insight-person"><span className="person-avatar">JH</span><div><strong>Jordan Hale</strong><span>Directory match · Evidence attached</span></div><span className="match-lines" aria-hidden="true"><i /><i /><i /><i /><i /></span></div>
+      </div>
+      <div className={`insight-float insight-history ${active === 2 ? 'is-processing' : ''}`}>
+        <span className="insight-icon"><SignalIcon type="history" /></span><div><strong>03 / Related history</strong><span>Prior coaching · Reason shown</span></div><span className="connection-dot" />
+      </div>
+      <div className={`insight-float insight-review ${active === 3 ? 'is-processing' : ''}`}><span className="review-avatars" aria-hidden="true"><i>HR</i><i>SP</i></span><div><strong>04 / Ready for human review</strong><span>Sam Patel · Suggested stakeholder</span></div></div>
+      <div className="hero-stage-controls" role="group" aria-label="Explore a sample HR case">
+        {stages.map((item, index) => <button key={item.label} type="button" aria-pressed={active === index} onClick={() => { setActive(index); setPaused(true); }}><span>0{index + 1}</span>{item.label}</button>)}
+      </div>
+      <div className="stage-bottom"><span><span className="status-light" /> Synthetic example · Your team makes the decision</span><button type="button" onClick={() => setPaused(!paused)} aria-pressed={paused} aria-label={paused ? 'Resume visual animation' : 'Pause visual animation'}><span aria-hidden="true">{paused ? '▷' : 'Ⅱ'}</span> {paused ? 'Resume motion' : 'Pause motion'}</button></div>
     </div>
   );
 }

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { ApiError, api } from '../../lib/api';
+import { AuthShell } from '../../components/AuthShell';
+import { ArrowIcon, SignalIcon } from '../../components/landing/LandingIcons';
 
 type FormState = {
   fullName: string;
@@ -30,8 +32,15 @@ const initialForm: FormState = {
 export default function AccessRequestPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [customerIntent, setCustomerIntent] = useState(false);
 
   useEffect(() => {
+    const customer = new URLSearchParams(window.location.search).get('intent') === 'customer';
+    setCustomerIntent(customer);
+    if (customer) {
+      setChecking(false);
+      return;
+    }
     api.restoreSession()
       .then((session) => setAuthenticated(Boolean(session)))
       .catch(() => setAuthenticated(false))
@@ -39,17 +48,18 @@ export default function AccessRequestPage() {
   }, []);
 
   if (checking) {
-    return <div className="theme-light min-h-screen bg-paper" aria-busy="true" />;
+    return <div className="product-auth min-h-screen" aria-busy="true" aria-label="Preparing workspace access" />;
   }
 
-  if (authenticated) {
-    return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized HR Intelligence workspace. Intercom access is approved separately."><AccessRequestForm embedded /></AppShell>;
+  if (authenticated && !customerIntent) {
+    return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized HR Intelligence workspace. Intercom access is approved separately."><AccessRequestForm embedded customerIntent={customerIntent} /></AppShell>;
   }
 
-  return <AccessRequestForm />;
+  return <AccessRequestForm customerIntent={customerIntent} />;
 }
 
-function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
+function AccessRequestForm({ embedded = false, customerIntent = false }: { embedded?: boolean; customerIntent?: boolean }) {
+  const [customer, setCustomer] = useState(customerIntent);
   const [form, setForm] = useState<FormState>(initialForm);
   const [state, setState] = useState<'idle' | 'submitting' | 'complete'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -66,10 +76,14 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
     setForm((current) => ({ ...current, [key]: value }));
 
   const submit = async () => {
+    if (customer && form.purpose.length > 740) {
+      setError('Please keep the workflow description to 740 characters or fewer.');
+      return;
+    }
     setState('submitting');
     setError(null);
     try {
-      await api.post('/api/access-requests', form);
+      await api.post('/api/access-requests', { ...form, workspaceId: form.workspaceId.trim() || undefined, purpose: customer ? `[Customer product demo] ${form.purpose}` : form.purpose });
       setAccessStatus({ status: 'pending', workspaceId: form.workspaceId || null, reviewNote: null });
       setState('complete');
     } catch (err) {
@@ -86,177 +100,38 @@ function AccessRequestForm({ embedded = false }: { embedded?: boolean }) {
     }
   };
 
-  return (
-    <main className={embedded ? 'min-h-0 text-foreground' : 'theme-light min-h-screen bg-paper text-foreground'}>
-      {!embedded ? <header className="mx-3 mt-3 rounded-2xl border border-primary/10 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-5 md:px-6">
-          <Link href="/" className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-primary">HI</span>
-            <span>
-              <span className="block text-sm font-semibold text-primary">HR Intelligence</span>
-              <span className="block text-[11px] text-muted">Organization access</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/overview"
-              className="rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm font-medium text-primary shadow-sm transition hover:border-primary/30 hover:bg-paper"
-            >
-              ← Back to dashboard
-            </Link>
-            <Link href="/" className="hidden text-sm font-medium text-primary hover:text-primary-hover sm:inline">
-              Landing page
-            </Link>
-          </div>
+  const content = (
+    <section className={`auth-form-card ${embedded ? 'embedded-access-card' : ''}`}>
+      <p className="product-eyebrow">{customer ? 'FOR YOUR ORGANIZATION' : 'PRODUCT & PROJECT ACCESS'}</p>
+      <h1>{customer ? 'Put your HR workflow in the picture.' : 'Request a personal reviewer account.'}</h1>
+      <p className="auth-form-intro">{customer ? 'Tell us how your team handles HR conversations. Request a product demo to explore case classification, employee matching, related history, and stakeholder routing.' : 'Explore the product and the engineering behind it with a personal, read-only account. Evaluation records are synthetic; Intercom invitations are approved separately.'}</p>
+      {!embedded && state !== 'complete' ? <div className="access-audience" role="group" aria-label="What brings you here?"><button type="button" aria-pressed={customer} onClick={() => setCustomer(true)}><SignalIcon type="person" /><span>For my organization<small>Evaluate the product</small></span></button><button type="button" aria-pressed={!customer} onClick={() => setCustomer(false)}><SignalIcon type="spark" /><span>Review the project<small>Recruiters & reviewers</small></span></button></div> : null}
+      {state === 'complete' ? (
+        <div className="access-complete" role="status">
+          <span className="access-success-icon">✓</span><h2>Request received</h2>
+          <p>{customer ? 'Your product demo request is waiting for review. Your organization and workflow details will help shape the conversation. You can explore the synthetic product demo while you wait.' : 'Your request is awaiting manual review. If approved, a secure password setup link will be sent to the email you provided.'}</p>
+          <AccessStatusPanel status={accessStatus ?? { status: 'pending', workspaceId: form.workspaceId || null, reviewNote: null }} />
+          <Link href="/login?mode=demo" className="product-primary-button">Explore the read-only demo <ArrowIcon /></Link>
+          <Link href="/#live-demo" className="auth-back-link">Watch the product walkthrough ↗</Link>
         </div>
-      </header> : null}
-
-      <div className={`mx-auto grid max-w-6xl gap-8 ${embedded ? 'px-0 py-0 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1.15fr)]' : 'px-4 py-10 md:px-6 md:py-16 lg:grid-cols-[minmax(0,0.85fr)_minmax(28rem,1.15fr)]'}`}>
-        <section className="lg:py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Controlled workspace access</p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary md:text-5xl">
-            Request a personal reviewer account.
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-muted">
-            Access is invite-only because the workspace contains sensitive case context. Approved reviewers use their
-            own email to create a password and receive read-only workspace access.
-          </p>
-
-          <div className="mt-8 rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
-            <h2 className="text-base font-semibold text-primary">What you can review immediately</h2>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-muted">
-              <li>• The public product story, architecture, screenshots, and subtitled walkthrough.</li>
-              <li>• The protected read-only workspace through a short-lived, server-issued demo session.</li>
-              <li>• Sanitized case intelligence, directory matching, and system-design evidence.</li>
-            </ul>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-secondary/20 bg-secondary/5 p-6">
-            <h2 className="text-base font-semibold text-primary">After approval</h2>
-            <ol className="mt-4 space-y-4">
-              {[
-                'If approved, Brevo sends a secure password setup link to the email submitted here.',
-                'Create your password through the one-time link; your dashboard role is read-only.',
-                'Sign in to inspect sanitized cases, directory context, architecture, and reliability evidence.',
-                'Intercom workspace invitations remain separate and are sent only when explicitly approved.'
-              ].map((step, index) => (
-                <li key={step} className="flex gap-3 text-sm leading-6 text-muted">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
-                    {index + 1}
-                  </span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-primary/10 bg-white p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">How the connection works</p>
-            <ol className="mt-4 space-y-3 text-sm leading-6 text-muted">
-              {[
-                'Intercom receives a conversation or event.',
-                'Intercom sends the authorized event to the HR Intelligence API.',
-                'The API validates the request and processes the case asynchronously.',
-                'Employee, store, and related-case intelligence is persisted.',
-                'Results appear in the HR Intelligence dashboard.',
-                'Where configured, safe output can also be written back to Intercom.'
-              ].map((step, index) => <li key={step} className="flex gap-3"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-paper text-xs font-semibold text-primary">{index + 1}</span><span>{step}</span></li>)}
-            </ol>
-            <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900"><strong>Never paste Intercom API keys or access tokens here.</strong> Reviewer users submit only a non-secret workspace identifier. Provider credentials and webhook secrets stay server-side.</p>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-primary/10 bg-white p-6 shadow-lift md:p-8">
-          {state === 'complete' ? (
-            <div role="status" className="flex min-h-[34rem] flex-col justify-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10 text-xl text-success">✓</span>
-              <h2 className="mt-5 text-2xl font-semibold text-primary">Request received</h2>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Your request is awaiting manual review. If approved, Brevo will send a secure password setup link to
-                the email you provided. Submitting this form does not create an account automatically.
-              </p>
-              <div className="mt-6 rounded-xl bg-paper p-4 text-sm leading-6 text-muted">
-                While you wait, use the public walkthrough and screenshots. They demonstrate the same synthetic Inbox,
-                Canvas intelligence, and operational health views without requiring third-party access.
-              </div>
-              <AccessStatusPanel status={accessStatus ?? { status: 'pending', workspaceId: form.workspaceId || null, reviewNote: null }} />
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link href="/overview" className="btn-primary rounded-lg px-4 py-2.5 text-sm font-semibold">
-                  Back to dashboard
-                </Link>
-                <Link href="/#live-demo" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">
-                  Watch the walkthrough
-                </Link>
-                <Link href="/" className="btn-secondary rounded-lg px-4 py-2.5 text-sm font-semibold">
-                  Return to product walkthrough
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Invitation request</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-primary">Tell us who is reviewing</h2>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Access is manually approved and limited to a synthetic, read-only HR Intelligence workspace.
-              </p>
-
-              {accessStatus ? <AccessStatusPanel status={accessStatus} /> : null}
-
-              {error ? (
-                <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {error}
-                </div>
-              ) : null}
-
-              <form className="mt-7 space-y-5" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-                <Field label="Full name" required>
-                  <input required minLength={2} maxLength={120} autoComplete="name" className="dash-field mt-2" value={form.fullName} onChange={(event) => update('fullName', event.target.value)} />
-                </Field>
-                <Field label="Work email" required hint="Your secure password setup link will be sent to this exact address if approved.">
-                  <input required type="email" maxLength={255} autoComplete="email" className="dash-field mt-2" value={form.workEmail} onChange={(event) => update('workEmail', event.target.value)} />
-                </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Organization">
-                    <input maxLength={160} autoComplete="organization" className="dash-field mt-2" value={form.organization} onChange={(event) => update('organization', event.target.value)} />
-                  </Field>
-                  <Field label="Role">
-                    <input maxLength={120} autoComplete="organization-title" className="dash-field mt-2" placeholder="HR reviewer, operator…" value={form.role} onChange={(event) => update('role', event.target.value)} />
-                  </Field>
-                </div>
-                <Field label="Intercom Workspace ID" required={embedded} hint="Use the workspace identifier shown in Intercom. This is a non-secret identifier; do not enter an API key or access token.">
-                  <input required={embedded} minLength={3} maxLength={64} pattern="[A-Za-z0-9_-]{3,64}" className="dash-field mt-2" placeholder="Example: workspace_123" value={form.workspaceId} onChange={(event) => update('workspaceId', event.target.value)} />
-                </Field>
-                <Field label="Reason for access" required hint="Minimum 20 characters. Do not include confidential information.">
-                  <textarea required minLength={20} maxLength={800} rows={5} className="dash-field mt-2 resize-y" placeholder="I am reviewing this project for…" value={form.purpose} onChange={(event) => update('purpose', event.target.value)} />
-                </Field>
-
-                <label className="flex items-start gap-3 rounded-xl bg-paper p-4 text-sm leading-6 text-muted">
-                  <input required type="checkbox" className="mt-1 h-4 w-4 rounded border-slate-300 accent-primary" checked={form.consent} onChange={(event) => update('consent', event.target.checked)} />
-                  <span>I agree that these details may be stored solely to review and manage this access request.</span>
-                </label>
-
-                <div className="hidden" aria-hidden="true">
-                  <label>
-                    Website
-                    <input tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => update('website', event.target.value)} />
-                  </label>
-                </div>
-
-                <button type="submit" disabled={state === 'submitting'} className="btn-primary w-full rounded-lg px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60">
-                  {state === 'submitting' ? 'Submitting securely…' : 'Request reviewer access'}
-                </button>
-              </form>
-
-              <p className="mt-5 text-xs leading-5 text-muted">
-                Requests are reviewed manually. Access may be declined, time-limited, or revoked. No customer or
-                employer data exists in this workspace.
-              </p>
-            </>
-          )}
-        </section>
-      </div>
-    </main>
+      ) : <>
+        {accessStatus ? <AccessStatusPanel status={accessStatus} /> : null}
+        {error ? <div role="alert" className="auth-error">{error}</div> : null}
+        <form className="auth-form" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+          <div className="auth-field-grid"><Field label="Full name" required><input required minLength={2} maxLength={120} autoComplete="name" placeholder="Your name" value={form.fullName} onChange={(event) => update('fullName', event.target.value)} /></Field><Field label="Work email" required><input required type="email" maxLength={255} autoComplete="email" placeholder="you@company.com" value={form.workEmail} onChange={(event) => update('workEmail', event.target.value)} /></Field></div>
+          <div className="auth-field-grid"><Field label="Organization" required={customer}><input required={customer} maxLength={160} autoComplete="organization" placeholder="Your company" value={form.organization} onChange={(event) => update('organization', event.target.value)} /></Field><Field label="Role"><input maxLength={120} autoComplete="organization-title" placeholder="HR lead, operator, recruiter…" value={form.role} onChange={(event) => update('role', event.target.value)} /></Field></div>
+          <Field label="Intercom Workspace ID" required={embedded} hint="Optional for a product demo. Enter only the non-secret workspace ID, never an API key or access token."><input required={embedded} minLength={3} maxLength={64} pattern="[A-Za-z0-9_-]{3,64}" placeholder="workspace_123" value={form.workspaceId} onChange={(event) => update('workspaceId', event.target.value)} /></Field>
+          <Field label={customer ? 'What would you like to explore?' : 'Reason for access'} required hint="At least 20 characters. Please leave out confidential employee information."><textarea required minLength={20} maxLength={customer ? 740 : 800} rows={4} placeholder={customer ? 'Tell us about your team, current HR workflow, and what you would like to improve…' : 'Tell us what you are reviewing and the access you need…'} value={form.purpose} onChange={(event) => update('purpose', event.target.value)} /></Field>
+          <label className="auth-consent"><input required type="checkbox" checked={form.consent} onChange={(event) => update('consent', event.target.checked)} /><span>I agree that these details may be stored solely to review and manage this request.</span></label>
+          <div className="hidden" aria-hidden="true"><label>Website<input tabIndex={-1} autoComplete="off" value={form.website} onChange={(event) => update('website', event.target.value)} /></label></div>
+          <button type="submit" disabled={state === 'submitting'} className="product-primary-button">{state === 'submitting' ? 'Submitting securely…' : customer ? 'Request a product demo' : 'Request reviewer access'}<ArrowIcon /></button>
+        </form>
+        <p className="auth-fine-print">{customer ? 'Requests are reviewed manually. Product evaluation starts with synthetic records and a read-only walkthrough.' : 'Personal invitations are reviewed manually. Approved accounts are read-only; Intercom access is arranged separately.'}</p>
+        <div className="auth-sales-link"><p>Want to see the workflow now?</p><Link href="/login?mode=demo">Explore the read-only demo <ArrowIcon diagonal /></Link></div>
+      </>}
+    </section>
   );
+  return embedded ? content : <AuthShell mode="access">{content}</AuthShell>;
 }
 
 type AccessStatus = {

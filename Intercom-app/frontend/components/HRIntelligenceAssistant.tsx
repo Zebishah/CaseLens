@@ -108,7 +108,7 @@ export function HRIntelligenceAssistant() {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-[60] w-[calc(100vw-2rem)] max-w-sm sm:bottom-6 sm:right-6" aria-live="polite">
+    <div data-product-theme={pathname === '/engineering' ? 'light' : 'dark'} className="product-assistant fixed bottom-4 right-4 z-[60] w-[calc(100vw-2rem)] max-w-sm sm:bottom-6 sm:right-6" aria-live="polite">
       {open ? (
         <section id="hr-intelligence-assistant" className="overflow-hidden rounded-2xl border border-primary/15 bg-white shadow-2xl" aria-label="Ask HR Intelligence">
           <div className="flex items-start justify-between gap-3 bg-[linear-gradient(135deg,#1e4e5c,#153a48)] px-4 py-4 text-white">
@@ -154,9 +154,9 @@ export function HRIntelligenceAssistant() {
           </div>
         </section>
       ) : (
-        <button type="button" className="ml-auto flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="hr-intelligence-assistant">
+        <button type="button" className={`${pathname !== '/engineering' ? 'ai-assistant-launcher ' : ''}ml-auto flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2`} onClick={() => setOpen(true)} aria-expanded={open} aria-controls="hr-intelligence-assistant" aria-label="Ask HR Intelligence">
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-xs text-primary">✦</span>
-          Ask HR Intelligence
+          <span className="assistant-launcher-label">Ask HR Intelligence</span>
         </button>
       )}
     </div>

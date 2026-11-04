@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ProductJourney } from '../ProductJourney';
 
 export type DashboardIconName = 'cases' | 'users' | 'link' | 'review' | 'activity' | 'shield' | 'store' | 'spark';
 
@@ -52,6 +53,7 @@ export function DashboardHero({
           {meta}
         </span>
       </div>
+      <div className="workspace-hero-journey"><ProductJourney compact /></div>
       <div aria-hidden="true" className="dashboard-hero-orbit dashboard-hero-orbit-one" />
       <div aria-hidden="true" className="dashboard-hero-orbit dashboard-hero-orbit-two" />
     </section>

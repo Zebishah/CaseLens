@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApiError, api } from '../lib/api';
 import { DashboardHero, type DashboardIconName } from './dashboard/ui';
+import { ArrowIcon, IntelligenceMark } from './landing/LandingIcons';
 import {
   AUTH_STATE_EVENT,
   getAdminUser,
@@ -67,8 +68,8 @@ const navGroups: NavGroup[] = [
 ];
 
 const heroByPath: Record<string, { eyebrow: string; title: string; icon: DashboardIconName; meta: string }> = {
-  '/overview': { eyebrow: 'Organization overview', title: 'See the operating picture across your HR workspace.', icon: 'activity', meta: 'Live operating view' },
-  '/cases': { eyebrow: 'Case operations', title: 'Turn fragmented conversations into explainable case intelligence.', icon: 'cases', meta: 'Persisted case evidence' },
+  '/overview': { eyebrow: 'Organization overview', title: 'Your HR conversations. One connected picture.', icon: 'activity', meta: 'Live operating view' },
+  '/cases': { eyebrow: 'Case operations', title: 'Every HR case, with the context to move forward.', icon: 'cases', meta: 'Persisted case evidence' },
   '/directory': { eyebrow: 'Directory intelligence', title: 'Resolve people, stores, and ownership with confidence.', icon: 'users', meta: 'Organization context' },
   '/operations': { eyebrow: 'Operational health', title: 'Keep intake, processing, and write-back observable.', icon: 'activity', meta: 'Runtime health' },
   '/evaluation': { eyebrow: 'AI quality', title: 'Measure assistance before it reaches an operator.', icon: 'spark', meta: 'Versioned baseline' },
@@ -204,9 +205,9 @@ export function AppShell({
 
   if (status !== 'ready' || restrictedPath) {
     return (
-      <div className="theme-light flex min-h-screen items-center justify-center bg-paper px-6 text-foreground">
+      <div className="product-workspace theme-light flex min-h-screen items-center justify-center bg-paper px-6 text-foreground">
         <div className="w-full max-w-sm text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">HI</div>
+          <IntelligenceMark className="workspace-loading-mark" />
           <h1 className="mt-5 text-xl font-semibold text-primary">
             {restrictedPath ? 'Opening the read-only reviewer workspace' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
           </h1>
@@ -232,7 +233,7 @@ export function AppShell({
   }
 
   return (
-    <div className="theme-light dash-canvas min-h-screen text-foreground">
+    <div className="product-workspace theme-light dash-canvas min-h-screen text-foreground">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-white">
         Skip to content
       </a>
@@ -240,14 +241,15 @@ export function AppShell({
         <aside className="dash-sidebar sticky top-3 m-3 mr-0 hidden h-[calc(100vh-1.5rem)] w-[17rem] shrink-0 overflow-hidden rounded-2xl border border-emerald-950/40 md:flex md:flex-col">
           <Link href="/overview" className="border-b border-white/10 px-5 py-5">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-xs font-bold text-slate-950">HI</span>
+              <span className="workspace-brand-mark"><IntelligenceMark /></span>
               <span>
                 <span className="block text-sm font-semibold tracking-tight text-white">HR Intelligence</span>
-                <span className="mt-0.5 block text-[11px] text-slate-400">Case operations</span>
+                <span className="mt-0.5 block text-[11px] text-slate-400">AI-powered HR case intelligence</span>
               </span>
             </div>
           </Link>
 
+          <div className="workspace-sidebar-context"><span>THE CONTEXT ENGINE</span><p>People. History. A clearer next step.</p></div>
           <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Application">
             {visibleNavGroups.map((group) => (
               <div key={group.label} className="mb-5">
@@ -310,16 +312,16 @@ export function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-3 z-40 mx-3 mt-3 overflow-hidden rounded-2xl border border-primary/10 bg-white/95 shadow-sm backdrop-blur">
+          <header className="workspace-header sticky top-3 z-40 mx-3 mt-3 overflow-hidden rounded-2xl border border-primary/10 bg-white/95 shadow-sm backdrop-blur">
             <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-4 py-4 md:px-8">
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-secondary md:hidden">HR Intelligence</p>
+                <p className="workspace-context-label">HR INTELLIGENCE / WORKSPACE</p>
                 <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 md:text-2xl">{title}</h1>
               </div>
               <div className="flex items-center gap-3">
                 <span className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 sm:flex">
                   <span className="h-2 w-2 rounded-full bg-success" />
-                  {isAdmin ? 'Admin workspace' : isDemoRecruiterMode ? 'Recruiter demo · Read-only' : 'Read-only reviewer workspace'}
+                  {isAdmin ? 'Admin workspace' : isDemoRecruiterMode ? 'Product demo · Read-only' : 'Read-only reviewer workspace'}
                 </span>
                 <button
                   type="button"
@@ -363,13 +365,14 @@ export function AppShell({
 
           <main id="main" className="flex-1 px-4 py-6 md:px-8 md:py-8">
             <div className="mx-auto max-w-[96rem]">
+              {isDemoRecruiterMode ? <div className="workspace-demo-banner"><span><IntelligenceMark /><span><strong>Your preview of connected HR work.</strong> Explore a read-only product demo with synthetic records.</span></span><Link href="/access?intent=customer">For your organization <ArrowIcon diagonal /></Link></div> : null}
               {hero ? (
                 <DashboardHero
                   eyebrow={hero.eyebrow}
                   title={hero.title}
                   description={description}
                   icon={hero.icon}
-                  meta={hero.meta}
+                  meta={isDemoRecruiterMode ? 'Synthetic evaluation workspace' : hero.meta}
                 />
               ) : description ? <p className="mb-6 max-w-3xl text-sm leading-6 text-slate-600">{description}</p> : null}
               {children}

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ArrowIcon, IntelligenceMark } from './LandingIcons';
 
 const links = [
   { href: '/#problem', label: 'Problem', match: 'problem' },
@@ -14,7 +15,7 @@ const links = [
   { href: '/#live-demo', label: 'Live demo', match: 'live-demo' }
 ];
 
-export function LandingNav() {
+export function LandingNav({ immersive = false }: { immersive?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hash, setHash] = useState('');
@@ -52,6 +53,25 @@ export function LandingNav() {
     }
     return hash === match;
   };
+
+  if (immersive) {
+    const primaryLinks = [
+      { href: '/#product', label: 'The product' },
+      { href: '/#workflow', label: 'How it works' },
+      { href: '/#architecture', label: 'Built for trust' },
+      { href: '/#reviewers', label: 'For reviewers' }
+    ];
+    return (
+      <header className={`ai-navigation ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="ai-nav-inner">
+          <Link href="/" className="ai-brand" aria-label="HR Intelligence home"><IntelligenceMark /><span>hr<span>intelligence</span><sup>AI</sup></span></Link>
+          <nav className="ai-desktop-nav" aria-label="Landing">{primaryLinks.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}</nav>
+          <div className="ai-nav-actions"><Link href="/login" className="ai-sign-in">Sign in <ArrowIcon diagonal /></Link><Link href="/access?intent=customer" className="ai-nav-cta">Request a demo <ArrowIcon /></Link><button className="ai-menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="ai-mobile-nav" aria-label={open ? 'Close menu' : 'Open menu'}>{open ? 'Close' : 'Menu'}<span aria-hidden="true">{open ? '−' : '+'}</span></button></div>
+        </div>
+        {open && <nav id="ai-mobile-nav" className="ai-mobile-nav" aria-label="Mobile landing">{primaryLinks.map(link => <Link key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}<ArrowIcon diagonal /></Link>)}<Link href="/access?intent=customer" onClick={() => setOpen(false)}>Request a product demo <ArrowIcon /></Link></nav>}
+      </header>
+    );
+  }
 
   return (
     <header

@@ -67,7 +67,7 @@ function RecruiterOperationsPage() {
     <AppShell title="Operational health" description="Review aggregate ingestion and background-processing health from the synthetic workspace. Recovery, replay, and write-back controls are reserved for administrators.">
       <div className="mb-5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950" role="status">
         <span className="h-2 w-2 rounded-full bg-success" aria-hidden="true" />
-        <span><strong className="font-semibold">Recruiter demo · Read-only.</strong> This view shows safe operational summaries without maintenance actions.</span>
+        <span><strong className="font-semibold">Product demo · Read-only.</strong> This view shows safe operational summaries without maintenance actions.</span>
       </div>
       {error ? <AlertBanner tone="danger" title="Could not load operational health" action={<TextButton onClick={() => void load()}>Retry</TextButton>}>{error}</AlertBanner> : null}
       {!data && !error ? <PageSkeleton variant="overview" /> : null}

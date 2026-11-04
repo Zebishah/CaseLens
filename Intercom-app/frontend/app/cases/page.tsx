@@ -120,7 +120,7 @@ export default function CasesPage() {
               <h2 className="text-sm font-semibold text-slate-900">Case results</h2>
               <p className="mt-1 text-xs text-slate-500">{items.length} {items.length === 1 ? 'case' : 'cases'} in the current view</p>
             </div>
-            <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-500"><span className="h-2 w-2 rounded-full bg-success" />Live database</span>
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-slate-500"><span className="h-2 w-2 rounded-full bg-success" />Workspace records</span>
           </div>
           {items.length === 0 ? (
             <div className="p-5"><EmptyState title="No cases match these filters">Try a broader search or clear the active filters.</EmptyState></div>
