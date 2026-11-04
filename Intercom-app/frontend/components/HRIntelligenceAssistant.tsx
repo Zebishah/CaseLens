@@ -1,8 +1,9 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ApiError, api } from '../lib/api';
+import { ArrowIcon, IntelligenceMark, SignalIcon } from './landing/LandingIcons';
 
 type AssistantResponse = {
   answer: string;
@@ -13,50 +14,47 @@ type AssistantResponse = {
   suggestedPrompts: string[];
 };
 
-type Message = { role: 'assistant' | 'user'; text: string; meta?: string };
-
-const renderInlineText = (text: string) => text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
-  if (part.startsWith('**') && part.endsWith('**')) {
-    return <strong key={`${part}-${index}`} className="font-semibold text-slate-900">{part.slice(2, -2)}</strong>;
-  }
-  if (part.startsWith('`') && part.endsWith('`')) {
-    return <code key={`${part}-${index}`} className="rounded bg-slate-100 px-1 py-0.5 text-[0.9em] text-primary">{part.slice(1, -1)}</code>;
-  }
-  return <span key={`${part}-${index}`}>{part}</span>;
-});
-
-function FormattedAssistantText({ text }: { text: string }) {
-  const lines = text.split(/\r?\n/);
-  return (
-    <div className="space-y-2">
-      {lines.map((line, index) => {
-        const bullet = line.match(/^\s*[-*•]\s+(.+)$/);
-        if (bullet) {
-          return <div key={`${line}-${index}`} className="flex gap-2"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-secondary" aria-hidden="true" /><span>{renderInlineText(bullet[1])}</span></div>;
-        }
-        if (!line.trim()) return null;
-        return <p key={`${line}-${index}`}>{renderInlineText(line)}</p>;
-      })}
-    </div>
-  );
-}
+type Message = { role: 'assistant' | 'user'; text: string; context: string; sourceCount?: number };
 
 const pagePrompts: Record<string, string[]> = {
-  '/': ['What problem does HR Intelligence solve?', 'Why does it integrate with Intercom?', 'How are duplicates prevented?'],
+  '/': ['What problem does HR Intelligence solve?', 'Why does it integrate with Intercom?', 'How is HR data protected?'],
   '/overview': ['Summarize this organization workspace', 'What requires attention?', 'Explain these metrics'],
   '/cases': ['Show attendance cases', 'Which cases need review?', 'What does related history mean?'],
   '/directory': ['Explain employee identity', 'How does store routing help?', 'What context is in this directory?'],
-  '/architecture': ['Explain the system simply', 'Why BullMQ and Redis?', 'Why use a transactional outbox?'],
+  '/architecture': ['Explain the system simply', 'Why use on-demand Apify Actors?', 'Why use a transactional outbox?'],
   '/operations': ['What is failing?', 'Why are jobs waiting?', 'How does outbox recovery work?'],
   '/evaluation': ['Explain classification accuracy', 'What does employee precision mean?', 'Which fixture cases failed?'],
   '/access': ['What can reviewers inspect?', 'How is HR data protected?', 'Why is Intercom access invitation-based?'],
   '/login': ['What does the product walkthrough include?', 'How is HR data protected?', 'What problem does this solve?']
 };
 
-const routePrompts = (pathname: string): string[] => {
-  if (pathname.startsWith('/cases/')) return ['Summarize this case', 'Explain employee match', 'Why are these cases related?', 'Explain routing'];
-  return pagePrompts[pathname] ?? pagePrompts['/overview']!;
+const routePrompts = (pathname: string): string[] => pathname.startsWith('/cases/')
+  ? ['Summarize this case', 'Explain employee match', 'Why are these cases related?']
+  : pagePrompts[pathname] ?? pagePrompts['/']!;
+
+const contextNames: Record<string, string> = {
+  '/': 'Product guide', '/login': 'Workspace access', '/access': 'Product & reviewer access',
+  '/forgot-password': 'Account recovery', '/set-password': 'Your invitation',
+  '/overview': 'Organization overview', '/cases': 'Case operations', '/directory': 'Directory intelligence',
+  '/operations': 'Operational health', '/evaluation': 'AI quality', '/architecture': 'System architecture',
+  '/engineering': 'Engineering guide', '/demo': 'Product walkthrough', '/access-requests': 'Access management'
 };
+
+function renderInlineText(text: string) {
+  return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith('`') && part.endsWith('`')) return <code key={index}>{part.slice(1, -1)}</code>;
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function FormattedAssistantText({ text }: { text: string }) {
+  return <div className="assistant-answer-text">{text.split(/\r?\n/).map((line, index) => {
+    const bullet = line.match(/^\s*[-*•]\s+(.+)$/);
+    if (bullet) return <div key={index} className="assistant-answer-bullet"><span aria-hidden="true" /> <span>{renderInlineText(bullet[1])}</span></div>;
+    return line.trim() ? <p key={index}>{renderInlineText(line)}</p> : null;
+  })}</div>;
+}
 
 export function HRIntelligenceAssistant() {
   const pathname = usePathname();
@@ -66,99 +64,128 @@ export function HRIntelligenceAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastQuestion, setLastQuestion] = useState('');
+  const [followUps, setFollowUps] = useState<string[]>([]);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const transcriptRef = useRef<HTMLDivElement>(null);
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
+  const inFlightRef = useRef(false);
   const prompts = useMemo(() => routePrompts(pathname), [pathname]);
   const entityId = pathname.match(/^\/cases\/(\d+)/)?.[1];
+  const context = entityId ? `Case #${entityId}` : contextNames[pathname] ?? 'HR workspace';
+  const publicPage = ['/', '/login', '/access', '/engineering', '/forgot-password', '/set-password'].includes(pathname);
+
+  const openAssistant = useCallback(() => {
+    returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setOpen(true);
+  }, []);
 
   useEffect(() => {
-    const openAssistant = () => setOpen(true);
     window.addEventListener('hr-assistant:open', openAssistant);
     return () => window.removeEventListener('hr-assistant:open', openAssistant);
-  }, []);
+  }, [openAssistant]);
+
+  useEffect(() => {
+    if (open) composerRef.current?.focus({ preventScroll: true });
+    else if (wasOpenRef.current) {
+      const target = returnFocusRef.current?.isConnected ? returnFocusRef.current : launcherRef.current;
+      target?.focus({ preventScroll: true });
+    }
+    wasOpenRef.current = open;
+    if (!open) return;
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [open]);
+
+  useEffect(() => {
+    const transcript = transcriptRef.current;
+    if (transcript) transcript.scrollTop = messages.length || loading ? transcript.scrollHeight : 0;
+  }, [messages, loading, open]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const root = rootRef.current;
+    if (!open || !viewport || !root) return;
+    const resize = () => {
+      root.style.setProperty('--assistant-viewport-height', `${viewport.height}px`);
+      root.style.setProperty('--assistant-keyboard-offset', `${Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)}px`);
+    };
+    resize();
+    viewport.addEventListener('resize', resize);
+    viewport.addEventListener('scroll', resize);
+    return () => {
+      viewport.removeEventListener('resize', resize);
+      viewport.removeEventListener('scroll', resize);
+      root.style.removeProperty('--assistant-viewport-height');
+      root.style.removeProperty('--assistant-keyboard-offset');
+    };
+  }, [open]);
+
+  useEffect(() => { setFollowUps([]); }, [pathname]);
 
   const ask = async (question = input) => {
     const message = question.trim();
-    if (!message || loading) return;
+    if (!message || message.length > 1200 || inFlightRef.current) return;
+    inFlightRef.current = true;
     setOpen(true);
     setInput('');
     setError(null);
     setLastQuestion(message);
-    setMessages((current) => current.at(-1)?.role === 'user' && current.at(-1)?.text === message
-      ? current
-      : [...current, { role: 'user', text: message }]);
+    setMessages(current => current.at(-1)?.role === 'user' && current.at(-1)?.text === message
+      ? current : [...current, { role: 'user', text: message, context }]);
     setLoading(true);
     try {
       const result = await api.post<AssistantResponse>('/api/assistant/ask', {
-        message,
-        route: pathname,
-        workspace: 'hr-intelligence-workspace',
-        ...(entityId ? { entityId: Number(entityId) } : {})
+        message, route: pathname, workspace: 'hr-intelligence-workspace', ...(entityId ? { entityId: Number(entityId) } : {})
       });
-      setMessages((current) => [...current, { role: 'assistant', text: result.answer, meta: `${result.tool} · ${result.provider}` }]);
+      setMessages(current => [...current, { role: 'assistant', text: result.answer, context, sourceCount: Array.isArray(result.sources) ? result.sources.length : 0 }]);
+      setFollowUps((result.suggestedPrompts ?? []).filter(prompt => typeof prompt === 'string' && prompt.trim() && prompt.length <= 140 && prompt !== message).slice(0, 3));
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setError('Sign in to inspect protected case context.');
-      } else if (err instanceof ApiError && err.status === 404) {
-        setError('The assistant route is not deployed on this API yet.');
-      } else {
-        setError('The assistant could not connect. Check the API connection and try again.');
-      }
+      if (err instanceof ApiError && err.status === 401) setError('Sign in to explore protected case and workspace information.');
+      else if (err instanceof ApiError && err.status === 404) setError('The assistant is not available in this environment yet. Please try again later.');
+      else setError('I couldn’t connect to the assistant. Your question is saved here so you can try again.');
     } finally {
+      inFlightRef.current = false;
       setLoading(false);
     }
   };
 
+  const newConversation = () => {
+    if (inFlightRef.current) return;
+    setMessages([]); setError(null); setFollowUps([]); setLastQuestion(''); setInput('');
+    composerRef.current?.focus();
+  };
+
+  const nextPrompts = followUps.length ? followUps : prompts.filter(prompt => prompt !== lastQuestion).slice(0, 2);
+
   return (
-    <div data-product-theme={pathname === '/engineering' ? 'light' : 'dark'} className="product-assistant fixed bottom-4 right-4 z-[60] w-[calc(100vw-2rem)] max-w-sm sm:bottom-6 sm:right-6" aria-live="polite">
+    <div ref={rootRef} className={`hr-assistant ${open ? 'is-open' : ''}`}>
       {open ? (
-        <section id="hr-intelligence-assistant" className="overflow-hidden rounded-2xl border border-primary/15 bg-white shadow-2xl" aria-label="Ask HR Intelligence">
-          <div className="flex items-start justify-between gap-3 bg-[linear-gradient(135deg,#1e4e5c,#153a48)] px-4 py-4 text-white">
-            <div className="flex min-w-0 items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-300/15 text-emerald-300 shadow-inner" aria-hidden="true">✦</span>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Read-only assistant</p>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/70"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />Grounded</span>
-                </div>
-                <h2 className="mt-1 text-base font-semibold">Ask HR Intelligence</h2>
-                <p className="mt-1 text-xs text-white/65">Answers use authorized, bounded context.</p>
-              </div>
-            </div>
-            <button type="button" className="rounded-md px-2 py-1 text-sm text-white/70 hover:bg-white/10 hover:text-white" onClick={() => setOpen(false)} aria-label="Close assistant">×</button>
+        <section id="hr-intelligence-assistant" className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
+          <header className="assistant-header">
+            <div className="assistant-header-brand"><span className="assistant-brand-symbol"><IntelligenceMark /></span><div><p>YOUR AI CONTEXT GUIDE</p><h2 id="assistant-title">Ask HR Intelligence</h2></div></div>
+            <div className="assistant-header-actions"><button type="button" onClick={newConversation} disabled={loading || messages.length === 0} aria-label="Start a new conversation" title="Start a new conversation"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10a8 8 0 1 1 2 8M4 4v6h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></button><button type="button" onClick={() => setOpen(false)} aria-label="Close assistant" title="Close assistant"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg></button></div>
+          </header>
+          <div className="assistant-context"><span><SignalIcon type="spark" />{context}</span><span><SignalIcon type="shield" /> Read-only</span></div>
+          <div ref={transcriptRef} className="assistant-transcript" role="log" aria-label="Conversation" aria-live="polite" aria-relevant="additions text">
+            {messages.length === 0 ? <div className="assistant-welcome"><div className="assistant-welcome-orb" aria-hidden="true"><span /><IntelligenceMark /><span /></div><p className="assistant-welcome-eyebrow">A LITTLE CONTEXT GOES A LONG WAY</p><h3>Your HR questions.<br /><span>A clearer picture.</span></h3><p>{publicPage ? 'Discover how HR Intelligence connects conversations, people, and case history for your team.' : 'Explore this workspace, understand employee matches, or find out what needs your attention.'}</p><div className="assistant-starter-prompts" aria-label="Suggested questions">{prompts.slice(0, 3).map(prompt => <button key={prompt} type="button" disabled={loading} onClick={() => void ask(prompt)}><SignalIcon type="message" /><span>{prompt}</span><ArrowIcon diagonal /></button>)}</div></div> : messages.map((message, index) => <article key={`${message.role}-${index}`} className={`assistant-message from-${message.role}`} aria-label={message.role === 'user' ? 'Your question' : 'Assistant answer'}>
+              <div className="assistant-message-author">{message.role === 'assistant' ? <IntelligenceMark /> : <span className="assistant-you-dot" />}<span>{message.role === 'user' ? 'You' : 'HR Intelligence'}</span>{message.role === 'assistant' && <span className="assistant-message-context">{message.context}</span>}</div>
+              <div className="assistant-message-bubble">{message.role === 'assistant' ? <FormattedAssistantText text={message.text} /> : <p>{message.text}</p>}</div>
+              {message.role === 'assistant' && !!message.sourceCount && <span className="assistant-evidence"><SignalIcon type="shield" /> {message.sourceCount} permitted context {message.sourceCount === 1 ? 'source' : 'sources'}</span>}
+            </article>)}
+            {loading ? <div className="assistant-thinking" role="status"><span className="assistant-thinking-mark"><IntelligenceMark /></span><span>Connecting the context<span className="assistant-thinking-dots" aria-hidden="true"><i /><i /><i /></span></span></div> : null}
+            {error ? <div className="assistant-error" role="alert"><span>{error}</span><button type="button" disabled={loading} onClick={() => void ask(lastQuestion)}>Try again <ArrowIcon /></button></div> : null}
           </div>
-          <div className="max-h-72 space-y-3 overflow-y-auto bg-slate-50 p-4">
-            {messages.length === 0 ? <p className="rounded-xl border border-primary/10 bg-white p-3 text-sm leading-6 text-slate-600">Ask about the platform, organization workflow, employee matching, related cases, access, reliability, evaluation, or the current screen.</p> : null}
-            {messages.map((message, index) => (
-              <div key={`${message.role}-${index}`} className={message.role === 'user' ? 'ml-8 rounded-xl bg-primary px-3 py-2 text-sm leading-5 text-white' : 'mr-4 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm leading-5 text-slate-700'}>
-                {message.role === 'assistant' ? <FormattedAssistantText text={message.text} /> : message.text}
-                {message.meta ? <p className="mt-2 text-[10px] uppercase tracking-wide text-slate-400">{message.meta}</p> : null}
-              </div>
-            ))}
-            {loading ? <p className="text-xs text-slate-500">Checking authorized context…</p> : null}
-          </div>
-          <div className="border-t border-slate-200 bg-white p-3">
-            {error ? (
-              <div className="mb-3 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs leading-5 text-rose-700" role="alert">
-                <span className="mt-0.5 shrink-0" aria-hidden="true">!</span>
-                <span className="min-w-0 flex-1">{error}</span>
-                {lastQuestion ? <button type="button" className="shrink-0 font-semibold text-rose-800 underline decoration-rose-300 underline-offset-2 hover:text-rose-950" onClick={() => void ask(lastQuestion)}>Retry</button> : null}
-              </div>
-            ) : null}
-            <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
-              {prompts.slice(0, 3).map((prompt) => <button key={prompt} type="button" className="whitespace-nowrap rounded-full border border-primary/15 px-2.5 py-1.5 text-[11px] font-medium text-primary hover:bg-paper" onClick={() => void ask(prompt)}>{prompt}</button>)}
-            </div>
-            <form className="flex gap-2" onSubmit={(event) => { event.preventDefault(); void ask(); }}>
-              <label className="sr-only" htmlFor="assistant-question">Ask HR Intelligence</label>
-              <input id="assistant-question" className="dash-field h-10 min-w-0" placeholder="Ask a question…" value={input} onChange={(event) => setInput(event.target.value)} maxLength={1200} />
-              <button type="submit" disabled={!input.trim() || loading} className="btn-primary shrink-0 rounded-lg px-3 text-sm font-semibold disabled:opacity-50">Ask</button>
-            </form>
-          </div>
+          {messages.length > 0 && !loading && !error ? <div className="assistant-follow-ups"><p>KEEP EXPLORING</p><div>{nextPrompts.map(prompt => <button key={prompt} type="button" onClick={() => void ask(prompt)}>{prompt}<ArrowIcon diagonal /></button>)}</div></div> : null}
+          <form className="assistant-composer" onSubmit={event => { event.preventDefault(); void ask(); }} aria-busy={loading}>
+            <div className="assistant-input-wrap"><label className="sr-only" htmlFor="assistant-question">Ask HR Intelligence</label><textarea ref={composerRef} id="assistant-question" rows={2} placeholder={entityId ? 'Ask about this case…' : 'What would you like to understand?'} value={input} onChange={event => setInput(event.target.value)} maxLength={1200} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void ask(); } }} /><button type="submit" disabled={!input.trim() || loading} aria-label="Send question" title="Send question"><ArrowIcon /></button></div>
+            <div className="assistant-composer-meta"><span><SignalIcon type="shield" /> Uses your permitted context</span><span>{input.length > 1000 ? `${input.length}/1200` : 'Enter ↵ to send'}</span></div>
+          </form>
         </section>
-      ) : (
-        <button type="button" className={`${pathname !== '/engineering' ? 'ai-assistant-launcher ' : ''}ml-auto flex items-center gap-2 rounded-full bg-primary px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2`} onClick={() => setOpen(true)} aria-expanded={open} aria-controls="hr-intelligence-assistant" aria-label="Ask HR Intelligence">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-secondary text-xs text-primary">✦</span>
-          <span className="assistant-launcher-label">Ask HR Intelligence</span>
-        </button>
-      )}
+      ) : <button ref={launcherRef} type="button" className="assistant-launcher" onClick={openAssistant} aria-expanded={false} aria-controls="hr-intelligence-assistant" aria-label="Ask HR Intelligence" title="Ask HR Intelligence"><span className="assistant-launcher-icon"><IntelligenceMark /></span><span className="assistant-launcher-label">Ask HR Intelligence</span><span className="assistant-launcher-badge">AI</span></button>}
     </div>
   );
 }

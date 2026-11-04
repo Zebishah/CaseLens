@@ -200,7 +200,7 @@ function ContactsTable({ items, onSelect }: { items: Directory['fixedContacts'];
 }
 
 function DirectoryDrawer({ selection, onClose }: { selection: DirectorySelection; onClose: () => void }) {
-  return <aside className="mt-4 rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift" aria-label={`${selection.kind} details`}>
+  return <aside className="mt-4 rounded-2xl border border-primary/15 bg-mist p-5 text-white shadow-lift" aria-label={`${selection.kind} details`}>
     <div className="flex items-start justify-between gap-4"><div><p className="dashboard-section-label text-emerald-300">{selection.kind} detail</p><h3 className="mt-2 text-xl font-semibold">{selection.title}</h3><p className="mt-1 text-sm text-slate-400">{selection.subtitle}</p></div><button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Close</button></div>
     <dl className="mt-5 grid gap-3 sm:grid-cols-2">{selection.details.map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3"><dt className="text-xs text-slate-400">{label}</dt><dd className="mt-1 text-sm font-medium text-white">{value}</dd></div>)}</dl>
   </aside>;

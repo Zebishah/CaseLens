@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ApiError, api } from '../lib/api';
 import { DashboardHero, type DashboardIconName } from './dashboard/ui';
 import { ArrowIcon, IntelligenceMark } from './landing/LandingIcons';
+import { WorkspaceLoader } from './WorkspaceLoader';
 import {
   AUTH_STATE_EVENT,
   getAdminUser,
@@ -205,30 +206,21 @@ export function AppShell({
 
   if (status !== 'ready' || restrictedPath) {
     return (
-      <div className="product-workspace theme-light flex min-h-screen items-center justify-center bg-paper px-6 text-foreground">
-        <div className="w-full max-w-sm text-center">
-          <IntelligenceMark className="workspace-loading-mark" />
-          <h1 className="mt-5 text-xl font-semibold text-primary">
-            {restrictedPath ? 'Opening the read-only reviewer workspace' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {restrictedPath
-              ? 'Administrative tools are not part of reviewer access.'
-              : status === 'checking'
-                ? 'Restoring the protected workspace session.'
-                : 'The backend host may be waking up. Your session has not been discarded.'}
-          </p>
-          {status === 'unavailable' ? (
-            <button type="button" className="btn-primary mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold" onClick={() => void restore()}>
-              Try again
-            </button>
-          ) : (
-            <div className="mx-auto mt-5 h-1 w-28 overflow-hidden rounded-full bg-primary/10">
-              <div className="h-full w-1/2 animate-pulse rounded-full bg-secondary" />
-            </div>
-          )}
-        </div>
-      </div>
+      <WorkspaceLoader
+        title={restrictedPath ? 'Opening the read-only reviewer workspace' : status === 'checking' ? 'Securing your workspace' : 'The service is starting'}
+        description={restrictedPath
+          ? 'Administrative tools are not part of reviewer access.'
+          : status === 'checking'
+            ? 'Restoring the protected workspace session.'
+            : 'The backend host may be waking up. Your session has not been discarded.'}
+        busy={status !== 'unavailable'}
+      >
+        {status === 'unavailable' ? (
+          <button type="button" className="btn-primary mt-5 rounded-lg px-4 py-2.5 text-sm font-semibold" onClick={() => void restore()}>
+            Try again
+          </button>
+        ) : null}
+      </WorkspaceLoader>
     );
   }
 
@@ -239,12 +231,12 @@ export function AppShell({
       </a>
       <div className="flex min-h-screen">
         <aside className="dash-sidebar sticky top-3 m-3 mr-0 hidden h-[calc(100vh-1.5rem)] w-[17rem] shrink-0 overflow-hidden rounded-2xl border border-emerald-950/40 md:flex md:flex-col">
-          <Link href="/overview" className="border-b border-white/10 px-5 py-5">
+          <Link href="/overview" className="border-b border-primary/15 px-5 py-5">
             <div className="flex items-center gap-3">
               <span className="workspace-brand-mark"><IntelligenceMark /></span>
               <span>
-                <span className="block text-sm font-semibold tracking-tight text-white">HR Intelligence</span>
-                <span className="mt-0.5 block text-[11px] text-slate-400">AI-powered HR case intelligence</span>
+                <span className="block text-sm font-semibold tracking-tight text-foreground">HR Intelligence</span>
+                <span className="mt-0.5 block text-[11px] text-muted">AI-powered HR case intelligence</span>
               </span>
             </div>
           </Link>
@@ -253,16 +245,16 @@ export function AppShell({
           <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Application">
             {visibleNavGroups.map((group) => (
               <div key={group.label} className="mb-5">
-                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">{group.label}</p>
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">{group.label}</p>
                 <div className="space-y-1">
                   {group.items.map((item) => {
                     const active = isActive(item.href);
                     return (
-                      <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'}`}>
-                        <span className={`mt-0.5 ${active ? 'text-secondary' : 'text-slate-500 group-hover:text-slate-300'}`}><NavIcon name={item.icon} /></span>
+                      <Link key={item.href} href={item.href} aria-current={active ? 'page' : undefined} className={`group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? 'bg-mist text-foreground' : 'text-muted hover:bg-mist hover:text-foreground'}`}>
+                        <span className={`mt-0.5 ${active ? 'text-secondary' : 'text-muted group-hover:text-muted'}`}><NavIcon name={item.icon} /></span>
                         <span className="min-w-0">
                           <span className="block text-sm font-medium">{item.label}</span>
-                          <span className={`mt-0.5 block text-[11px] ${active ? 'text-slate-300' : 'text-slate-500'}`}>{item.hint}</span>
+                          <span className={`mt-0.5 block text-[11px] ${active ? 'text-muted' : 'text-muted'}`}>{item.hint}</span>
                         </span>
                       </Link>
                     );
@@ -272,39 +264,39 @@ export function AppShell({
             ))}
           </nav>
 
-          <div className="border-t border-white/10 p-4">
+          <div className="border-t border-primary/15 p-4">
             {isAdmin && intercomWorkspaceUrl ? (
               <a
                 href={intercomWorkspaceUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="mb-4 flex items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-300/15"
+                className="mb-4 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/10 px-3 py-2.5 text-sm font-medium text-primary hover:bg-primary/15"
               >
                 <span>Open Intercom inbox</span>
                 <span aria-hidden="true">↗</span>
               </a>
             ) : isDemoRecruiterMode ? (
-              <button type="button" onClick={openIntercomInbox} className="mb-4 flex w-full items-center justify-between rounded-lg border border-emerald-300/20 bg-emerald-300/10 px-3 py-2.5 text-left text-sm font-medium text-emerald-200 hover:bg-emerald-300/15">
+              <button type="button" onClick={openIntercomInbox} className="mb-4 flex w-full items-center justify-between rounded-lg border border-primary/20 bg-primary/10 px-3 py-2.5 text-left text-sm font-medium text-primary hover:bg-primary/15">
                 <span>Open Intercom inbox</span>
                 <span aria-hidden="true">↗</span>
               </button>
             ) : null}
             <Link
               href="/"
-              className="mb-4 flex items-center justify-between rounded-lg border border-white/10 px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+              className="mb-4 flex items-center justify-between rounded-lg border border-primary/15 px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-mist hover:text-foreground"
             >
               <span>Back to landing page</span>
               <span aria-hidden="true">←</span>
             </Link>
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold uppercase text-white">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-mist text-xs font-semibold uppercase text-foreground">
                 {(user?.name ?? user?.email ?? 'O').slice(0, 2)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">{user?.name ?? 'Operator'}</p>
-                <p className="truncate text-[11px] text-slate-400">{user?.email ?? 'Authenticated'}</p>
+                <p className="truncate text-sm font-medium text-foreground">{user?.name ?? 'Operator'}</p>
+                <p className="truncate text-[11px] text-muted">{user?.email ?? 'Authenticated'}</p>
               </div>
-              <button type="button" onClick={() => void signOut()} className="rounded-md px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Sign out">
+              <button type="button" onClick={() => void signOut()} className="rounded-md px-2 py-1 text-xs text-muted hover:bg-mist hover:text-foreground" aria-label="Sign out">
                 Exit
               </button>
             </div>
@@ -325,7 +317,7 @@ export function AppShell({
                 </span>
                 <button
                   type="button"
-                  className="hidden items-center gap-2 rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-secondary/50 hover:bg-emerald-50 sm:flex"
+                  className="hidden items-center gap-2 rounded-lg border border-primary/15 bg-white px-3 py-2 text-sm font-semibold text-primary shadow-sm transition hover:border-secondary/50 hover:bg-primary/10 sm:flex"
                   onClick={() => window.dispatchEvent(new CustomEvent('hr-assistant:open'))}
                 >
                   <span className="text-secondary" aria-hidden="true">✦</span>

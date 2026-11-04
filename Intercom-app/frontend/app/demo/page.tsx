@@ -167,7 +167,7 @@ export default function DemoPage() {
       title="Product walkthrough & access"
       description="Understand the HR Intelligence workflow, the two controlled access paths, and a safe sample case. Organization overview stays focused on live operating stats."
     >
-      <section aria-labelledby="product-walkthrough-title" className="reveal mb-8 overflow-hidden rounded-[2rem] border border-primary/15 bg-slate-950 shadow-lift">
+      <section aria-labelledby="product-walkthrough-title" className="reveal mb-8 overflow-hidden rounded-[2rem] border border-primary/15 bg-mist shadow-lift">
         <div className="border-b border-white/10 px-5 py-6 md:px-8 md:py-7">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -252,7 +252,7 @@ export default function DemoPage() {
               <li><span className="font-semibold text-primary">Architecture.</span> Follow the webhook, queue, intelligence, and snapshot path.</li>
             </ol>
           </div>
-          <div className="rounded-2xl bg-slate-950 p-5 text-white">
+          <div className="rounded-2xl bg-mist p-5 text-white">
             <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-300 text-sm font-bold text-slate-950">02</span><h3 className="font-semibold">Open Intercom separately</h3></div>
             <ol className="mt-5 space-y-3 text-sm leading-6 text-slate-300">
               <li><span className="font-semibold text-white">Accept the official invitation.</span> Intercom access is separate from the dashboard account and is never created by public sign-up.</li>

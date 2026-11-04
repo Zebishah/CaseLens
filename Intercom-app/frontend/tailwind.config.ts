@@ -23,7 +23,7 @@ module.exports = {
         danger: 'rgb(var(--danger) / <alpha-value>)',
         warning: 'rgb(var(--warning) / <alpha-value>)',
         mist: 'rgb(var(--soft-blue) / <alpha-value>)',
-        paper: '#f2f2f2',
+        paper: '#f3f7f9',
         ink: {
           950: '#0A0D14',
           900: '#111722',
@@ -31,16 +31,18 @@ module.exports = {
           700: '#223044'
         },
         copper: {
-          400: '#9B87FD',
-          500: '#7C5CFC'
+          400: '#38CFFF',
+          500: '#006A86'
         }
       },
       fontFamily: {
-        sans: ['IBM Plex Sans', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        sans: ['var(--font-body)', 'Arial', 'sans-serif'],
+        display: ['var(--font-display)', 'Arial', 'sans-serif'],
+        mono: ['var(--font-code)']
       },
       boxShadow: {
-        panel: '0 24px 80px rgba(0, 0, 0, 0.35)',
-        glow: '0 0 0 1px rgba(124, 92, 252, 0.16), 0 20px 60px rgba(10, 13, 20, 0.6)',
+        panel: '0 16px 50px rgba(0, 106, 134, 0.08)',
+        glow: '0 0 0 1px rgba(0, 106, 134, 0.12), 0 16px 40px rgba(16, 24, 32, 0.08)',
         lift: '0 18px 50px rgba(43, 103, 119, 0.12)',
         float: '0 28px 70px rgba(43, 103, 119, 0.16)'
       },

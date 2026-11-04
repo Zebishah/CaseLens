@@ -42,9 +42,9 @@ export function NeuralCore({ paused = false }: { paused?: boolean }) {
       const cos = Math.cos(turn);
       const sin = Math.sin(turn);
       const glow = context.createRadialGradient(centerX, centerY, radius * 0.25, centerX, centerY, radius * 1.4);
-      glow.addColorStop(0, 'rgba(117, 66, 222, 0.12)');
-      glow.addColorStop(0.65, 'rgba(136, 86, 255, 0.08)');
-      glow.addColorStop(1, 'rgba(136, 86, 255, 0)');
+      glow.addColorStop(0, 'rgba(56, 207, 255, 0.12)');
+      glow.addColorStop(0.65, 'rgba(20, 159, 196, 0.08)');
+      glow.addColorStop(1, 'rgba(20, 159, 196, 0)');
       context.fillStyle = glow;
       context.fillRect(0, 0, width, height);
 
@@ -63,8 +63,8 @@ export function NeuralCore({ paused = false }: { paused?: boolean }) {
         context.beginPath();
         context.arc(point.x, point.y, 0.45 + front * 1.05, 0, Math.PI * 2);
         context.fillStyle = point.index % 9 === 0
-          ? `rgba(226, 244, 174, ${0.15 + front * 0.8})`
-          : `rgba(${167 + Math.round(front * 60)}, ${126 + Math.round(front * 70)}, 255, ${0.08 + front * 0.75})`;
+          ? `rgba(0, 106, 134, ${0.15 + front * 0.65})`
+          : `rgba(${20 + Math.round(front * 36)}, ${159 + Math.round(front * 48)}, ${196 + Math.round(front * 59)}, ${0.12 + front * 0.65})`;
         context.fill();
       }
 
@@ -88,7 +88,7 @@ export function NeuralCore({ paused = false }: { paused?: boolean }) {
           if (step === 0) context.moveTo(screenX, screenY);
           else context.lineTo(screenX, screenY);
         }
-        context.strokeStyle = 'rgba(184, 148, 255, 0.12)';
+        context.strokeStyle = 'rgba(0, 106, 134, 0.12)';
         context.lineWidth = 0.65;
         context.stroke();
       }

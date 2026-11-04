@@ -127,7 +127,7 @@ export default function CaseDetailPage() {
       {loading && !data && !error ? <PageSkeleton variant="detail" /> : null}
       {data ? (
         <div className="space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift md:p-6">
+          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-mist p-5 text-white shadow-lift md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-5">
               <div className="min-w-0">
                 <p className="dashboard-section-label text-emerald-300">Case intelligence · #{String(params.id).padStart(4, '0')}</p>

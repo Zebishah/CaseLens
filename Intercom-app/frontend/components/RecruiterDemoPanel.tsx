@@ -92,7 +92,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
           </p>
         </div>
 
-        <div className={compact ? 'border-t border-slate-200 bg-slate-950 p-5 xl:border-l xl:border-t-0' : 'border-t border-primary/10 bg-slate-950 p-6 lg:border-l lg:border-t-0 md:p-8'}>
+        <div className={compact ? 'border-t border-slate-200 bg-mist p-5 xl:border-l xl:border-t-0' : 'border-t border-primary/10 bg-mist p-6 lg:border-l lg:border-t-0 md:p-8'}>
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">Immediate walkthrough</p>
@@ -175,7 +175,7 @@ function ScreenshotCard({ screenshot }: { screenshot: Screenshot }) {
         target="_blank"
         rel="noreferrer"
         aria-label={`Open full-size screenshot: ${screenshot.title}`}
-        className="block overflow-hidden border-b border-primary/10 bg-slate-950"
+        className="block overflow-hidden border-b border-primary/10 bg-mist"
       >
         <div
           role="img"

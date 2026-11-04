@@ -83,7 +83,7 @@ export function AlertBanner({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="font-semibold">{title}</h2>
-          {children ? <div className="mt-1 text-sm leading-6 opacity-80">{children}</div> : null}
+          {children ? <div className="mt-1 text-sm leading-6">{children}</div> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>

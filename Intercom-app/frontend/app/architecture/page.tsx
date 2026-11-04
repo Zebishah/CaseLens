@@ -28,7 +28,7 @@ export default function ArchitecturePage() {
       description="A concise view of how verified conversations become persisted, explainable HR case intelligence. PostgreSQL remains the source of truth across execution modes."
     >
       <div className="space-y-7">
-        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-5 text-white shadow-lift md:p-7" aria-labelledby="architecture-flow-title">
+        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-mist p-5 text-white shadow-lift md:p-7" aria-labelledby="architecture-flow-title">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="dashboard-section-label text-emerald-300">Production processing path</p>

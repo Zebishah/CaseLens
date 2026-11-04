@@ -73,7 +73,7 @@ function RecruiterOperationsPage() {
       {!data && !error ? <PageSkeleton variant="overview" /> : null}
       {data ? (
         <div className="space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift md:p-6">
+          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-mist p-5 text-white shadow-lift md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="dashboard-section-label text-emerald-300">Read-only runtime evidence</p>
@@ -167,7 +167,7 @@ function AdminOperationsPage() {
 
       {!loading && data ? (
         <div className="space-y-5">
-          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-slate-950 p-5 text-white shadow-lift md:p-6">
+          <section className="overflow-hidden rounded-2xl border border-primary/15 bg-mist p-5 text-white shadow-lift md:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex items-start gap-3">
                 <span className={`mt-1 h-2.5 w-2.5 rounded-full ${data.intercom?.enabled && data.intercom?.connected ? 'bg-emerald-300' : 'bg-amber-300'}`} />
