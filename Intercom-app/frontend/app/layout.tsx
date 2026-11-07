@@ -21,13 +21,13 @@ const displayFont = localFont({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Case Lense — AI-Powered B2B HR Case Intelligence Platform',
-    template: '%s · Case Lense'
+    default: 'Case Lens — AI-Powered B2B HR Case Intelligence Platform',
+    template: '%s · Case Lens'
   },
   description:
     'AI-Powered B2B HR Case Intelligence Platform for explainable HR case intelligence across Intercom and email, with identity resolution, related history, stakeholder routing, auditable AI workflows, and operational reliability.',
   openGraph: {
-    title: 'Case Lense — AI-Powered B2B HR Case Intelligence Platform',
+    title: 'Case Lens — AI-Powered B2B HR Case Intelligence Platform',
     description:
       'Turn fragmented HR conversations into explainable case intelligence while keeping human reviewers in control.',
     type: 'website'

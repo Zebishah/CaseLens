@@ -168,7 +168,7 @@ export default function OverviewPage() {
   return (
     <AppShell
       title="Organization overview"
-      description="A live view of what Case Lense is helping your organization accomplish: processed cases, directory matches, related history, and work that needs human review."
+      description="A live view of what Case Lens is helping your organization accomplish: processed cases, directory matches, related history, and work that needs human review."
     >
       {sleeping ? (
         <AlertBanner
