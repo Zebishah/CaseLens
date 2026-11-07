@@ -1,4 +1,4 @@
-# HR Intelligence API
+# CaseLens API
 
 The backend is a strict-TypeScript Express API for signed conversation ingestion, HR intelligence processing, employee resolution, related-case retrieval, Intercom Canvas rendering, and portfolio operations.
 
@@ -84,7 +84,7 @@ Before deploying this version, configure these backend environment variables:
 RESEND_AUTH_EMAIL_ENABLED=true
 RESEND_API_KEY=your-resend-sending-api-key
 RESEND_FROM_EMAIL=access@your-verified-domain.example
-RESEND_FROM_NAME=HR Intelligence
+RESEND_FROM_NAME=CaseLens
 PUBLIC_APP_URL=https://your-frontend.example
 EMAIL_VERIFICATION_TTL_MINUTES=30
 ```

@@ -1,16 +1,16 @@
-# HR Intelligence — AI-Powered B2B HR Intelligence Platform
+# CaseLens — AI-Powered HR Case Intelligence
 
-HR Intelligence is an AI-Powered B2B HR Intelligence Platform for organizations using Intercom and email. It turns fragmented HR conversations into structured, explainable case intelligence: classification, employee identity resolution, related history, stakeholder context, routing, and auditable human-reviewed outcomes.
+CaseLens is an AI-powered B2B HR case intelligence platform for organizations using Intercom and email. It turns fragmented HR conversations into structured, explainable case intelligence: classification, employee identity resolution, related history, stakeholder context, routing, and auditable human-reviewed outcomes.
 
 ## Problem → solution → impact
 
-Before this layer, HR operations teams could spend repetitive effort reading long conversations, identifying an employee from inconsistent names, searching related history, looking up store and stakeholder context, and carrying findings between systems. HR Intelligence normalizes Intercom, inbound email, and reviewer sample intake, structures the case, preserves deterministic identity evidence, surfaces related history and routing context, and keeps the operator in Intercom.
+Before this layer, HR operations teams could spend repetitive effort reading long conversations, identifying an employee from inconsistent names, searching related history, looking up store and stakeholder context, and carrying findings between systems. CaseLens normalizes Intercom, inbound email, and reviewer sample intake, structures the case, preserves deterministic identity evidence, surfaces related history and routing context, and keeps the operator in Intercom.
 
 The defensible organizational value is centralized case intelligence, reduced repetitive lookup work, safer handling of uncertain identity matches, consistent team workflows, better traceability, and recoverable asynchronous work. This environment does not claim unmeasured savings, production volume, or customer outcomes.
 
-[View the HR Intelligence product walkthrough](https://nagumo-hr-intelligence.vercel.app)
+[View the CaseLens product walkthrough](https://nagumo-hr-intelligence.vercel.app)
 
-![HR Intelligence resolving an employee identity and related cases inside Intercom](Intercom-app/frontend/public/product-screenshots/sarah-identity-resolution.webp)
+![CaseLens resolving an employee identity and related cases inside Intercom](Intercom-app/frontend/public/product-screenshots/sarah-identity-resolution.webp)
 
 ## Platform capabilities
 
@@ -22,7 +22,7 @@ The defensible organizational value is centralized case intelligence, reduced re
 - Idempotent inbound-event recording, transactional outbox dispatch, retries, and recovery
 - Role-based dashboard access for administrators and read-only reviewers
 - Public synthetic demo sessions with request limits and data retention controls
-- A site-wide read-only “Ask HR Intelligence” assistant with public product help and role-gated case, operations, directory, and fixture-evaluation context
+- A site-wide read-only “Ask CaseLens” assistant with public product help and role-gated case, operations, directory, and fixture-evaluation context
 - Invite-controlled authentication: no public signup, no exposed reviewer password, and a short-lived server-issued reviewer walkthrough
 
 ## Architecture
@@ -67,7 +67,7 @@ Intercom-app/
 │   │   └── routes/       API and provider route composition
 │   ├── scripts/          Migrations, seeds, evaluations and integration smoke tests
 │   └── tests/            Unit, integration, contract and end-to-end tests
-└── web/
+└── frontend/
     ├── app/              Next.js App Router pages and route-level error/loading UI
     ├── components/       Workspace, landing-page and product-walkthrough components
     ├── lib/              Typed API, authentication and display utilities
@@ -146,3 +146,7 @@ npm run build
 The reviewer account is intentionally read-only. Intercom access is separately approved because Intercom performs identity verification for new teammates.
 
 > This repository and its hosted product walkthrough use synthetic data only. Provider secrets and production credentials are never committed.
+
+## Branding and configuration
+
+**CaseLens** is the portfolio product name for the HR case intelligence platform. Set `NEXT_PUBLIC_APP_NAME=CaseLens` in the frontend environment. Existing repository paths, deployed URLs, and backend identifiers remain compatible with the existing integrations. The root README is the main entry point; the backend guide provides detailed migration and provider setup.
