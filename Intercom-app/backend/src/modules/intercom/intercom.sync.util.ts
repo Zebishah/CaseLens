@@ -111,7 +111,7 @@ export const buildIntercomIntelligenceNote = (
   const marker = intercomSyncMarker(fingerprint);
 
   const body = [
-    '<p><strong>HR Intelligence Summary</strong></p>',
+    '<p><strong>Case Lense Summary</strong></p>',
     '<p>',
     `${escapeHtml(employeeBlock.employeeLine)}<br/>`,
     `${escapeHtml(employeeBlock.confidenceLine)}<br/>`,

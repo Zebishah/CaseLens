@@ -189,7 +189,7 @@ describe('Intercom canvas integration', () => {
     expect(res.statusCode).toBe(200);
     expect(res.body.canvas.content.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'text', style: 'header', text: 'HR Intelligence' })
+        expect.objectContaining({ type: 'text', style: 'header', text: 'Case Lense' })
       ])
     );
     expect(res.body.canvas.content.components).not.toEqual(
@@ -289,7 +289,7 @@ describe('Intercom canvas integration', () => {
     });
     expect(res.body.canvas.content.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'text', style: 'header', text: 'HR Intelligence' }),
+        expect.objectContaining({ type: 'text', style: 'header', text: 'Case Lense' }),
         expect.objectContaining({ type: 'list' })
       ])
     );
@@ -372,7 +372,7 @@ describe('Intercom canvas integration', () => {
     expect(mockEnqueueIntelligence).not.toHaveBeenCalled();
     expect(res.body.canvas.content.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'text', style: 'header', text: 'HR Intelligence' }),
+        expect.objectContaining({ type: 'text', style: 'header', text: 'Case Lense' }),
         expect.objectContaining({ text: CANVAS_COPY.PROCESSING_DETAIL }),
         expect.objectContaining({
           type: 'button',
@@ -995,7 +995,7 @@ describe('Intercom canvas integration', () => {
     expect(res.body.canvas.content.components[0]).toMatchObject({
       type: 'text',
       style: 'header',
-      text: 'HR Intelligence'
+      text: 'Case Lense'
     });
   });
 });

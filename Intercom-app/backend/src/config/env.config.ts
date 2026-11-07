@@ -138,7 +138,7 @@ const envSchema = z
       (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
       z.string().email().optional()
     ),
-    RESEND_FROM_NAME: z.string().trim().min(1).max(120).regex(/^[^<>\r\n]+$/).default('HR Intelligence'),
+    RESEND_FROM_NAME: z.string().trim().min(1).max(120).regex(/^[^<>\r\n]+$/).default('Case Lense'),
     EMAIL_VERIFICATION_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(30),
     RESEND_WEBHOOK_SECRET: optionalSecret,
     RESEND_RECEIVING_DOMAIN: optionalSecret,

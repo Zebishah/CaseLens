@@ -11,7 +11,7 @@ describe('engineering case study', () => {
   it('renders the public engineering narrative and current architecture labels', () => {
     render(<EngineeringPage />);
 
-    expect(screen.getByRole('heading', { name: 'Engineering at HR Intelligence' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Engineering at Case Lense' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'A durable path for bursty background work.' })).toBeInTheDocument();
     expect(screen.getAllByText('Current production', { exact: true }).length).toBeGreaterThan(0);
     expect(screen.getByText(/Architecture evolution/)).toBeInTheDocument();

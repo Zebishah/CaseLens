@@ -9,7 +9,7 @@ describe('canvasBuilder', () => {
     expect(canvas.canvas.content.components[0]).toMatchObject({
       type: 'text',
       style: 'header',
-      text: 'HR Intelligence'
+      text: 'Case Lense'
     });
   });
 
@@ -122,7 +122,7 @@ describe('canvasBuilder', () => {
 
     expect(canvas.canvas.content.components).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'text', style: 'header', text: 'HR Intelligence' }),
+        expect.objectContaining({ type: 'text', style: 'header', text: 'Case Lense' }),
         expect.objectContaining({
           type: 'button',
           id: 'refresh-intelligence',

@@ -1,5 +1,5 @@
 export const CANVAS_COPY = {
-  APP_TITLE: 'HR Intelligence',
+  APP_TITLE: 'Case Lense',
   APP_CONNECTED: 'App is active and connected to your workspace.',
   APP_CONNECTED_DETAIL: 'Conversations are synced automatically. Intelligence appears when ready.',
   CASE_SUMMARY_HEADER: 'CASE SUMMARY',

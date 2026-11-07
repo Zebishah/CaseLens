@@ -210,7 +210,7 @@ describe('Intercom HTTP E2E (Express stack, mocked Intercom/Gemini)', () => {
       .set('x-body-signature', canvasSignature)
       .send(canvasBody);
     expect(canvas.statusCode).toBe(200);
-    expect(canvas.body.canvas.content.components[0].text).toBe('HR Intelligence');
+    expect(canvas.body.canvas.content.components[0].text).toBe('Case Lense');
     expect(JSON.stringify(canvas.body)).toContain('Jordan Hale');
 
     const configureBody = { component_id: 'configure' };

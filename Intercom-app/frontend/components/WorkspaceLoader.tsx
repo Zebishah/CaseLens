@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { IntelligenceMark } from './landing/LandingIcons';
 
 export function WorkspaceLoader({
-  title = 'Loading HR Intelligence',
+  title = 'Loading Case Lense',
   description = 'Preparing your workspace and case context.',
   busy = true,
   children

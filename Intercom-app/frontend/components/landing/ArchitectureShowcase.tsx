@@ -62,7 +62,7 @@ export function ArchitectureShowcase({ showNotesLink = true }: { showNotesLink?:
           Intercom is the inbox. This is the intelligence layer.
         </h2>
         <p className="mt-5 max-w-md text-muted">
-          Operators work in Intercom. HR Intelligence verifies events, resolves employees, finds related
+          Operators work in Intercom. Case Lense verifies events, resolves employees, finds related
           cases, and can write a concise note back into the conversation.
         </p>
         <div

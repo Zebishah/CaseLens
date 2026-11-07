@@ -95,7 +95,7 @@ export default function EngineeringPage() {
           <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-16 md:px-6 md:pb-28 md:pt-24">
             <div className="max-w-4xl">
               <SectionLabel>Engineering case study</SectionLabel>
-              <h1 id="engineering-title" className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl md:text-7xl">Engineering at HR Intelligence</h1>
+              <h1 id="engineering-title" className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-foreground sm:text-5xl md:text-7xl">Engineering at Case Lense</h1>
               <p className="mt-6 max-w-3xl text-base leading-7 text-muted md:text-xl md:leading-9">A production-oriented case study in reliable background processing, secure HR workflows, caching, observability, and recruiter-safe demo architecture.</p>
               <div className="mt-8 flex flex-wrap gap-2 text-xs font-medium text-foreground">
                 {['Current production', 'PostgreSQL source of truth', 'Apify on-demand processing'].map((label) => <span key={label} className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5">{label}</span>)}
@@ -115,7 +115,7 @@ export default function EngineeringPage() {
 
         <section id="overview" className="bg-white" aria-labelledby="overview-title">
           <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
-            <div className="max-w-2xl"><SectionLabel>01 · Product overview</SectionLabel><h2 id="overview-title" className="mt-3 text-3xl font-semibold tracking-tight text-primary md:text-5xl">From conversation to operational context.</h2><p className="mt-5 text-base leading-7 text-muted">HR Intelligence transforms Intercom and inbound email conversations into structured, searchable case intelligence while keeping uncertain decisions visible to human reviewers.</p></div>
+            <div className="max-w-2xl"><SectionLabel>01 · Product overview</SectionLabel><h2 id="overview-title" className="mt-3 text-3xl font-semibold tracking-tight text-primary md:text-5xl">From conversation to operational context.</h2><p className="mt-5 text-base leading-7 text-muted">Case Lense transforms Intercom and inbound email conversations into structured, searchable case intelligence while keeping uncertain decisions visible to human reviewers.</p></div>
             <div className="mt-10 grid gap-4 md:grid-cols-3">
               {capabilities.map(([title, body], index) => <article key={title} className="engineering-card group"><span className="engineering-number">0{index + 1}</span><h3 className="mt-8 text-lg font-semibold text-primary">{title}</h3><p className="mt-3 text-sm leading-6 text-muted">{body}</p></article>)}
             </div>

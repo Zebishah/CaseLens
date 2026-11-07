@@ -16,14 +16,14 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
     {
       title: 'Intercom case inbox',
       description: 'A single-name mention is resolved to Sarah Saffari with confidence evidence and relevant case history.',
-      alt: 'Intercom Inbox showing HR Intelligence matching a Sarah mention to Sarah Saffari and listing closely related cases.',
+      alt: 'Intercom Inbox showing Case Lense matching a Sarah mention to Sarah Saffari and listing closely related cases.',
       url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_INBOX_URL?.trim() ||
         '/product-screenshots/sarah-identity-resolution.webp'
     },
     {
       title: 'Name-variant resolution',
       description: 'The system preserves the reported spelling, surfaces a possible duplicate, and explains why prior cases are related.',
-      alt: 'Intercom HR Intelligence panel showing Ayesha Sophy matched to Ayesha Sophie with possible-same-person and related-case evidence.',
+      alt: 'Intercom Case Lense panel showing Ayesha Sophy matched to Ayesha Sophie with possible-same-person and related-case evidence.',
       url: process.env.NEXT_PUBLIC_DEMO_SCREENSHOT_CANVAS_URL?.trim() ||
         '/product-screenshots/ayesha-related-case-evidence.webp'
     },
@@ -47,7 +47,7 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
               The workspace explains system behavior and operational evidence. Intercom is the real operator
-              workspace where synthetic conversations arrive and HR intelligence appears beside each ticket.
+              workspace where synthetic conversations arrive and Case Lense appears beside each ticket.
             </p>
           </div>
           <Link href="/access" className="btn-primary inline-flex shrink-0 rounded-lg px-4 py-2.5 text-sm font-semibold">
@@ -62,13 +62,13 @@ export function RecruiterDemoPanel({ compact = false }: { compact?: boolean }) {
           <div className="mt-4 space-y-3">
             <WorkspaceCard
               number="01"
-              title="HR Intelligence workspace"
+              title="Case Lense workspace"
               copy="Read-only case intelligence, directory evidence, reliability status, and verified architecture. The demo session is issued by the server and expires automatically."
             />
             <WorkspaceCard
               number="02"
               title="Intercom Inbox"
-              copy="The third-party operator UI for opening synthetic conversations and inspecting the embedded HR Intelligence panel and write-back."
+              copy="The third-party operator UI for opening synthetic conversations and inspecting the embedded Case Lense panel and write-back."
             />
           </div>
 

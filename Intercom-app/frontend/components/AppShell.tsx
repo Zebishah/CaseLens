@@ -77,8 +77,8 @@ const heroByPath: Record<string, { eyebrow: string; title: string; icon: Dashboa
   '/operations': { eyebrow: 'Operational health', title: 'Keep intake, processing, and write-back observable.', icon: 'activity', meta: 'Runtime health' },
   '/evaluation': { eyebrow: 'AI quality', title: 'Measure assistance before it reaches an operator.', icon: 'spark', meta: 'Versioned baseline' },
   '/architecture': { eyebrow: 'Intercom-integrated architecture', title: 'See how conversations become explainable case intelligence.', icon: 'link', meta: 'Verified flow' },
-  '/demo': { eyebrow: 'Product walkthrough', title: 'Review the HR Intelligence workflow from intake to human review.', icon: 'spark', meta: 'Guided platform tour' },
-  '/access': { eyebrow: 'Reviewer access', title: 'Choose a secure path into the HR Intelligence workspace.', icon: 'shield', meta: 'Invite-only access' },
+  '/demo': { eyebrow: 'Product walkthrough', title: 'Review the Case Lense workflow from intake to human review.', icon: 'spark', meta: 'Guided platform tour' },
+  '/access': { eyebrow: 'Reviewer access', title: 'Choose a secure path into the Case Lense workspace.', icon: 'shield', meta: 'Invite-only access' },
   '/access-requests': { eyebrow: 'Access management', title: 'Review who should receive organization workspace access.', icon: 'shield', meta: 'Admin approval queue' }
 };
 
@@ -237,7 +237,7 @@ export function AppShell({
             <div className="flex items-center gap-3">
               <span className="workspace-brand-mark"><IntelligenceMark /></span>
               <span>
-                <span className="block text-sm font-semibold tracking-tight text-foreground">HR Intelligence</span>
+                <span className="block text-sm font-semibold tracking-tight text-foreground">Case Lense</span>
                 <span className="mt-0.5 block text-[11px] text-muted">AI-powered HR case intelligence</span>
               </span>
             </div>
@@ -309,7 +309,7 @@ export function AppShell({
           <header className="workspace-header sticky top-3 z-40 mx-3 mt-3 overflow-hidden rounded-2xl border border-primary/10 bg-white/95 shadow-sm backdrop-blur">
             <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-4 px-4 py-4 md:px-8">
               <div className="min-w-0">
-                <p className="workspace-context-label">HR INTELLIGENCE / WORKSPACE</p>
+                <p className="workspace-context-label">CASE LENSE / WORKSPACE</p>
                 <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 md:text-2xl">{title}</h1>
               </div>
               <div className="flex items-center gap-3">
@@ -446,7 +446,7 @@ function IntercomOnboardingModal({
           </div>
           <button ref={closeRef} type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Close</button>
         </div>
-        <p className="mt-4 text-sm leading-6 text-muted">To use the connected Intercom experience, first create or use a test/demo Intercom workspace. Then provide your workspace identifier through Reviewer Access. Once the access request is approved, HR Intelligence can associate your reviewer account with that workspace.</p>
+        <p className="mt-4 text-sm leading-6 text-muted">To use the connected Intercom experience, first create or use a test/demo Intercom workspace. Then provide your workspace identifier through Reviewer Access. Once the access request is approved, Case Lense can associate your reviewer account with that workspace.</p>
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Reviewer access status</p><span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-primary">{loading ? 'Checking…' : statusLabel}</span></div>
           <p className="mt-2 text-sm leading-6 text-muted">{loading ? 'Checking your latest reviewer access request.' : access?.status === 'pending' ? 'Your reviewer access request is waiting for approval.' : access?.status === 'approved' || access?.status === 'invited' ? access.connectedInboxUrl ? 'Your reviewer account is connected to the approved Intercom workspace.' : 'Your request is approved, but this environment does not have a safe direct inbox link configured.' : access?.status === 'declined' ? access.reviewNote || 'Your request needs an update. Review the admin note and resubmit if allowed.' : 'No reviewer access request has been submitted yet.'}</p>

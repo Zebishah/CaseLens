@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
         <Link href="/login" className="auth-back-link">← Back to sign in</Link>
         <p className="product-eyebrow">ACCOUNT RECOVERY</p>
         <h1>Let’s get you back in.</h1>
-        <p className="auth-form-intro">HR Intelligence uses invitation-based accounts. Your workspace administrator can send a fresh password setup link to your approved email address.</p>
+        <p className="auth-form-intro">Case Lense uses invitation-based accounts. Your workspace administrator can send a fresh password setup link to your approved email address.</p>
         <ol className="auth-recovery-steps">
           <li><span>01</span><div><strong>Contact your workspace administrator.</strong><p>Use your organization’s existing support channel and provide the email on your account.</p></div></li>
           <li><span>02</span><div><strong>Open your fresh invitation.</strong><p>Create a password using the one-time setup link. Your existing access role remains controlled by your administrator.</p></div></li>

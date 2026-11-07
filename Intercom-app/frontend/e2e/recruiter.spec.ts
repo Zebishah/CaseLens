@@ -205,7 +205,7 @@ test('landing engineering CTA opens the public case study and passes axe checks'
   await page.goto('/');
   await page.getByRole('link', { name: /Explore the engineering/ }).click();
   await expect(page).toHaveURL(/\/engineering$/);
-  await expect(page.getByRole('heading', { name: 'Engineering at HR Intelligence' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Engineering at Case Lense' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'A durable path for bursty background work.' })).toBeVisible();
   await expect(page.getByText('API → Apify on-demand Actor')).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();

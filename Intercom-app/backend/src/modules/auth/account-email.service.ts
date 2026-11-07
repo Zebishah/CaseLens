@@ -39,8 +39,8 @@ export const sendVerificationEmail = async (input: {
   const expiry = input.expiresAt.toISOString();
   return sendAccountEmail({
     email: input.email,
-    subject: 'Verify your HR Intelligence email',
+    subject: 'Verify your Case Lense email',
     text: `Hi ${input.name},\n\nVerify your email address: ${input.verificationUrl}\n\nThis one-time link expires ${expiry}. If you did not request it, you can ignore this email.`,
-    html: `<p>Hi ${escapeEmailHtml(input.name)},</p><p>Verify your HR Intelligence email address.</p><p><a href="${escapeEmailHtml(input.verificationUrl)}">Verify email address</a></p><p>This one-time link expires ${expiry}. If you did not request it, you can ignore this email.</p>`
+    html: `<p>Hi ${escapeEmailHtml(input.name)},</p><p>Verify your Case Lense email address.</p><p><a href="${escapeEmailHtml(input.verificationUrl)}">Verify email address</a></p><p>This one-time link expires ${expiry}. If you did not request it, you can ignore this email.</p>`
   });
 };

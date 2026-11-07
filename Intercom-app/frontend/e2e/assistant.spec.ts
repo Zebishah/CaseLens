@@ -2,7 +2,7 @@ import { expect, test, type Route } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 const answer = {
-  answer: '**HR Intelligence** connects your HR conversations.\n- Resolve employee identity.\n- Surface related history.',
+  answer: '**Case Lense** connects your HR conversations.\n- Resolve employee identity.\n- Surface related history.',
   tool: 'getProductContext', provider: 'fixture', readOnly: true,
   sources: ['product:overview'], suggestedPrompts: ['How does identity matching work?']
 };
@@ -22,11 +22,11 @@ test('assistant shows real pending state, formatted answers, and useful follow-u
     await respond(route);
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Ask HR Intelligence', exact: true }).click();
-  const assistant = page.getByRole('dialog', { name: 'Ask HR Intelligence' });
+  await page.getByRole('button', { name: 'Ask Case Lense', exact: true }).click();
+  const assistant = page.getByRole('dialog', { name: 'Ask Case Lense' });
   await expect(assistant.getByText('Product guide', { exact: true })).toBeVisible();
-  await expect(assistant.getByRole('textbox', { name: 'Ask HR Intelligence' })).toBeFocused();
-  await assistant.getByRole('button', { name: 'What problem does HR Intelligence solve?' }).click();
+  await expect(assistant.getByRole('textbox', { name: 'Ask Case Lense' })).toBeFocused();
+  await assistant.getByRole('button', { name: 'What problem does Case Lense solve?' }).click();
   await expect(assistant.getByRole('status')).toContainText('Connecting the context');
   await expect(assistant.getByRole('button', { name: 'Start a new conversation' })).toBeDisabled();
   await assistant.getByRole('textbox').fill('A draft for my next question');
@@ -37,7 +37,7 @@ test('assistant shows real pending state, formatted answers, and useful follow-u
   await expect(assistant.getByRole('article', { name: 'Assistant answer' })).toContainText('Resolve employee identity.');
   await expect(assistant.getByText('1 permitted context source')).toBeVisible();
   await expect(assistant.getByRole('button', { name: 'How does identity matching work?' })).toBeVisible();
-  await expect(assistant.locator('strong')).toContainText('HR Intelligence');
+  await expect(assistant.locator('strong')).toContainText('Case Lense');
   await expect(assistant).not.toContainText('getProductContext');
   await assistant.getByRole('button', { name: 'How does identity matching work?' }).click();
   await expect(assistant.getByRole('article', { name: 'Assistant answer' })).toHaveCount(2);
@@ -53,9 +53,9 @@ test('assistant preserves multiline input, retries without duplicates, and resto
     return respond(route);
   });
   await page.goto('/');
-  const launcher = page.getByRole('button', { name: 'Ask HR Intelligence', exact: true });
+  const launcher = page.getByRole('button', { name: 'Ask Case Lense', exact: true });
   await launcher.click();
-  const assistant = page.getByRole('dialog', { name: 'Ask HR Intelligence' });
+  const assistant = page.getByRole('dialog', { name: 'Ask Case Lense' });
   const input = assistant.getByRole('textbox');
   await input.fill('Explain identity matching');
   await input.press('Shift+Enter');
@@ -77,8 +77,8 @@ test('assistant fits mobile and keyboard-height viewports and passes serious acc
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Ask HR Intelligence', exact: true }).click();
-  const assistant = page.getByRole('dialog', { name: 'Ask HR Intelligence' });
+  await page.getByRole('button', { name: 'Ask Case Lense', exact: true }).click();
+  const assistant = page.getByRole('dialog', { name: 'Ask Case Lense' });
   const result = await new AxeBuilder({ page }).include('#hr-intelligence-assistant').analyze();
   expect(result.violations.filter(item => ['critical', 'serious'].includes(item.impact ?? ''))).toEqual([]);
   for (const viewport of [{ width: 320, height: 640 }, { width: 390, height: 420 }]) {

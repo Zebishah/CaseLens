@@ -8,8 +8,8 @@ import { IntelligenceWorkflow, ProductFilm } from '../components/landing/Intelli
 import './landing.css';
 
 const faqs = [
-  ['What exactly does HR Intelligence do?', 'It turns Intercom and email conversations into structured case intelligence: employee identity, relevant history, store context, and suggested stakeholders. An auditable snapshot keeps the evidence together for the reviewer.'],
-  ['Does it replace our existing inbox?', 'Intercom remains the operator workspace. HR Intelligence adds context alongside the conversation, so your team can review cases without carrying information between disconnected tools.'],
+  ['What exactly does Case Lense do?', 'It turns Intercom and email conversations into structured case intelligence: employee identity, relevant history, store context, and suggested stakeholders. An auditable snapshot keeps the evidence together for the reviewer.'],
+  ['Does it replace our existing inbox?', 'Intercom remains the operator workspace. Case Lense adds context alongside the conversation, so your team can review cases without carrying information between disconnected tools.'],
   ['What happens when the AI is uncertain?', 'Identity matching preserves its evidence, and uncertain cases can be flagged for manual review. AI helps interpret the conversation; deterministic matching and review rules keep people in control.'],
   ['Can I explore it without connecting company data?', 'Yes. The reviewer walkthrough uses synthetic records in a read-only workspace. You can inspect case intelligence, directory context, operations, and fixture evaluations without providing real employee data.'],
   ['How do I explore this for my organization?', 'Request a product demo to discuss your organization’s workflow, or request reviewer access to inspect the project. Evaluation begins with synthetic records. Intercom invitations and workspace linkage are approved separately.']
@@ -36,7 +36,7 @@ export default function LandingPage() {
           </section>
 
           <section id="product" className="ai-product-evidence ai-section" aria-labelledby="product-evidence-title">
-            <p className="ai-eyebrow"><span /> THIS IS HR INTELLIGENCE</p>
+            <p className="ai-eyebrow"><span /> THIS IS CASE LENSE</p>
             <div className="section-heading-row"><h2 id="product-evidence-title">Your conversations.<br /><span>The missing context, connected.</span></h2><p>An AI layer for HR casework, right inside your existing inbox. Explore actual product screens to see what your team receives.</p></div>
             <ProductEvidence />
           </section>
@@ -69,7 +69,7 @@ export default function LandingPage() {
           </section>
 
           <section id="reviewers" className="ai-audience-paths ai-section" aria-label="Find your next step">
-            <article className="customer-path"><p className="ai-eyebrow"><span /> FOR YOUR ORGANIZATION</p><h2>Bring context to<br /><span>your HR workflow.</span></h2><p>Handling employee questions, attendance cases, or store-level escalations? Tell us how your team works and explore where HR Intelligence can help.</p><Link href="/access?intent=customer" className="ai-button ai-button-primary">Request a product demo <ArrowIcon /></Link></article>
+            <article className="customer-path"><p className="ai-eyebrow"><span /> FOR YOUR ORGANIZATION</p><h2>Bring context to<br /><span>your HR workflow.</span></h2><p>Handling employee questions, attendance cases, or store-level escalations? Tell us how your team works and explore where Case Lense can help.</p><Link href="/access?intent=customer" className="ai-button ai-button-primary">Request a product demo <ArrowIcon /></Link></article>
             <article className="reviewer-path"><p className="ai-eyebrow">FOR RECRUITERS & PROJECT REVIEWERS</p><SignalIcon type="spark" /><h3>Explore the product.<br />Inspect the engineering.</h3><p>Review the implementation, architecture, reliability patterns, and AI evaluation. Start with a read-only demo using synthetic records.</p><Link href="/login?mode=demo" className="ai-text-link">Explore reviewer walkthrough <ArrowIcon diagonal /></Link><Link href="/engineering" className="reviewer-engineering-link">Read the engineering case study ↗</Link></article>
           </section>
 
@@ -77,7 +77,7 @@ export default function LandingPage() {
 
           <section className="ai-final-cta"><div className="cta-orbit" aria-hidden="true" /><p className="ai-eyebrow">THE NEXT CHAPTER OF HR WORK</p><h2>A bigger picture.<br /><span>A better place to start.</span></h2><p>Give your HR team employee context, connected history, and a clearer next step.</p><Link href="/access?intent=customer" className="ai-button ai-button-primary">Explore it for your team <ArrowIcon /></Link><span className="cta-footnote">Personal demo request · Start with synthetic records · Human-reviewed access</span></section>
         </main>
-        <footer className="ai-footer"><div className="footer-top"><div><Link href="/" className="ai-brand"><IntelligenceMark /><span>hr<span>intelligence</span><sup>AI</sup></span></Link><p>Human context. Superhuman clarity.</p></div><nav aria-label="Footer product"><span>EXPLORE</span><Link href="#ai-intelligence">The intelligence</Link><Link href="#workflow">How it works</Link><Link href="#live-demo">Product walkthrough</Link></nav><nav aria-label="Footer resources"><span>GO DEEPER</span><Link href="/engineering">Engineering</Link><Link href="/architecture">Architecture</Link><Link href="#faq">Common questions</Link></nav><nav aria-label="Footer access"><span>YOUR NEXT STEP</span><Link href="/login">Sign in <ArrowIcon diagonal /></Link><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link><Link href="/access?intent=reviewer">Reviewer access <ArrowIcon diagonal /></Link></nav></div><div className="footer-bottom"><span>© {new Date().getFullYear()} HR Intelligence</span><span>AI-assisted. Evidence-led. Human-reviewed.</span><a href="#main-content">Back to top ↑</a></div></footer>
+        <footer className="ai-footer"><div className="footer-top"><div><Link href="/" className="ai-brand"><IntelligenceMark /><span>Case <span>Lense</span><sup>AI</sup></span></Link><p>Human context. Superhuman clarity.</p></div><nav aria-label="Footer product"><span>EXPLORE</span><Link href="#ai-intelligence">The intelligence</Link><Link href="#workflow">How it works</Link><Link href="#live-demo">Product walkthrough</Link></nav><nav aria-label="Footer resources"><span>GO DEEPER</span><Link href="/engineering">Engineering</Link><Link href="/architecture">Architecture</Link><Link href="#faq">Common questions</Link></nav><nav aria-label="Footer access"><span>YOUR NEXT STEP</span><Link href="/login">Sign in <ArrowIcon diagonal /></Link><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link><Link href="/access?intent=reviewer">Reviewer access <ArrowIcon diagonal /></Link></nav></div><div className="footer-bottom"><span>© {new Date().getFullYear()} Case Lense</span><span>AI-assisted. Evidence-led. Human-reviewed.</span><a href="#main-content">Back to top ↑</a></div></footer>
       </div>
     </LandingMotion>
   );

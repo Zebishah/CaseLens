@@ -165,7 +165,7 @@ export default function DemoPage() {
   return (
     <AppShell
       title="Product walkthrough & access"
-      description="Understand the HR Intelligence workflow, the two controlled access paths, and a safe sample case. Organization overview stays focused on live operating stats."
+      description="Understand the Case Lense workflow, the two controlled access paths, and a safe sample case. Organization overview stays focused on live operating stats."
     >
       <section aria-labelledby="product-walkthrough-title" className="reveal mb-8 overflow-hidden rounded-[2rem] border border-primary/15 bg-mist shadow-lift">
         <div className="border-b border-white/10 px-5 py-6 md:px-8 md:py-7">
@@ -173,7 +173,7 @@ export default function DemoPage() {
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">Dedicated product tour</p>
               <h2 id="product-walkthrough-title" className="mt-2 text-2xl font-semibold tracking-tight text-white md:text-3xl">
-                See HR Intelligence inside Intercom
+                See Case Lense inside Intercom
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
                 Follow a conversation from intake to explainable matching, related history, stakeholder routing, and a safe write-back.
@@ -240,7 +240,7 @@ export default function DemoPage() {
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-secondary">Reviewer guide</p>
           <h2 id="workspace-guide-title" className="mt-2 text-2xl font-semibold tracking-tight text-primary">How to use the two workspaces together</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Use Intercom to see the conversation and the HR Intelligence workspace to see the intelligence, evidence, and processing state built around it.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Use Intercom to see the conversation and the Case Lense workspace to see the intelligence, evidence, and processing state built around it.</p>
         </div>
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="rounded-2xl bg-paper p-5">

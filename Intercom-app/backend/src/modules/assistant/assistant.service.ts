@@ -34,26 +34,26 @@ type KnowledgeArticle = {
 
 const KNOWLEDGE: KnowledgeArticle[] = [
   {
-    terms: ['what can this project do', 'what can this do', 'what is hr intelligence', 'what is this platform', 'capabilities', 'features', 'use cases', 'who is it for', 'for clients', 'for organizations', 'client value', 'customer value', 'business value', 'benefit'],
+    terms: ['what can this project do', 'what can this do', 'what is hr intelligence', 'what is case lense', 'what is this platform', 'capabilities', 'features', 'use cases', 'who is it for', 'for clients', 'for organizations', 'client value', 'customer value', 'business value', 'benefit'],
     tool: 'explainClientValue',
-    answer: 'For clients and HR operations teams, HR Intelligence is an AI-Powered B2B HR Intelligence Platform. It turns Intercom and email conversations into structured case intelligence: classification, employee identity evidence, related history, store and company context, stakeholder routing, and an auditable snapshot. Organizations keep working in Intercom while gaining centralized context, safer matching, more consistent handling, durable processing, measurable AI quality, and controlled human review.',
+    answer: 'For clients and HR operations teams, Case Lense is an AI-Powered B2B HR Case Intelligence Platform. It turns Intercom and email conversations into structured case intelligence: classification, employee identity evidence, related history, store and company context, stakeholder routing, and an auditable snapshot. Organizations keep working in Intercom while gaining centralized context, safer matching, more consistent handling, durable processing, measurable AI quality, and controlled human review.',
     suggestedPrompts: ['How does it reduce manual work?', 'Why does it integrate with Intercom?', 'How is sensitive HR data protected?']
   },
   {
     terms: ['what does the recruiter demo include', 'what does the product walkthrough include', 'recruiter demo', 'reviewer walkthrough', 'demo session', 'demo include'],
     tool: 'getRecruiterDemoHelp',
-    answer: 'The product walkthrough is a short-lived, read-only tour of the sanitized HR Intelligence workspace. It includes organization overview, case operations, employee and store context, related-case evidence, architecture, operational health, and AI quality signals. It does not expose shared passwords, customer data, mutations, or administrator controls.',
+    answer: 'The product walkthrough is a short-lived, read-only tour of the sanitized Case Lense workspace. It includes organization overview, case operations, employee and store context, related-case evidence, architecture, operational health, and AI quality signals. It does not expose shared passwords, customer data, mutations, or administrator controls.',
     suggestedPrompts: ['How is HR data protected?', 'What can I inspect in a case?']
   },
   {
     terms: ['problem', 'before', 'manual', 'pain'],
     tool: 'getPlatformHelp',
-    answer: 'Before HR Intelligence, operators had to read long conversations, identify the employee, search previous cases, determine store context, and find the right stakeholders manually. HR Intelligence centralizes those context-finding steps while Intercom remains the operator workspace.'
+    answer: 'Before Case Lense, operators had to read long conversations, identify the employee, search previous cases, determine store context, and find the right stakeholders manually. Case Lense centralizes those context-finding steps while Intercom remains the operator workspace.'
   },
   {
     terms: ['intercom', 'replace inbox', 'another system'],
     tool: 'getPlatformHelp',
-    answer: 'HR Intelligence is an intelligence layer around Intercom, not a replacement inbox. It normalizes the conversation, adds identity, related-history, and routing context, then can write the result back beside the case so operators keep their existing workflow.'
+    answer: 'Case Lense is an intelligence layer around Intercom, not a replacement inbox. It normalizes the conversation, adds identity, related-history, and routing context, then can write the result back beside the case so operators keep their existing workflow.'
   },
   {
     terms: ['identity', 'employee matching', 'match', 'alias', 'fuzzy'],
@@ -129,7 +129,7 @@ const knowledgeAnswer = (article: KnowledgeArticle): Answer => ({
   answer: article.answer,
   tool: article.tool,
   sources: ['product:knowledge'],
-  suggestedPrompts: article.suggestedPrompts ?? ['What problem does HR Intelligence solve?', 'How is HR data protected?']
+  suggestedPrompts: article.suggestedPrompts ?? ['What problem does Case Lense solve?', 'How is HR data protected?']
 });
 
 const withNaturalLanguageAnswer = async (
@@ -214,10 +214,10 @@ export const assistantService = {
 
     if (isGreeting(normalized)) {
       return {
-        answer: 'Hi — I’m the HR Intelligence assistant. I can explain the platform, organization use cases, case operations, identity matching, related history, Intercom workflow, reviewer access, reliability, security, or AI quality. What would you like to explore?',
+        answer: 'Hi — I’m the Case Lense assistant. I can explain the platform, organization use cases, case operations, identity matching, related history, Intercom workflow, reviewer access, reliability, security, or AI quality. What would you like to explore?',
         tool: 'conversationGreeting',
         sources: ['product:knowledge'],
-        suggestedPrompts: ['What can HR Intelligence do for organizations?', 'What does the product walkthrough include?', 'How is HR data protected?']
+        suggestedPrompts: ['What can Case Lense do for organizations?', 'What does the product walkthrough include?', 'How is HR data protected?']
       };
     }
 
@@ -286,10 +286,10 @@ export const assistantService = {
     const article = findKnowledgeArticle(normalized);
     if (article) return withNaturalLanguageAnswer(knowledgeAnswer(article), normalized, context);
     return withNaturalLanguageAnswer({
-      answer: 'I can help with HR Intelligence questions about the platform, organization use cases, case operations, employee identity, related history, stakeholder routing, reviewer access, Intercom, security, reliability, and AI quality. Try asking what the platform can do for an HR team or how a capability works.',
+      answer: 'I can help with Case Lense questions about the platform, organization use cases, case operations, employee identity, related history, stakeholder routing, reviewer access, Intercom, security, reliability, and AI quality. Try asking what the platform can do for an HR team or how a capability works.',
       tool: 'clarifyQuestion',
       sources: ['product:knowledge'],
-      suggestedPrompts: ['What can HR Intelligence do for organizations?', 'How does employee matching work?', 'Why does it integrate with Intercom?']
+      suggestedPrompts: ['What can Case Lense do for organizations?', 'How does employee matching work?', 'Why does it integrate with Intercom?']
     }, normalized, context);
   }
 };

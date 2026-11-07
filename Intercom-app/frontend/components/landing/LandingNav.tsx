@@ -64,7 +64,7 @@ export function LandingNav({ immersive = false }: { immersive?: boolean }) {
     return (
       <header className={`ai-navigation ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="ai-nav-inner">
-          <Link href="/" className="ai-brand" aria-label="HR Intelligence home"><IntelligenceMark /><span>hr<span>intelligence</span><sup>AI</sup></span></Link>
+          <Link href="/" className="ai-brand" aria-label="Case Lense home"><IntelligenceMark /><span>Case <span>Lense</span><sup>AI</sup></span></Link>
           <nav className="ai-desktop-nav" aria-label="Landing">{primaryLinks.map(link => <Link key={link.href} href={link.href}>{link.label}</Link>)}</nav>
           <div className="ai-nav-actions"><Link href="/login" className="ai-sign-in">Sign in <ArrowIcon diagonal /></Link><Link href="/access?intent=customer" className="ai-nav-cta">Request a demo <ArrowIcon /></Link><button className="ai-menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="ai-mobile-nav" aria-label={open ? 'Close menu' : 'Open menu'}>{open ? 'Close' : 'Menu'}<span aria-hidden="true">{open ? '−' : '+'}</span></button></div>
         </div>
@@ -87,7 +87,7 @@ export function LandingNav({ immersive = false }: { immersive?: boolean }) {
         >
           <Link href="/" className="min-w-0 shrink-0 rounded-full px-2 py-1">
             <span className="block text-[10px] font-medium tracking-[0.2em] text-secondary">AI-POWERED B2B HR</span>
-            <span className="block text-sm font-semibold text-primary">HR Intelligence</span>
+            <span className="block text-sm font-semibold text-primary">Case Lense</span>
           </Link>
           <nav className="hidden items-center gap-1 text-sm text-muted md:flex" aria-label="Landing">
             {links.map((link) => (

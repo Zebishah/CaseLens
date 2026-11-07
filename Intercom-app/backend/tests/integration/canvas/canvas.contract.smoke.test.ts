@@ -88,7 +88,7 @@ describe('Canvas Kit contract (local, never contacts Intercom)', () => {
         expect.objectContaining({
           type: 'button',
           id: 'open-hr-intelligence-case',
-          label: 'Open in HR Intelligence',
+          label: 'Open in Case Lense',
           action: { type: 'url', url: expect.stringContaining('/cases/42') }
         })
       ])

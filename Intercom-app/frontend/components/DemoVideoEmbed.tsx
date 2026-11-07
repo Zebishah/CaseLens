@@ -42,7 +42,7 @@ export function DemoVideoEmbed({ videoUrl }: { videoUrl: string }) {
 
       <iframe
         src={videoUrl}
-        title="HR Intelligence product walkthrough"
+        title="Case Lense product walkthrough"
         aria-hidden="true"
         className={`h-full w-full transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         allow="clipboard-write; fullscreen"

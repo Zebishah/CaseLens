@@ -107,7 +107,7 @@ export default function LoginPage() {
   return (
     <AuthShell>
       <div className="auth-form-card">
-        <p className="product-eyebrow">YOUR HR INTELLIGENCE WORKSPACE</p>
+        <p className="product-eyebrow">YOUR CASE LENSE WORKSPACE</p>
         <h1>Welcome back.</h1>
         <p className="auth-form-intro">Sign in to review HR cases, understand employee context, and bring the right people into the conversation.</p>
         {checking ? <div className="auth-notice" role="status">Checking your existing session…</div> : null}
@@ -125,7 +125,7 @@ export default function LoginPage() {
             {resending ? 'Sending verification email…' : resendWait ? 'Please wait a minute before resending' : 'Send or resend verification email'}
           </button>
         </div> : null}
-        <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what HR Intelligence can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}<ArrowIcon /></button></div>
+        <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what Case Lense can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}<ArrowIcon /></button></div>
         <div className="auth-sales-link"><p>Bringing this to your organization?</p><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link></div>
         <p className="auth-fine-print">Workspace accounts are invitation-based. Product demos use synthetic records; Intercom access is approved separately.</p>
       </div>

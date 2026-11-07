@@ -552,7 +552,7 @@ const buildOpenDashboardButton = (caseId?: number): CanvasComponent[] => {
   return [{
     type: 'button',
     id: 'open-hr-intelligence-case',
-    label: 'Open in HR Intelligence',
+    label: 'Open in Case Lense',
     style: 'secondary',
     action: { type: 'url', url: buildHrIntelligenceCaseUrl(caseId) }
   }];

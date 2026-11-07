@@ -24,7 +24,7 @@ export function IntelligenceWorkflow() {
       </div>
       {steps.map((_, index) => <div key={index} role="tabpanel" id={`workflow-panel-${index}`} aria-labelledby={`workflow-tab-${index}`} hidden={active !== index} className="workflow-panel" tabIndex={0}>
         {active === index && <>
-          <div className="workspace-chrome"><span className="window-dots" aria-hidden="true"><i /><i /><i /></span><span>hr intelligence / case workspace</span><span className="workspace-lock"><SignalIcon type="shield" /></span></div>
+          <div className="workspace-chrome"><span className="window-dots" aria-hidden="true"><i /><i /><i /></span><span>Case Lense / case workspace</span><span className="workspace-lock"><SignalIcon type="shield" /></span></div>
           <div className="workspace-content" key={active}>
             <p className="ai-eyebrow">{step.label} <span>0{active + 1} / 03</span></p>
             <h3>{step.subject}</h3>
@@ -44,8 +44,8 @@ export function ProductFilm() {
   // Mount the external player only when the visitor requests it.
   return (
     <div className="product-film">
-      {playing ? <div className="film-player"><iframe src={PRODUCT_DEMO_URL} title="HR Intelligence five-minute subtitled product walkthrough" allow="fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /><button onClick={() => setPlaying(false)} className="film-close">Close video ×</button></div> : <button type="button" className="film-poster" onClick={() => setPlaying(true)} aria-label="Play the five-minute product walkthrough">
-        <Image src="/product-screenshots/sarah-identity-resolution.webp" alt="HR Intelligence resolving employee identity and related history alongside a synthetic Intercom conversation" width={1600} height={1000} sizes="(max-width: 800px) 95vw, 1100px" />
+      {playing ? <div className="film-player"><iframe src={PRODUCT_DEMO_URL} title="Case Lense five-minute subtitled product walkthrough" allow="fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" /><button onClick={() => setPlaying(false)} className="film-close">Close video ×</button></div> : <button type="button" className="film-poster" onClick={() => setPlaying(true)} aria-label="Play the five-minute product walkthrough">
+        <Image src="/product-screenshots/sarah-identity-resolution.webp" alt="Case Lense resolving employee identity and related history alongside a synthetic Intercom conversation" width={1600} height={1000} sizes="(max-width: 800px) 95vw, 1100px" />
         <span className="film-overlay" /><span className="film-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 11 7-11 7V5Z" fill="currentColor" /></svg></span><span className="film-caption"><span>LESS SEARCHING. MORE UNDERSTANDING.</span><strong>See the intelligence in action.</strong><span>5-minute walkthrough <span aria-hidden="true">↗</span> Captions included</span></span>
       </button>}
     </div>
