@@ -6,7 +6,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 text-sm md:grid-cols-3 md:px-6">
         <div>
           <p className="text-[11px] tracking-[0.2em] text-secondary">AI-POWERED B2B HR CASE INTELLIGENCE</p>
-          <p className="mt-2 text-lg font-semibold">Case Lense</p>
+          <p className="mt-2 text-lg font-semibold">Case Lens</p>
           <p className="mt-3 max-w-xs text-muted">
             Explainable HR case intelligence for organizations using Intercom and email. AI assists interpretation;
             deterministic systems verify and resolve; human reviewers remain authoritative.

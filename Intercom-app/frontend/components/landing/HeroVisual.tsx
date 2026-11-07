@@ -59,7 +59,7 @@ export function HeroVisual() {
       <span className="stage-coordinate coordinate-left" aria-hidden="true">CONVERSATIONS IN.</span>
       <span className="stage-coordinate coordinate-right" aria-hidden="true">CASE INTELLIGENCE OUT.</span>
       <div className="core-container"><NeuralCore paused={stopped} /></div>
-      <div className="core-label"><IntelligenceMark /><span>CASE LENSE<span>AI + DIRECTORY EVIDENCE</span></span></div>
+      <div className="core-label"><IntelligenceMark /><span>CASE LENS<span>AI + DIRECTORY EVIDENCE</span></span></div>
       <div className="core-process" aria-live="off"><span className="status-light" /><span key={active}>{stage.action}</span></div>
 
       <div className={`insight-float insight-input ${active === 0 ? 'is-processing' : ''}`}>

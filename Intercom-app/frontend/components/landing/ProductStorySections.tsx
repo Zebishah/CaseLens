@@ -10,8 +10,8 @@ const capabilities = [
 ] as const;
 
 const faqs = [
-  ['What problem does Case Lense solve?', 'It reduces the manual work of reading, identifying employees, finding related history, determining store context, and locating stakeholders across fragmented HR conversations.'],
-  ['Does it replace Intercom?', 'No. Intercom remains the operator workspace. Case Lense adds an intelligence layer and can write the persisted result back beside the case.'],
+  ['What problem does Case Lens solve?', 'It reduces the manual work of reading, identifying employees, finding related history, determining store context, and locating stakeholders across fragmented HR conversations.'],
+  ['Does it replace Intercom?', 'No. Intercom remains the operator workspace. Case Lens adds an intelligence layer and can write the persisted result back beside the case.'],
   ['How does it reduce manual operator work?', 'It automates repetitive case-analysis steps and centralizes identity, related cases, and routing context. Human review remains available when evidence is uncertain.'],
   ['How does the system prevent duplicate processing?', 'Inbound event identifiers, idempotency controls, and deterministic jobs prevent repeated provider deliveries from becoming duplicate logical work.'],
   ['What happens if queue dispatch or AI fails?', 'The transactional outbox makes pending delivery recoverable, while retries, recorded processing states, and deterministic fallbacks keep failures visible and isolated from intake.'],
@@ -55,7 +55,7 @@ export function ProductStorySections() {
           <div className="mt-10 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {['Conversation arrives', 'Identity is resolved', 'History and routing appear', 'Operator reviews in Intercom'].map((step, index) => <div key={step} className="relative rounded-2xl border border-primary/10 bg-mist p-5"><span className="text-xs font-semibold text-secondary">STEP {index + 1}</span><h3 className="mt-3 text-base font-semibold text-primary">{step}</h3><p className="mt-2 text-sm leading-6 text-muted">{['A signed or validated event enters the shared ingestion path.', 'Evidence is preserved instead of silently forcing uncertain matches.', 'Related cases and stakeholder context become easier to find.', 'The human remains in control, with intelligence next to the conversation.'][index]}</p></div>)}
           </div>
-          <div className="mt-8 rounded-2xl bg-primary p-6 text-white md:p-8"><p className="text-sm font-semibold text-emerald-300">Before → after</p><p className="mt-3 text-sm leading-7 text-white/80"><span className="font-semibold text-white">Before:</span> manual reading → employee search → old-case search → store lookup → stakeholder lookup → context carried by hand.</p><p className="mt-2 text-sm leading-7 text-white/80"><span className="font-semibold text-white">After:</span> conversation → Case Lense → identity → history → routing → auditable snapshot → operator review in Intercom.</p></div>
+          <div className="mt-8 rounded-2xl bg-primary p-6 text-white md:p-8"><p className="text-sm font-semibold text-emerald-300">Before → after</p><p className="mt-3 text-sm leading-7 text-white/80"><span className="font-semibold text-white">Before:</span> manual reading → employee search → old-case search → store lookup → stakeholder lookup → context carried by hand.</p><p className="mt-2 text-sm leading-7 text-white/80"><span className="font-semibold text-white">After:</span> conversation → Case Lens → identity → history → routing → auditable snapshot → operator review in Intercom.</p></div>
         </div>
       </section>
 

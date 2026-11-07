@@ -52,7 +52,7 @@ export default function AccessRequestPage() {
   }
 
   if (authenticated && !customerIntent) {
-    return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized Case Lense workspace. Intercom access is approved separately."><AccessRequestForm embedded customerIntent={customerIntent} /></AppShell>;
+    return <AppShell title="Reviewer access" description="Request a personal, read-only account for the sanitized Case Lens workspace. Intercom access is approved separately."><AccessRequestForm embedded customerIntent={customerIntent} /></AppShell>;
   }
 
   return <AccessRequestForm customerIntent={customerIntent} />;
