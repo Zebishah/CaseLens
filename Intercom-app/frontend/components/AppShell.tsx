@@ -392,7 +392,7 @@ export function AppShell({
         >
           <div role="alertdialog" aria-modal="true" aria-labelledby="logout-modal-title" aria-describedby="logout-modal-description" className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <h2 id="logout-modal-title" className="text-xl font-semibold text-slate-900">Sign out of CaseLens?</h2>
-            <p id="logout-modal-description" className="mt-3 text-sm leading-6 text-slate-600">You'll need to sign in again to access your workspace.</p>
+            <p id="logout-modal-description" className="mt-3 text-sm leading-6 text-slate-600">You&apos;ll need to sign in again to access your workspace.</p>
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" autoFocus disabled={loggingOut} onClick={() => setLogoutModalOpen(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
               <button type="button" disabled={loggingOut} onClick={() => void signOut()} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{loggingOut ? 'Signing out…' : 'Sign out'}</button>

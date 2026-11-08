@@ -139,7 +139,7 @@ export default function LoginPage() {
         </form>
         {needsVerification ? <div className="auth-notice" aria-label="Email verification">
           <h2 className="font-semibold text-slate-900">Verify your email</h2>
-          <p className="mt-2 text-sm">We'll send a six-digit code to {email.trim()}. Enter it here to finish signing in.</p>
+          <p className="mt-2 text-sm">We&apos;ll send a six-digit code to {email.trim()}. Enter it here to finish signing in.</p>
           <button type="button" className="product-secondary-button mt-3" disabled={resending || resendWait || !email || !password} onClick={() => void resendVerification()}>
             {resending ? 'Sending code…' : resendWait ? 'Resend available in one minute' : 'Send verification code'}
           </button>
