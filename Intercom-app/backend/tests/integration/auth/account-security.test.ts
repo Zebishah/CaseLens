@@ -207,4 +207,49 @@ describe('account security API', () => {
     expect(await bcrypt.compare('invited-password-123', accept.mock.calls[0]?.[1] as string)).toBe(true);
     expect(response.body.data.user.role).toBe('viewer');
   });
+  test('password recovery returns a generic response and sends only a hashed 30-minute link', async () => {
+    const create = jest.spyOn(authRepository, 'createPasswordReset').mockResolvedValue(true);
+    const send = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{"id":"email-id"}', { status: 200 }));
+    const response = await request(app).post('/api/auth/password-reset/request').send({ email: account.email });
+    expect(response.status).toBe(200);
+    expect(response.body.data.message).toMatch(/If an eligible account exists/);
+    expect(send.mock.calls[0]?.[0]).toBe('https://api.resend.com/emails');
+    const mail = JSON.parse((send.mock.calls[0]?.[1] as RequestInit).body as string);
+    const token = /#token=([a-f0-9]{64})/.exec(mail.text)?.[1];
+    expect(token).toMatch(/^[a-f0-9]{64}$/);
+    expect(create.mock.calls[0]?.[0]).toMatchObject({
+      userId: account.id,
+      tokenHash: sha256(token!)
+    });
+    expect(JSON.stringify(response.body)).not.toContain(token!);
+  });
+
+  test('password recovery remains generic for unknown accounts and within cooldown', async () => {
+    const create = jest.spyOn(authRepository, 'createPasswordReset').mockResolvedValue(false);
+    const send = jest.spyOn(globalThis, 'fetch');
+    const known = await request(app).post('/api/auth/password-reset/request').send({ email: account.email });
+    jest.spyOn(authRepository, 'findUserByEmail').mockResolvedValue(undefined);
+    const unknown = await request(app).post('/api/auth/password-reset/request').send({ email: 'unknown@example.com' });
+    expect(known.status).toBe(200);
+    expect(unknown.status).toBe(200);
+    expect(known.body.data).toEqual(unknown.body.data);
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  test('password reset rejects invalid or used token and accepts a one-time valid token', async () => {
+    const reset = jest.spyOn(authRepository, 'resetPassword')
+      .mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const token = 'a'.repeat(64);
+    const invalid = await request(app).post('/api/auth/password-reset/confirm')
+      .send({ token, password: 'replacement-password-456' });
+    expect(invalid.status).toBe(400);
+    const valid = await request(app).post('/api/auth/password-reset/confirm')
+      .send({ token, password: 'replacement-password-456' });
+    expect(valid.status).toBe(200);
+    expect(valid.body.data).toEqual({ reset: true });
+    expect(reset.mock.calls[1]?.[0]).toBe(sha256(token));
+    expect(await bcrypt.compare('replacement-password-456', reset.mock.calls[1]?.[1] as string)).toBe(true);
+  });
+
 });
