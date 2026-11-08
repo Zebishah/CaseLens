@@ -134,6 +134,10 @@ const envSchema = z
     RESEND_ENABLED: booleanFlag(false),
     RESEND_API_KEY: optionalSecret,
     RESEND_AUTH_EMAIL_ENABLED: booleanFlag(false),
+    ACCESS_REQUEST_NOTIFY_EMAIL: z.preprocess(
+      (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+      z.string().email().optional()
+    ),
     RESEND_FROM_EMAIL: z.preprocess(
       (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
       z.string().email().optional()

@@ -116,6 +116,8 @@ export function AppShell({
   const [demoMode, setDemoMode] = useState(false);
   const [open, setOpen] = useState(false);
   const [inboxModalOpen, setInboxModalOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [reviewerAccess, setReviewerAccess] = useState<ReviewerAccessStatus | null>(null);
   const [reviewerAccessLoading, setReviewerAccessLoading] = useState(false);
 
@@ -157,8 +159,15 @@ export function AppShell({
   }, [pathname]);
 
   const signOut = async () => {
-    await api.logout();
-    router.replace('/login?reason=signed-out');
+    if (loggingOut) return;
+    setLoggingOut(true);
+    try {
+      await api.logout();
+      setLogoutModalOpen(false);
+      router.replace('/login?reason=signed-out');
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const isAdmin = user?.role === 'admin';
@@ -298,7 +307,7 @@ export function AppShell({
                 <p className="truncate text-sm font-medium text-foreground">{user?.name ?? 'Operator'}</p>
                 <p className="truncate text-[11px] text-muted">{user?.email ?? 'Authenticated'}</p>
               </div>
-              <button type="button" onClick={() => void signOut()} className="rounded-md px-2 py-1 text-xs text-muted hover:bg-mist hover:text-foreground" aria-label="Sign out">
+              <button type="button" onClick={() => setLogoutModalOpen(true)} className="rounded-md px-2 py-1 text-xs text-muted hover:bg-mist hover:text-foreground" aria-label="Sign out">
                 Exit
               </button>
             </div>
@@ -350,7 +359,7 @@ export function AppShell({
                 <Link href="/" className="mt-2 block border-t border-slate-100 px-3 pt-3 text-sm font-medium text-slate-700">
                   Back to landing page
                 </Link>
-                <button type="button" className="mt-2 w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-danger" onClick={() => void signOut()}>
+                <button type="button" className="mt-2 w-full border-t border-slate-100 px-3 pt-3 text-left text-sm font-medium text-danger" onClick={() => setLogoutModalOpen(true)}>
                   Sign out
                 </button>
               </nav>
@@ -374,6 +383,23 @@ export function AppShell({
           </main>
         </div>
       </div>
+      {logoutModalOpen ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/55 px-4 py-6"
+          role="presentation"
+          onMouseDown={(event) => { if (event.target === event.currentTarget && !loggingOut) setLogoutModalOpen(false); }}
+          onKeyDown={(event) => { if (event.key === 'Escape' && !loggingOut) setLogoutModalOpen(false); }}
+        >
+          <div role="alertdialog" aria-modal="true" aria-labelledby="logout-modal-title" aria-describedby="logout-modal-description" className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h2 id="logout-modal-title" className="text-xl font-semibold text-slate-900">Sign out of CaseLens?</h2>
+            <p id="logout-modal-description" className="mt-3 text-sm leading-6 text-slate-600">You'll need to sign in again to access your workspace.</p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" autoFocus disabled={loggingOut} onClick={() => setLogoutModalOpen(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={loggingOut} onClick={() => void signOut()} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{loggingOut ? 'Signing out…' : 'Sign out'}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {isDemoRecruiterMode ? (
         <IntercomOnboardingModal
           open={inboxModalOpen}

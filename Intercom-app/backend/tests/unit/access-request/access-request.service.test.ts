@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, jest, test } from '@jest/globals';
 
 const mockFindPendingByEmail = jest.fn();
+const mockSendAccountEmail = jest.fn();
+await jest.unstable_mockModule('../../../src/modules/auth/account-email.service.js', () => ({
+  sendAccountEmail: mockSendAccountEmail,
+  escapeEmailHtml: (value: string) => value
+}));
+await jest.unstable_mockModule('../../../src/config/env.config.js', () => ({
+  env: { ACCESS_REQUEST_NOTIFY_EMAIL: 'zebihaider123@gmail.com' }
+}));
 const mockCreate = jest.fn();
 const mockList = jest.fn();
 const mockUpdateStatus = jest.fn();
@@ -26,6 +34,8 @@ const { accessRequestService } = await import(
 describe('accessRequestService', () => {
   beforeEach(() => {
     mockFindPendingByEmail.mockReset();
+    mockSendAccountEmail.mockReset();
+    mockSendAccountEmail.mockResolvedValue({ sent: true });
     mockCreate.mockReset();
     mockList.mockReset();
     mockUpdateStatus.mockReset();
@@ -47,6 +57,10 @@ describe('accessRequestService', () => {
     ).resolves.toEqual({ received: true });
 
     expect(mockFindPendingByEmail).toHaveBeenCalledWith('amina@example.com');
+    expect(mockSendAccountEmail).toHaveBeenCalledWith(expect.objectContaining({
+      email: 'zebihaider123@gmail.com',
+      subject: 'CaseLens: new reviewer access request'
+    }));
     expect(mockCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         fullName: 'Amina Khan',
@@ -71,6 +85,7 @@ describe('accessRequestService', () => {
     ).resolves.toEqual({ received: true });
 
     expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockSendAccountEmail).not.toHaveBeenCalled();
   });
 
   test('updates administrator review state', async () => {
