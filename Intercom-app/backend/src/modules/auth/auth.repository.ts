@@ -1,4 +1,4 @@
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import { db } from '../../database/connection.js';
 import { users } from '../../database/schema/users.js';
 import { emailVerifications } from '../../database/schema/email_verifications.js';
@@ -47,6 +47,32 @@ export const authRepository = {
       if (!user) return false;
       await tx.update(emailVerifications).set({ usedAt: now })
         .where(and(eq(emailVerifications.userId, user.id), isNull(emailVerifications.usedAt)));
+      return true;
+    });
+  },
+
+  async verifyEmailCode(userId: number, email: string, codeHash: string): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      const now = new Date();
+      const [account] = await tx.select({ id: users.id }).from(users)
+        .where(and(eq(users.id, userId), eq(users.email, email), isNull(users.emailVerifiedAt)))
+        .for('update');
+      if (!account) return false;
+      // Locking the user serializes verification attempts across API instances.
+      const [verification] = await tx.select().from(emailVerifications)
+        .where(and(eq(emailVerifications.userId, userId), eq(emailVerifications.kind, 'otp'),
+          isNull(emailVerifications.usedAt), gt(emailVerifications.expiresAt, now)))
+        .orderBy(desc(emailVerifications.createdAt), desc(emailVerifications.id)).limit(1);
+      if (!verification || verification.attemptCount >= 5) return false;
+      // Persist failed attempts to bound online guessing, including concurrent requests.
+      await tx.update(emailVerifications)
+        .set({ attemptCount: verification.attemptCount + 1 })
+        .where(eq(emailVerifications.id, verification.id));
+      if (verification.tokenHash !== codeHash) return false;
+      await tx.update(users).set({ emailVerifiedAt: now, updatedAt: now })
+        .where(eq(users.id, userId));
+      await tx.update(emailVerifications).set({ usedAt: now })
+        .where(and(eq(emailVerifications.userId, userId), isNull(emailVerifications.usedAt)));
       return true;
     });
   },

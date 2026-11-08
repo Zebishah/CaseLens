@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt } from 'node:crypto';
 import { createAccessToken, createRefreshToken, createShortLivedAccessToken } from '../../utils/token.util.js';
 import { AppError } from '../../utils/error.util.js';
 import { verifyRefreshToken } from '../../services/jwt.service.js';
@@ -9,7 +9,7 @@ import { demoSessionService } from '../demo/demo-session.service.js';
 import { env } from '../../config/env.config.js';
 import { AUTH_CONSTANTS } from './auth.constants.js';
 import { workspaceInviteRepository } from './workspace-invite.repository.js';
-import { sendVerificationEmail } from './account-email.service.js';
+import { sendVerificationCodeEmail } from './account-email.service.js';
 import { sendWorkspaceInviteEmail } from './invite-email.service.js';
 import { accessRequestRepository } from '../access-request/access-request.repository.js';
 import { refreshSessionRepository } from './refresh-session.repository.js';
@@ -30,6 +30,8 @@ const publicUser = (user: AuthUser) => ({
 });
 
 const hashInviteToken = (token: string): string => createHash('sha256').update(token).digest('hex');
+const hashEmailCode = (userId: number, code: string): string =>
+  createHmac('sha256', env.JWT_SECRET).update(`email-otp:${userId}:${code}`).digest('hex');
 
 export const hashRefreshToken = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
@@ -95,20 +97,36 @@ export const authService = {
       throw AppError.unauthorized('Invalid credentials');
     }
     if (user.emailVerifiedAt) return { message: 'Your email is already verified. You can sign in.' };
-    const token = randomBytes(32).toString('hex');
-    const tokenHash = hashInviteToken(token);
-    const expiresAt = new Date(Date.now() + env.EMAIL_VERIFICATION_TTL_MINUTES * 60_000);
-    const created = await authRepository.createVerification({ userId: user.id, email: user.email, tokenHash, expiresAt });
+    const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+    const tokenHash = hashEmailCode(user.id, code);
+    const expiresAt = new Date(Date.now() + Math.min(env.EMAIL_VERIFICATION_TTL_MINUTES, 10) * 60_000);
+    const created = await authRepository.createVerification({
+      userId: user.id, email: user.email, tokenHash, expiresAt, kind: 'otp'
+    });
     if (created) {
       try {
-        await sendVerificationEmail({ email: user.email, name: user.name, expiresAt,
-          verificationUrl: `${env.PUBLIC_APP_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(token)}` });
+        await sendVerificationCodeEmail({ email: user.email, name: user.name, code, expiresAt });
       } catch (error) {
         await authRepository.discardVerification(tokenHash);
         throw error;
       }
     }
-    return { message: 'Check your inbox for a verification link. Please wait at least a minute before requesting another.' };
+    return { message: created
+      ? 'We sent a six-digit verification code to your email address.'
+      : 'A code was recently sent. Please wait one minute before requesting another.' };
+  },
+
+  async verifyEmailCode(payload: { email: string; password: string; code: string }) {
+    const user = await authRepository.findUserByEmail(payload.email);
+    if (!user || !(await bcrypt.compare(payload.password, user.password))) {
+      throw AppError.unauthorized('Invalid credentials');
+    }
+    if (user.emailVerifiedAt) return { verified: true };
+    const verified = await authRepository.verifyEmailCode(
+      user.id, user.email, hashEmailCode(user.id, payload.code)
+    );
+    if (!verified) throw AppError.badRequest('Invalid or expired verification code. Request a new code if needed.');
+    return { verified: true };
   },
 
   async verifyEmail(token: string) {

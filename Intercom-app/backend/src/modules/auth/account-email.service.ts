@@ -44,3 +44,15 @@ export const sendVerificationEmail = async (input: {
     html: `<p>Hi ${escapeEmailHtml(input.name)},</p><p>Verify your Case Lense email address.</p><p><a href="${escapeEmailHtml(input.verificationUrl)}">Verify email address</a></p><p>This one-time link expires ${expiry}. If you did not request it, you can ignore this email.</p>`
   });
 };
+
+export const sendVerificationCodeEmail = async (input: {
+  email: string; name: string; code: string; expiresAt: Date;
+}): Promise<{ sent: true }> => {
+  const expiryMinutes = Math.max(1, Math.ceil((input.expiresAt.getTime() - Date.now()) / 60_000));
+  return sendAccountEmail({
+    email: input.email,
+    subject: 'Your CaseLens verification code',
+    text: `Hi ${input.name},\n\nYour CaseLens verification code is: ${input.code}\n\nIt expires in ${expiryMinutes} minutes. If you did not request this, ignore this email.`,
+    html: `<p>Hi ${escapeEmailHtml(input.name)},</p><p>Use this code to verify your CaseLens email address:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${input.code}</p><p>This code expires in ${expiryMinutes} minutes. Do not share it with anyone.</p>`
+  });
+};

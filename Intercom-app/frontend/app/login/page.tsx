@@ -17,6 +17,8 @@ export default function LoginPage() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendAvailableAt, setResendAvailableAt] = useState(0);
   const [resendWait, setResendWait] = useState(false);
@@ -77,7 +79,7 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'EMAIL_VERIFICATION_REQUIRED') {
         setNeedsVerification(true);
-        setError('Verify your email address before signing in. Use the button below to receive a verification link.');
+        setError('Your email address needs verification. Send a six-digit code to finish signing in.');
       } else if (err instanceof ApiError && err.status === 401) {
         setError('The email or password is incorrect.');
       } else if (err instanceof ApiError && err.sleeping) {
@@ -87,6 +89,22 @@ export default function LoginPage() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    setError(null);
+    setVerifyingCode(true);
+    try {
+      await api.verifyEmailCode(email.trim(), password, verificationCode);
+      setNeedsVerification(false);
+      setVerificationCode('');
+      await api.login(email.trim(), password);
+      router.replace('/overview');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to verify your code.');
+    } finally {
+      setVerifyingCode(false);
     }
   };
 
@@ -114,16 +132,26 @@ export default function LoginPage() {
         {notice && !checking ? <div className="auth-notice" role="status">{notice}</div> : null}
         {error ? <div className="auth-error" role="alert">{error}</div> : null}
         <form className="auth-form" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
-          <label>Email address<input required type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(event) => { setEmail(event.target.value); setNeedsVerification(false); }} /></label>
+          <label>Email address<input required type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(event) => { setEmail(event.target.value); setNeedsVerification(false); setVerificationCode(''); }} /></label>
           <label>Password<span className="auth-password-field"><input required type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></span></label>
           <div className="auth-form-links"><span><SignalIcon type="shield" /> Protected workspace</span><Link href="/forgot-password">Forgot password?</Link></div>
           <button type="submit" disabled={loading || checking} className="product-primary-button">{loading ? 'Signing in…' : 'Sign in to workspace'}<ArrowIcon /></button>
         </form>
-        {needsVerification ? <div className="auth-notice">
-          <p>Open the verification email, then return here to sign in. Links expire after a short time.</p>
+        {needsVerification ? <div className="auth-notice" aria-label="Email verification">
+          <h2 className="font-semibold text-slate-900">Verify your email</h2>
+          <p className="mt-2 text-sm">We'll send a six-digit code to {email.trim()}. Enter it here to finish signing in.</p>
           <button type="button" className="product-secondary-button mt-3" disabled={resending || resendWait || !email || !password} onClick={() => void resendVerification()}>
-            {resending ? 'Sending verification email…' : resendWait ? 'Please wait a minute before resending' : 'Send or resend verification email'}
+            {resending ? 'Sending code…' : resendWait ? 'Resend available in one minute' : 'Send verification code'}
           </button>
+          <form className="mt-4" onSubmit={(event) => { event.preventDefault(); void verifyCode(); }}>
+            <label className="block text-sm font-medium">Six-digit code
+              <input className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-center text-xl tracking-[0.3em]" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={verificationCode} onChange={(event) => setVerificationCode(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" />
+            </label>
+            <button type="submit" className="product-primary-button mt-3" disabled={verifyingCode || verificationCode.length !== 6}>
+              {verifyingCode ? 'Verifying…' : 'Verify and sign in'}<ArrowIcon />
+            </button>
+          </form>
+          <p className="mt-2 text-xs">Codes expire after 10 minutes and allow up to five attempts.</p>
         </div> : null}
         <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what Case Lense can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}<ArrowIcon /></button></div>
         <div className="auth-sales-link"><p>Bringing this to your organization?</p><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link></div>

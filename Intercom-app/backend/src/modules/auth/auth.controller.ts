@@ -29,6 +29,10 @@ export const authController = {
     sendSuccess(res, await authService.resendVerification(req.body));
   },
 
+  async verifyEmailCode(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.verifyEmailCode(req.body));
+  },
+
   async verifyEmail(req: Request, res: Response): Promise<void> {
     sendSuccess(res, await authService.verifyEmail(req.body.token));
   },

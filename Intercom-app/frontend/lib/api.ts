@@ -191,6 +191,14 @@ export const api = {
     return parse(response);
   },
 
+  async verifyEmailCode(email: string, password: string, code: string): Promise<{ verified: boolean }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/email-verification/verify-code`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ email, password, code })
+    });
+    return parse(response);
+  },
+
   async verifyEmail(token: string): Promise<{ verified: boolean }> {
     const response = await fetchWithTimeout(`${API_URL}/api/auth/email-verification/verify`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
