@@ -80,11 +80,11 @@ describe('login and recruiter access', () => {
     await user.type(await screen.findByLabelText('Email address'), 'admin@example.com');
     await user.type(screen.getByLabelText('Password'), 'correct-password-123');
     await user.click(screen.getByRole('button', { name: 'Sign in to workspace' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Verify your email address');
-    await user.click(screen.getByRole('button', { name: 'Send or resend verification email' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('needs verification');
+    await user.click(screen.getByRole('button', { name: 'Send verification code' }));
     expect(apiMocks.resendVerification).toHaveBeenCalledWith('admin@example.com', 'correct-password-123');
     expect(await screen.findByRole('status')).toHaveTextContent('Check your inbox');
-    expect(screen.getByRole('button', { name: 'Please wait a minute before resending' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Resend available in one minute' })).toBeDisabled();
     expect(routerReplace).not.toHaveBeenCalled();
   });
 
