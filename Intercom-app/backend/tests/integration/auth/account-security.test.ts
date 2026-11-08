@@ -138,8 +138,8 @@ describe('account security API', () => {
     expect(init.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer test-resend-key' }));
     const email = JSON.parse(init.body as string);
     expect(email.to).toEqual([account.email]);
-    const code = /verification code is: (\\d{6})/.exec(email.text)?.[1];
-    expect(code).toMatch(/^\\d{6}$/);
+    const code = /verification code is: (\d{6})/.exec(email.text)?.[1];
+    expect(code).toMatch(/^\d{6}$/);
     const persisted = create.mock.calls[0]?.[0];
     expect(persisted?.kind).toBe('otp');
     expect(persisted?.tokenHash).toMatch(/^[a-f0-9]{64}$/);
