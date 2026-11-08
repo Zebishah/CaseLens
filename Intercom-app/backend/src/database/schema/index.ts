@@ -19,3 +19,4 @@ export * from './recruiter_access_requests.js';
 export * from './workspace_invites.js';
 export * from './refresh_sessions.js';
 export * from './email_verifications.js';
+export * from './password_reset_tokens.js';

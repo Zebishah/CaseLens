@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { asyncHandler } from '../../middlewares/asyncHandler.middleware.js';
 import { validate } from '../../middlewares/validate.middleware.js';
-import { authLoginRateLimit, publicDemoRateLimit } from '../../middlewares/rateLimit.middleware.js';
+import { authLoginRateLimit, passwordRecoveryRateLimit, publicDemoRateLimit } from '../../middlewares/rateLimit.middleware.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { requireRole } from '../../middlewares/requireRole.middleware.js';
 import { ROLES } from '../../constants/roles.js';
 import { authController } from './auth.controller.js';
-import { changePasswordSchema, verifyEmailSchema, verifyEmailCodeSchema, acceptInviteSchema, inspectInviteSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
+import { changePasswordSchema, passwordResetRequestSchema, passwordResetConfirmSchema, verifyEmailSchema, verifyEmailCodeSchema, acceptInviteSchema, inspectInviteSchema, loginSchema, refreshTokenSchema, registerSchema } from './auth.validation.js';
 
 export const authRoutes = Router();
 
@@ -20,6 +20,8 @@ authRoutes.post(
 authRoutes.post('/email-verification/resend', authLoginRateLimit, validate(loginSchema), asyncHandler(authController.resendVerification));
 authRoutes.post('/email-verification/verify-code', authLoginRateLimit, validate(verifyEmailCodeSchema), asyncHandler(authController.verifyEmailCode));
 authRoutes.post('/email-verification/verify', authLoginRateLimit, validate(verifyEmailSchema), asyncHandler(authController.verifyEmail));
+authRoutes.post('/password-reset/request', passwordRecoveryRateLimit, validate(passwordResetRequestSchema), asyncHandler(authController.requestPasswordReset));
+authRoutes.post('/password-reset/confirm', passwordRecoveryRateLimit, validate(passwordResetConfirmSchema), asyncHandler(authController.confirmPasswordReset));
 authRoutes.post('/change-password', authMiddleware, requireRole(ROLES.ADMIN), authLoginRateLimit,
   validate(changePasswordSchema), asyncHandler(authController.changePassword));
 authRoutes.post('/demo', publicDemoRateLimit, asyncHandler(authController.enterDemo));

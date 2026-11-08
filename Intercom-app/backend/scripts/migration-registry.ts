@@ -13,5 +13,6 @@ export const PORTFOLIO_MIGRATIONS = [
   { id: '012-analytics-trends-indexes', file: 'migrate-analytics-trends-indexes.sql' },
   { id: '013-reviewer-workspace-id', file: 'migrate-reviewer-workspace-id.sql' },
   { id: '014-account-security', file: 'migrate-account-security.sql' },
-  { id: '015-email-verification-otp', file: 'migrate-email-verification-otp.sql' }
+  { id: '015-email-verification-otp', file: 'migrate-email-verification-otp.sql' },
+  { id: '016-password-recovery', file: 'migrate-password-recovery.sql' }
 ] as const;

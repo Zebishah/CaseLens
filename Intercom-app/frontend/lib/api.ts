@@ -207,6 +207,22 @@ export const api = {
     return parse(response);
   },
 
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/password-reset/request`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ email })
+    });
+    return parse(response);
+  },
+
+  async confirmPasswordReset(token: string, password: string): Promise<{ reset: true }> {
+    const response = await fetchWithTimeout(`${API_URL}/api/auth/password-reset/confirm`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, cache: 'no-store',
+      body: JSON.stringify({ token, password })
+    });
+    return parse(response);
+  },
+
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await request('/api/auth/change-password', {
       method: 'POST', body: JSON.stringify({ currentPassword, newPassword })

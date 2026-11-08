@@ -2,6 +2,7 @@ import { and, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import { db } from '../../database/connection.js';
 import { users } from '../../database/schema/users.js';
 import { emailVerifications } from '../../database/schema/email_verifications.js';
+import { passwordResetTokens } from '../../database/schema/password_reset_tokens.js';
 import { refreshSessions } from '../../database/schema/refresh_sessions.js';
 import { workspaceInvites } from '../../database/schema/workspace_invites.js';
 import { userRepository } from '../user/user.repository.js';
@@ -73,6 +74,49 @@ export const authRepository = {
         .where(eq(users.id, userId));
       await tx.update(emailVerifications).set({ usedAt: now })
         .where(and(eq(emailVerifications.userId, userId), isNull(emailVerifications.usedAt)));
+      return true;
+    });
+  },
+
+  async createPasswordReset(input: { userId: number; tokenHash: string; expiresAt: Date }): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      const [user] = await tx.select({ id: users.id }).from(users)
+        .where(and(eq(users.id, input.userId), sql`${users.emailVerifiedAt} IS NOT NULL`)).for('update');
+      if (!user) return false;
+      const [recent] = await tx.select({ id: passwordResetTokens.id }).from(passwordResetTokens)
+        .where(and(eq(passwordResetTokens.userId, input.userId),
+          gt(passwordResetTokens.createdAt, new Date(Date.now() - 60_000)))).limit(1);
+      if (recent) return false;
+      await tx.insert(passwordResetTokens).values(input);
+      return true;
+    });
+  },
+
+  async discardPasswordReset(tokenHash: string): Promise<void> {
+    await db.delete(passwordResetTokens).where(eq(passwordResetTokens.tokenHash, tokenHash));
+  },
+
+  async resetPassword(tokenHash: string, passwordHash: string): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      const [candidate] = await tx.select().from(passwordResetTokens)
+        .where(eq(passwordResetTokens.tokenHash, tokenHash)).limit(1);
+      if (!candidate) return false;
+      await tx.select({ id: users.id }).from(users)
+        .where(eq(users.id, candidate.userId)).for('update');
+      const now = new Date();
+      const [claimed] = await tx.update(passwordResetTokens).set({ usedAt: now })
+        .where(and(eq(passwordResetTokens.id, candidate.id), isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, now))).returning();
+      if (!claimed) return false;
+      const [updated] = await tx.update(users)
+        .set({ password: passwordHash, authVersion: sql`${users.authVersion} + 1`, updatedAt: now })
+        .where(and(eq(users.id, claimed.userId), sql`${users.emailVerifiedAt} IS NOT NULL`))
+        .returning({ id: users.id });
+      if (!updated) return false;
+      await tx.update(passwordResetTokens).set({ usedAt: now })
+        .where(and(eq(passwordResetTokens.userId, updated.id), isNull(passwordResetTokens.usedAt)));
+      await tx.update(refreshSessions).set({ revokedAt: now })
+        .where(and(eq(refreshSessions.userId, updated.id), isNull(refreshSessions.revokedAt)));
       return true;
     });
   },

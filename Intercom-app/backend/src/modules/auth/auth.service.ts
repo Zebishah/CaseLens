@@ -9,7 +9,7 @@ import { demoSessionService } from '../demo/demo-session.service.js';
 import { env } from '../../config/env.config.js';
 import { AUTH_CONSTANTS } from './auth.constants.js';
 import { workspaceInviteRepository } from './workspace-invite.repository.js';
-import { sendVerificationCodeEmail } from './account-email.service.js';
+import { sendVerificationCodeEmail, sendAccountEmail, escapeEmailHtml } from './account-email.service.js';
 import { sendWorkspaceInviteEmail } from './invite-email.service.js';
 import { accessRequestRepository } from '../access-request/access-request.repository.js';
 import { refreshSessionRepository } from './refresh-session.repository.js';
@@ -134,6 +134,39 @@ export const authService = {
       throw AppError.badRequest('This verification link is invalid, expired, or already used. Request another from sign in.');
     }
     return { verified: true };
+  },
+
+  async requestPasswordReset(payload: { email: string }) {
+    const response = { message: 'If an eligible account exists, you will receive password reset instructions.' };
+    const user = await authRepository.findUserByEmail(payload.email);
+    if (!user?.emailVerifiedAt) return response;
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = hashInviteToken(token);
+    const expiresAt = new Date(Date.now() + 30 * 60_000);
+    const created = await authRepository.createPasswordReset({ userId: user.id, tokenHash, expiresAt });
+    if (!created) return response;
+    // Fragment tokens are not transmitted as HTTP path/query parameters.
+    const resetUrl = `${env.PUBLIC_APP_URL.replace(/\/$/, '')}/reset-password#token=${token}`;
+    try {
+      await sendAccountEmail({
+        email: user.email,
+        subject: 'Reset your CaseLens password',
+        text: `Hi ${user.name},\n\nReset your password using this link (expires in 30 minutes):\n${resetUrl}\n\nIf you didn't request this, ignore the message.`,
+        html: `<p>Hi ${escapeEmailHtml(user.name)},</p><p>We received a request to reset your CaseLens password.</p><p><a href="${escapeEmailHtml(resetUrl)}">Reset password</a></p><p>This link expires in 30 minutes. If you did not request it, ignore this email.</p>`
+      });
+    } catch {
+      await authRepository.discardPasswordReset(tokenHash);
+      // Do not disclose account state or email provider configuration.
+    }
+    return response;
+  },
+
+  async confirmPasswordReset(payload: { token: string; password: string }) {
+    const passwordHash = await bcrypt.hash(payload.password, AUTH_CONSTANTS.SALT_ROUNDS);
+    if (!(await authRepository.resetPassword(hashInviteToken(payload.token), passwordHash))) {
+      throw AppError.badRequest('This password reset link is invalid, expired, or already used.');
+    }
+    return { reset: true };
   },
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {

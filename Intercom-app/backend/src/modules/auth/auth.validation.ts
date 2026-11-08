@@ -27,6 +27,18 @@ export const verifyEmailCodeSchema = z.object({
   query: z.object({}).default({})
 });
 
+export const passwordResetRequestSchema = z.object({
+  body: z.object({ email: z.string().trim().toLowerCase().email() }).strict(),
+  params: z.object({}).default({}),
+  query: z.object({}).default({})
+});
+
+export const passwordResetConfirmSchema = z.object({
+  body: z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), password: newPasswordSchema }).strict(),
+  params: z.object({}).default({}),
+  query: z.object({}).default({})
+});
+
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().trim().toLowerCase().email(),

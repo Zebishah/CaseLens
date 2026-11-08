@@ -37,6 +37,14 @@ export const authController = {
     sendSuccess(res, await authService.verifyEmail(req.body.token));
   },
 
+  async requestPasswordReset(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.requestPasswordReset(req.body));
+  },
+
+  async confirmPasswordReset(req: Request, res: Response): Promise<void> {
+    sendSuccess(res, await authService.confirmPasswordReset(req.body));
+  },
+
   async changePassword(req: Request, res: Response): Promise<void> {
     const result = await authService.changePassword(req.user!.sub, req.body.currentPassword, req.body.newPassword);
     clearRefreshCookie(res);
