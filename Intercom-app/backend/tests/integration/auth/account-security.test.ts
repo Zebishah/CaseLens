@@ -138,12 +138,14 @@ describe('account security API', () => {
     expect(init.headers).toEqual(expect.objectContaining({ Authorization: 'Bearer test-resend-key' }));
     const email = JSON.parse(init.body as string);
     expect(email.to).toEqual([account.email]);
-    const token = /token=([a-f0-9]{64})/.exec(email.text)?.[1];
-    expect(token).toBeDefined();
+    const code = /verification code is: (\\d{6})/.exec(email.text)?.[1];
+    expect(code).toMatch(/^\\d{6}$/);
     const persisted = create.mock.calls[0]?.[0];
-    expect(persisted?.tokenHash).toBe(sha256(token!));
+    expect(persisted?.kind).toBe('otp');
+    expect(persisted?.tokenHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(persisted?.tokenHash).not.toBe(code);
     expect(persisted?.expiresAt.getTime()).toBeGreaterThan(Date.now());
-    expect(JSON.stringify(response.body)).not.toContain(token!);
+    expect(JSON.stringify(response.body)).not.toContain(code!);
   });
 
   test('does not send during the per-account cooldown or for incorrect credentials', async () => {
@@ -165,6 +167,21 @@ describe('account security API', () => {
     expect(response.status).toBe(503);
     expect(response.body.message).toContain('Email delivery');
     expect(discard).toHaveBeenCalledWith(expect.stringMatching(/^[a-f0-9]{64}$/));
+  });
+
+  test('validates six-digit verification codes with account password and rejects reuse or incorrect codes', async () => {
+    account.emailVerifiedAt = null;
+    const verify = jest.spyOn(authRepository, 'verifyEmailCode').mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const endpoint = '/api/auth/email-verification/verify-code';
+    expect((await request(app).post(endpoint).send({ email: account.email, password: 'wrong', code: '123456' })).status).toBe(401);
+    expect(verify).not.toHaveBeenCalled();
+    expect((await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '12345' })).status).toBe(400);
+    expect((await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '123456' })).status).toBe(400);
+    const success = await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '123456' });
+    expect(success.status).toBe(200);
+    expect(success.body.data).toEqual({ verified: true });
+    expect(success.headers['set-cookie']).toBeUndefined();
+    expect(verify).toHaveBeenCalledTimes(2);
   });
 
   test('hashes submitted verification links and rejects expired, invalid, or used links', async () => {
