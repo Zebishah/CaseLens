@@ -27,8 +27,6 @@
     "db:migrate-related-case-scope": "tsx scripts/apply-related-case-scope-schema-migration.ts",
     "db:migrate-app-logs": "tsx scripts/apply-app-logs-schema-migration.ts",
     "db:cleanup-app-logs": "tsx scripts/cleanup-app-logs.ts",
-    "db:cleanup-first-intercom": "tsx scripts/cleanup-first-intercom-employee.ts",
-    "db:cleanup-si": "tsx scripts/cleanup-si-employee.ts",
     "db:migrate-store-directory": "tsx scripts/apply-store-directory-schema-migration.ts",
     "sync:store-directory": "tsx scripts/sync-store-directory.ts",
     "db:seed-store-directory-test": "tsx scripts/seed-store-directory-test.ts",
