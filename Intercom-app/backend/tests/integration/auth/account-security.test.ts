@@ -169,15 +169,13 @@ describe('account security API', () => {
     expect(discard).toHaveBeenCalledWith(expect.stringMatching(/^[a-f0-9]{64}$/));
   });
 
-  test('validates six-digit verification codes with account password and rejects reuse or incorrect codes', async () => {
+  test('verifies six-digit codes without carrying credentials onto the verification screen', async () => {
     account.emailVerifiedAt = null;
     const verify = jest.spyOn(authRepository, 'verifyEmailCode').mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     const endpoint = '/api/auth/email-verification/verify-code';
-    expect((await request(app).post(endpoint).send({ email: account.email, password: 'wrong', code: '123456' })).status).toBe(401);
-    expect(verify).not.toHaveBeenCalled();
-    expect((await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '12345' })).status).toBe(400);
-    expect((await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '123456' })).status).toBe(400);
-    const success = await request(app).post(endpoint).send({ email: account.email, password: originalPassword, code: '123456' });
+    expect((await request(app).post(endpoint).send({ email: account.email, code: '12345' })).status).toBe(400);
+    expect((await request(app).post(endpoint).send({ email: account.email, code: '123456' })).status).toBe(400);
+    const success = await request(app).post(endpoint).send({ email: account.email, code: '123456' });
     expect(success.status).toBe(200);
     expect(success.body.data).toEqual({ verified: true });
     expect(success.headers['set-cookie']).toBeUndefined();
