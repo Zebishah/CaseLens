@@ -118,8 +118,7 @@ export default function OverviewPage() {
           continue;
         }
 
-        const raw = err instanceof Error ? err.message : 'Unable to load overview';
-        setError(raw === 'Internal server error' ? 'The database host timed out. Retry in a moment.' : raw);
+        setError(err instanceof Error ? err.message : 'The case overview could not be loaded. Please try again.');
       }
     }
 
@@ -168,7 +167,7 @@ export default function OverviewPage() {
   return (
     <AppShell
       title="Organization overview"
-      description="A live view of what Case Lense is helping your organization accomplish: processed cases, directory matches, related history, and work that needs human review."
+      description="Track HR cases from Intercom and email, see who they match, and review cases that need an operator’s decision."
     >
       {sleeping ? (
         <AlertBanner

@@ -14,8 +14,9 @@ export default function CaseDetailPage() {
   const [feedbackRating, setFeedbackRating] = useState<'accurate' | 'needs_review' | 'incorrect'>('accurate');
   const [correction, setCorrection] = useState({ employee: '', caseType: '' });
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [correctionSaved, setCorrectionSaved] = useState<string | null>(null);
+  const [feedbackNotice, setFeedbackNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [correctionNotice, setCorrectionNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const [saving, setSaving] = useState<'feedback' | 'employee' | 'caseType' | null>(null);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState(() => getAdminUser()?.role);
   const isAdmin = role === 'admin';
@@ -51,32 +52,44 @@ export default function CaseDetailPage() {
   }, []);
 
   const submitFeedback = async () => {
-    const adminToken = getAdminToken();
-    const demoToken = typeof window !== 'undefined' ? sessionStorage.getItem('demoToken') : null;
-    const path =
-      adminToken || !demoToken ? `/api/cases/${params.id}/feedback` : `/api/demo/cases/${params.id}/feedback`;
-    await api.post(path, {
-      rating: feedbackRating,
-      comment
-    });
-    setSaved(true);
-    await load();
+    if (saving) return;
+    setSaving('feedback');
+    setFeedbackNotice(null);
+    try {
+      const adminToken = getAdminToken();
+      const demoToken = typeof window !== 'undefined' ? sessionStorage.getItem('demoToken') : null;
+      const path = adminToken || !demoToken
+        ? `/api/cases/${params.id}/feedback`
+        : `/api/demo/cases/${params.id}/feedback`;
+      await api.post(path, { rating: feedbackRating, comment });
+      setFeedbackNotice({ tone: 'success', text: 'Feedback saved for this case.' });
+      await load();
+    } catch (err) {
+      setFeedbackNotice({ tone: 'error', text: err instanceof Error ? err.message : 'Feedback could not be saved. Please try again.' });
+    } finally {
+      setSaving(null);
+    }
   };
 
   const submitCorrection = async (fieldName: 'employee' | 'caseType') => {
+    if (saving) return;
     const correctedValue = correction[fieldName].trim();
     if (!correctedValue) {
-      setCorrectionSaved('Enter a correction before saving it.');
+      setCorrectionNotice({ tone: 'error', text: 'Enter a correction before saving.' });
       return;
     }
 
+    setSaving(fieldName);
+    setCorrectionNotice(null);
     try {
       await api.post(`/api/cases/${params.id}/corrections`, { fieldName, correctedValue });
-      setCorrectionSaved(`${fieldName === 'employee' ? 'Employee' : 'Category'} correction saved.`);
+      setCorrectionNotice({ tone: 'success', text: `${fieldName === 'employee' ? 'Employee' : 'Category'} correction saved.` });
       setCorrection((current) => ({ ...current, [fieldName]: '' }));
       await load();
     } catch (err) {
-      setCorrectionSaved(err instanceof Error ? err.message : 'Correction could not be saved.');
+      setCorrectionNotice({ tone: 'error', text: err instanceof Error ? err.message : 'Correction could not be saved. Please try again.' });
+    } finally {
+      setSaving(null);
     }
   };
 
@@ -298,10 +311,10 @@ export default function CaseDetailPage() {
                   onChange={(event) => setComment(event.target.value)}
                 />
               </label>
-              <button type="submit" className="btn-primary mt-4 rounded-lg px-5 py-2.5 text-sm font-semibold">
-                Save feedback
+              <button type="submit" disabled={saving !== null} className="btn-primary mt-4 rounded-lg px-5 py-2.5 text-sm font-semibold">
+                {saving === 'feedback' ? 'Saving feedback…' : 'Save feedback'}
               </button>
-              {saved ? <p className="mt-3 text-sm text-success">Feedback saved for this case.</p> : null}
+              {feedbackNotice ? <p className={`mt-3 text-sm ${feedbackNotice.tone === 'error' ? 'text-red-700' : 'text-success'}`} role={feedbackNotice.tone === 'error' ? 'alert' : 'status'}>{feedbackNotice.text}</p> : null}
             </form>
             <div className="mt-6 border-t border-slate-100 pt-5">
               <h3 className="text-sm font-semibold text-primary">Correct the persisted result</h3>
@@ -310,15 +323,15 @@ export default function CaseDetailPage() {
                 <label className="block text-sm text-primary">
                   Employee
                   <input className="dash-field mt-2" value={correction.employee} placeholder={employee?.canonicalName ?? 'Canonical employee name'} onChange={(event) => setCorrection({ ...correction, employee: event.target.value })} />
-                  <button type="button" className="btn-secondary mt-2 rounded-lg px-3 py-2 text-xs font-semibold" onClick={() => void submitCorrection('employee')}>Save employee correction</button>
+                  <button type="button" className="btn-secondary mt-2 rounded-lg px-3 py-2 text-xs font-semibold" disabled={saving !== null} onClick={() => void submitCorrection('employee')}>{saving === 'employee' ? 'Saving correction…' : 'Save employee correction'}</button>
                 </label>
                 <label className="block text-sm text-primary">
                   Category
                   <input className="dash-field mt-2" value={correction.caseType} placeholder={snapshot.caseType ?? 'Case category'} onChange={(event) => setCorrection({ ...correction, caseType: event.target.value })} />
-                  <button type="button" className="btn-secondary mt-2 rounded-lg px-3 py-2 text-xs font-semibold" onClick={() => void submitCorrection('caseType')}>Save category correction</button>
+                  <button type="button" className="btn-secondary mt-2 rounded-lg px-3 py-2 text-xs font-semibold" disabled={saving !== null} onClick={() => void submitCorrection('caseType')}>{saving === 'caseType' ? 'Saving correction…' : 'Save category correction'}</button>
                 </label>
               </div>
-              {correctionSaved ? <p className="mt-3 text-sm text-success" role="status">{correctionSaved}</p> : null}
+              {correctionNotice ? <p className={`mt-3 text-sm ${correctionNotice.tone === 'error' ? 'text-red-700' : 'text-success'}`} role={correctionNotice.tone === 'error' ? 'alert' : 'status'}>{correctionNotice.text}</p> : null}
             </div>
           </SectionCard> : null}
         </div>
