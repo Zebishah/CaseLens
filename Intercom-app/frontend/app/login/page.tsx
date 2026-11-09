@@ -57,7 +57,7 @@ export default function LoginPage() {
         try {
           await api.resendVerification(email.trim(), password);
           router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}&sent=1`);
-        } catch (deliveryError) {
+        } catch {
           // The verification screen also provides a safe resend option.
           router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}`);
         }
