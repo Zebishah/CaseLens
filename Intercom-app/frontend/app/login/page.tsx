@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AuthActionSpinner } from '../../components/AuthActionSpinner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { ApiError, api } from '../../lib/api';
@@ -99,9 +100,9 @@ export default function LoginPage() {
           <label>Email address<input required type="email" autoComplete="username" placeholder="you@company.com" value={email} onChange={(event) => { setEmail(event.target.value); }} /></label>
           <label>Password<span className="auth-password-field"><input required type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /><button type="button" aria-pressed={showPassword} onClick={() => setShowPassword(!showPassword)}>{showPassword ? 'Hide' : 'Show'}</button></span></label>
           <div className="auth-form-links"><span><SignalIcon type="shield" /> Protected workspace</span><Link href="/forgot-password">Forgot password?</Link></div>
-          <button type="submit" disabled={loading || checking} className="product-primary-button">{loading ? 'Signing in…' : 'Sign in to workspace'}<ArrowIcon /></button>
+          <button type="submit" disabled={loading || checking} className="product-primary-button">{loading ? <><AuthActionSpinner label="Signing in" /> Signing in…</> : <>Sign in to workspace <ArrowIcon /></>}</button>
         </form>
-        <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what Case Lense can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? 'Opening secure demo…' : 'Enter read-only demo'}<ArrowIcon /></button></div>
+        <div className="auth-demo-option"><span className="auth-option-icon"><SignalIcon type="spark" /></span><div><h2>See what Case Lense can do.</h2><p>Evaluating it for your team or reviewing the project? Explore real product behavior using synthetic cases.</p></div><button type="button" disabled={demoLoading || checking} onClick={() => void enterDemo()} className="product-secondary-button">{demoLoading ? <><AuthActionSpinner label="Opening demo" /> Opening secure demo…</> : <>Enter read-only demo <ArrowIcon /></>}</button></div>
         <div className="auth-sales-link"><p>Bringing this to your organization?</p><Link href="/access?intent=customer">Request a product demo <ArrowIcon diagonal /></Link></div>
         <p className="auth-fine-print">Workspace accounts are invitation-based. Product demos use synthetic records; Intercom access is approved separately.</p>
       </div>

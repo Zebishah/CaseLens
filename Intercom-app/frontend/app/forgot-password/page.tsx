@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AuthActionSpinner } from '../../components/AuthActionSpinner';
 import { useState, type FormEvent } from 'react';
 import { AuthShell } from '../../components/AuthShell';
 import { api } from '../../lib/api';
@@ -41,7 +42,7 @@ export default function ForgotPasswordPage() {
           onChange={(event) => setEmail(event.target.value)} placeholder="you@company.com" />
       </label>
       <button type="submit" disabled={submitting || cooldown} className="product-primary-button">
-        {submitting ? 'Sending…' : cooldown ? 'You can request another link in one minute' : sent ? 'Resend reset link' : 'Send reset link'}
+        {submitting ? <><AuthActionSpinner label="Sending reset email" /> Sending…</> : cooldown ? 'You can request another link in one minute' : sent ? 'Resend reset link' : 'Send reset link'}
       </button>
     </form>
     <p className="auth-fine-print">For invited users and administrators. If you registered using a different sign-in provider, contact your workspace administrator.</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AuthActionSpinner } from '../../components/AuthActionSpinner';
 import { useEffect, useState, type FormEvent } from 'react';
 import { AuthShell } from '../../components/AuthShell';
 import { api } from '../../lib/api';
@@ -56,7 +57,7 @@ export default function ResetPasswordPage() {
               onChange={(event) => setConfirmPassword(event.target.value)} />
           </label>
           <button className="product-primary-button" type="submit" disabled={submitting}>
-            {submitting ? 'Updating password…' : 'Reset password'}
+            {submitting ? <><AuthActionSpinner label="Updating password" /> Updating password…</> : 'Reset password'}
           </button>
         </form>
       )}

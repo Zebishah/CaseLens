@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AuthActionSpinner } from '../../components/AuthActionSpinner';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AuthShell } from '../../components/AuthShell';
 import { api } from '../../lib/api';
@@ -104,7 +105,7 @@ export default function VerifyEmailPage() {
           </label>}
           <button type="submit" className="product-primary-button"
             disabled={submitting || (!legacyToken && (!/^[0-9]{6}$/.test(code) || !email))}>
-            {status === 'verifying' ? 'Verifying…' : legacyToken ? 'Confirm email address' : 'Verify email'} <ArrowIcon />
+            {status === 'verifying' ? <><AuthActionSpinner label="Verifying email" /> Verifying…</> : <>{legacyToken ? 'Confirm email address' : 'Verify email'} <ArrowIcon /></>}
           </button>
         </form>}
     {!legacyToken && status !== 'verified' && <div className="mt-6">
@@ -115,7 +116,7 @@ export default function VerifyEmailPage() {
         <label>Account password<input type="password" required autoComplete="current-password"
           value={password} onChange={event => setPassword(event.target.value)} /></label>
         <button type="submit" className="product-secondary-button" disabled={submitting || remaining > 0}>
-          {submitting ? 'Sending…' : remaining ? `Resend available in ${remaining}s` : 'Send another code'}
+          {submitting ? <><AuthActionSpinner label="Sending code" /> Sending…</> : remaining ? `Resend available in ${remaining}s` : 'Send another code'}
         </button>
       </form> : <button type="button" className="product-secondary-button"
         disabled={remaining > 0} onClick={() => setShowResend(true)}>
