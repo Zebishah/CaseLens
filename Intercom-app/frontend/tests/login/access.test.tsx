@@ -71,7 +71,7 @@ describe('login and recruiter access', () => {
     expect(password).toHaveAttribute('type', 'text');
     expect(screen.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-pressed', 'true');
   });
-  it('offers verification after a correct-password login requires it, and resends with a cooldown', async () => {
+  it('redirects verification-required sign-ins to the dedicated OTP page', async () => {
     const user = userEvent.setup();
     apiMocks.login.mockRejectedValueOnce(new (await import('../../lib/api')).ApiError(
       'Verify your email', 403, false, 'EMAIL_VERIFICATION_REQUIRED'
@@ -80,12 +80,10 @@ describe('login and recruiter access', () => {
     await user.type(await screen.findByLabelText('Email address'), 'admin@example.com');
     await user.type(screen.getByLabelText('Password'), 'correct-password-123');
     await user.click(screen.getByRole('button', { name: 'Sign in to workspace' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('needs verification');
-    await user.click(screen.getByRole('button', { name: 'Send verification code' }));
-    expect(apiMocks.resendVerification).toHaveBeenCalledWith('admin@example.com', 'correct-password-123');
-    expect(await screen.findByRole('status')).toHaveTextContent('Check your inbox');
-    expect(screen.getByRole('button', { name: 'Resend available in one minute' })).toBeDisabled();
-    expect(routerReplace).not.toHaveBeenCalled();
+    await waitFor(() => expect(apiMocks.resendVerification).toHaveBeenCalledWith('admin@example.com', 'correct-password-123'));
+    await waitFor(() => expect(routerReplace).toHaveBeenCalledWith('/verify-email?email=admin%40example.com&sent=1'));
+    expect(screen.queryByLabelText('Six-digit code')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Verify your email' })).not.toBeInTheDocument();
   });
 
 });

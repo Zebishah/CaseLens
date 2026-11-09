@@ -116,11 +116,9 @@ export const authService = {
       : 'A code was recently sent. Please wait one minute before requesting another.' };
   },
 
-  async verifyEmailCode(payload: { email: string; password: string; code: string }) {
+  async verifyEmailCode(payload: { email: string; code: string }) {
     const user = await authRepository.findUserByEmail(payload.email);
-    if (!user || !(await bcrypt.compare(payload.password, user.password))) {
-      throw AppError.unauthorized('Invalid credentials');
-    }
+    if (!user) throw AppError.badRequest('Invalid or expired verification code.');
     if (user.emailVerifiedAt) return { verified: true };
     const verified = await authRepository.verifyEmailCode(
       user.id, user.email, hashEmailCode(user.id, payload.code)

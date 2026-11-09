@@ -20,7 +20,6 @@ export const verifyEmailSchema = z.object({
 export const verifyEmailCodeSchema = z.object({
   body: z.object({
     email: z.string().trim().toLowerCase().email(),
-    password: z.string().min(1).max(200),
     code: z.string().regex(/^\d{6}$/)
   }).strict(),
   params: z.object({}).default({}),
