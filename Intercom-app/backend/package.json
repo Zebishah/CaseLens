@@ -21,7 +21,6 @@
     "db:extensions": "tsx scripts/enable-extensions.ts",
     "db:push": "npm run db:extensions && tsx node_modules/drizzle-kit/bin.cjs push",
     "db:studio": "tsx node_modules/drizzle-kit/bin.cjs studio",
-    "db:seed": "tsx scripts/seed-milestone1.ts",
     "db:migrate-intelligence": "tsx scripts/apply-intelligence-schema-migration.ts",
     "db:migrate-employee-scope": "tsx scripts/apply-employee-scope-schema-migration.ts",
     "db:migrate-related-case-scope": "tsx scripts/apply-related-case-scope-schema-migration.ts",
