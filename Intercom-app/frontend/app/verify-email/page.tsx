@@ -105,7 +105,7 @@ export default function VerifyEmailPage() {
           </label>}
           <button type="submit" className="product-primary-button"
             disabled={submitting || (!legacyToken && (!/^[0-9]{6}$/.test(code) || !email))}>
-            {status === 'verifying' ? <><AuthActionSpinner label="Verifying email" /> Verifying…</> : <>{legacyToken ? 'Confirm email address' : 'Verify email'} <ArrowIcon /></>}
+            {status === 'verifying' ? <><AuthActionSpinner label="Verifying email" /> Verifying…</> : <>{legacyToken ? 'Verify email address' : 'Verify email'} <ArrowIcon /></>}
           </button>
         </form>}
     {!legacyToken && status !== 'verified' && <div className="mt-6">
@@ -123,6 +123,6 @@ export default function VerifyEmailPage() {
         {remaining ? `Resend available in ${remaining}s` : 'Did not receive a code? Resend'}
       </button>}
     </div>}
-    <Link href="/login" className="auth-back-link mt-5">← Back to sign in</Link>
+    <Link href="/login" className="auth-back-link mt-5">Return to sign in</Link>
   </section></AuthShell>;
 }
