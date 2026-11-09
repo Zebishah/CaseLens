@@ -31,7 +31,7 @@ export default function SecuritySettingsPage() {
   };
 
   return <AppShell title="Account security" description="Manage the password for your administrator account.">
-    <section className="max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold text-primary">Change password</h2>
       <p className="mt-2 text-sm leading-6 text-muted">Enter your current password to continue. After changing it, all existing sessions will end and you will need to sign in again.</p>
       {error ? <div role="alert" className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}

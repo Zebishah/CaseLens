@@ -174,7 +174,7 @@ export default function AccessRequestsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="inline-flex flex-nowrap items-center gap-2 whitespace-nowrap [&>button]:shrink-0">
                         {row.status === 'pending' ? (
                           <>
                             <ActionButton disabled={action === row.id} onClick={() => void updateStatus(row.id, 'approved')}>Approve</ActionButton>

@@ -1458,7 +1458,9 @@
 }
 
 .embedded-access-card {
-  max-width: 720px;
+  width: 100%;
+  max-width: 768px;
+  margin-inline: auto;
 }
 
 /* Short entrance motion makes the product feel active without moving data. */
