@@ -46,7 +46,8 @@ const fetchWithTimeout = async (
     if (controller.signal.aborted && !init.signal?.aborted) {
       throw new ApiError('The service took too long to respond. Please try again.', 408);
     }
-    throw error;
+    if (init.signal?.aborted) throw error;
+    throw new ApiError("We couldn’t connect to CaseLens. Check your connection and try again.", 0);
   } finally {
     globalThis.clearTimeout(timeout);
     init.signal?.removeEventListener('abort', abortFromCaller);
@@ -63,11 +64,19 @@ const parse = async <T>(response: Response): Promise<T> => {
   };
 
   if (response.status === 503) {
-    throw new ApiError(body.message ?? 'Starting demo service', 503, !body.message);
+    const message = body.message === 'Email delivery is temporarily unavailable.'
+      || body.message === 'Email delivery is temporarily unavailable. Please try again shortly.'
+      ? body.message
+      : 'CaseLens is temporarily unavailable. Please try again shortly.';
+    throw new ApiError(message, 503, !body.message, body.errors?.code ?? body.details?.code);
   }
 
   if (!response.ok) {
-    throw new ApiError(body.message ?? 'Request failed', response.status, false, body.errors?.code ?? body.details?.code);
+    const fallback = response.status === 429
+      ? 'Too many requests. Wait a moment and try again.'
+      : 'The request could not be completed. Please try again.';
+    const message = response.status >= 500 ? fallback : (typeof body.message === 'string' && body.message.trim()) || fallback;
+    throw new ApiError(message, response.status, false, body.errors?.code ?? body.details?.code);
   }
 
   return (body.data ?? body) as T;

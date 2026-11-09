@@ -25,7 +25,7 @@ export default function LandingPage() {
           <section className="ai-hero" aria-labelledby="hero-title">
             <div className="hero-ambient" aria-hidden="true" />
             <div className="hero-copy">
-              <p className="hero-announcement"><span className="status-light" /> AI-POWERED HR CASE INTELLIGENCE <span aria-hidden="true">↗</span></p>
+              <p className="hero-announcement"><span className="status-light" /> AI-POWERED HR CASE INTELLIGENCE FOR INTERCOM <span aria-hidden="true">↗</span></p>
               <h1 id="hero-title">HR conversations.<br /><span>Clearer decisions.</span></h1>
               <p className="hero-description"><strong>AI-powered case intelligence for HR teams using Intercom and email.</strong><br className="desktop-break" /> Classify conversations, match employees, connect history, and suggest stakeholders.</p>
               <div className="hero-actions"><Link className="ai-button ai-button-primary" href="/access?intent=customer">Request a product demo <ArrowIcon /></Link><Link className="ai-button ai-button-ghost" href="/login?mode=demo"><span className="mini-play" aria-hidden="true">▷</span> Explore the product</Link></div>
