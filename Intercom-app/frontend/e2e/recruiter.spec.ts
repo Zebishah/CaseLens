@@ -364,8 +364,9 @@ test('authentication explains the product and provides working demo and recovery
   const a11y = await new AxeBuilder({ page }).analyze();
   expect(a11y.violations.filter(violation => violation.impact === 'critical')).toEqual([]);
   await page.getByRole('link', { name: 'Forgot password?' }).click();
-  await expect(page.getByRole('heading', { name: 'Let’s get you back in.' })).toBeVisible();
-  await expect(page.getByText(/This page does not send a reset email/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Forgot your password?' })).toBeVisible();
+  await expect(page.getByText(/Enter your workspace email address/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send reset link' })).toBeVisible();
   await page.goto('/set-password');
   await expect(page.getByRole('alert').filter({ hasText: 'missing its invitation token' })).toBeVisible();
   await page.route('**/api/auth/invite?token=synthetic-invitation', route => json(route, { name: 'Morgan Smith', email: 'morgan@example.test', expiresAt: '2026-11-05T00:00:00Z' }));
