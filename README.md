@@ -8,7 +8,7 @@ Before this layer, HR operations teams could spend repetitive effort reading lon
 
 The defensible organizational value is centralized case intelligence, reduced repetitive lookup work, safer handling of uncertain identity matches, consistent team workflows, better traceability, and recoverable asynchronous work. This environment does not claim unmeasured savings, production volume, or customer outcomes.
 
-[View the CaseLens product walkthrough](https://nagumo-hr-intelligence.vercel.app)
+[View the CaseLens product walkthrough](https://case-lens-amber.vercel.app/)
 
 ![CaseLens resolving an employee identity and related cases inside Intercom](Intercom-app/frontend/public/product-screenshots/sarah-identity-resolution.webp)
 
